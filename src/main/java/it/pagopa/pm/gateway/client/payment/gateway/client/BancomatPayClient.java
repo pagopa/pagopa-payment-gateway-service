@@ -1,32 +1,35 @@
 package it.pagopa.pm.gateway.client.payment.gateway.client;
 
-import it.pagopa.pm.gateway.client.ObjectFactory;
+import it.pagopa.pm.gateway.client.*;
 import it.pagopa.pm.gateway.client.util.Util;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.JAXBElement;
+import java.lang.Exception;
 
 public class BancomatPayClient {
 
 
     public void call() throws Exception {
 
-   /* ObjectFactory objectFactory = new ObjectFactory();
+        ObjectFactory objectFactory = new ObjectFactory();
 
-    RecuperaInfoUtenze recuperaInfoUtenze = new RecuperaInfoUtenze();
-    RequestRecuperaInfoUtenzeVO requestRecuperaInfoUtenzeVO = new RequestRecuperaInfoUtenzeVO();
-        requestRecuperaInfoUtenzeVO.setCodiceFiscale("546132156486");
-        recuperaInfoUtenze.setArg0(requestRecuperaInfoUtenzeVO);
+        InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
+        RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
+        RichiestaPagamentoPagoPaVO richiestaPagamentoPagoPaVO = new RichiestaPagamentoPagoPaVO();
+        richiestaPagamentoPagoPaVO.setIdPSP("idPsp");
+        richiestaPagamentoPagoPaVO.setIdPagoPa("idPagopa");
+        requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
 
-    JAXBElement<RecuperaInfoUtenze> objectFactoryRecuperaInfoUtenze = objectFactory.createRecuperaInfoUtenze(recuperaInfoUtenze);
+        JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
 
-    Util util = new Util();
-    WebServiceTemplate webServiceTemplate = util.webServiceTemplate();
+        Util util = new Util();
+        WebServiceTemplate webServiceTemplate = util.webServiceTemplate();
 
-    JAXBElement<RecuperaInfoUtenzeResponse> recuperaInfoUtenzeResponseJAXBElement = (JAXBElement<RecuperaInfoUtenzeResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryRecuperaInfoUtenze);
-    RecuperaInfoUtenzeResponse recuperaInfoUtenzeResponse = recuperaInfoUtenzeResponseJAXBElement.getValue(); */
+        JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
+        InserimentoRichiestaPagamentoPagoPaResponse recuperaInfoUtenzeResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
 
-}
+    }
 
 
 }

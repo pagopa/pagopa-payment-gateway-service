@@ -24,15 +24,15 @@ public class Util {
 
         //ENDPOINT UAT https://app-te.vaservices.eu:443/p2penginectx/F1/services/ConsultazioneCrossServices
         //ENDPOINT SIT https://app-te.vaservices.eu/sit-p2penginectx/F1/services/ConsultazioneCrossServices
-        String customizedBasePath = System.getProperty(JIFFY_HOSTNAME);
-        if (customizedBasePath == null) {
+        String path = "http://p2b.gft.it/srv/pp/inserimentoRichiestaPagamentoPagoPa";
+        if (path == null) {
             throw new Exception("System properties JIFFY_HOSTNAME not found");
         }
 
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
-        webServiceTemplate.setDefaultUri(customizedBasePath);
+        webServiceTemplate.setDefaultUri(path);
         //webServiceTemplate.setDefaultUri(customizedBasePath + "sit-p2penginectx/F1/services/ConsultazioneCrossServices");
 
         // register the LogHttpHeaderClientInterceptor

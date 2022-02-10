@@ -2,7 +2,6 @@ package it.pagopa.pm.gateway.dto;
 
 import com.fasterxml.jackson.annotation.*;
 import it.pagopa.pm.gateway.dto.enums.*;
-import it.pagopa.pm.gateway.enums.*;
 import lombok.*;
 
 import javax.validation.constraints.*;

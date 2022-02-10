@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="PagoPaServices" targetNamespace="http://p2b.gft.it/srv/pp" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://p2b.gft.it/srv/pp" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+<xs:schema xmlns:tns="http://p2b.gft.it/srv/pp" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://p2b.gft.it/srv/pp">
+  <xs:element name="inquiryTransactionStatus" type="tns:inquiryTransactionStatus"/>
+  <xs:element name="inquiryTransactionStatusResponse" type="tns:inquiryTransactionStatusResponse"/>
+  <xs:element name="inserimentoRichiestaPagamentoPagoPa" type="tns:inserimentoRichiestaPagamentoPagoPa"/>
+  <xs:element name="inserimentoRichiestaPagamentoPagoPaResponse" type="tns:inserimentoRichiestaPagamentoPagoPaResponse"/>
+  <xs:element name="stornoPagamento" type="tns:stornoPagamento"/>
+  <xs:element name="stornoPagamentoResponse" type="tns:stornoPagamentoResponse"/>
+  <xs:complexType name="stornoPagamento">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="arg0" type="tns:requestStornoPagamentoVO"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="requestStornoPagamentoVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseRequestVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="idPagoPa" type="xs:string"/>
+          <xs:element minOccurs="0" name="endToEndId" type="xs:string"/>
+          <xs:element minOccurs="0" name="causale" type="xs:string"/>
+          <xs:element minOccurs="0" name="tipoStorno" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="baseRequestVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseRequestLightVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="otpContesto" type="tns:otpContestoVO"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="baseRequestLightVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseVO">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="baseVO">
+    <xs:complexContent>
+      <xs:extension base="tns:p2BAbstractPresentationBean">
+        <xs:sequence>
+          <xs:element name="contesto" type="tns:contestoVO"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType abstract="true" name="p2BAbstractPresentationBean">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractPresentationBean">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType abstract="true" name="abstractPresentationBean">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractBean">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType abstract="true" name="abstractBean">
+    <xs:sequence/>
+  </xs:complexType>
+  <xs:complexType name="otpContestoVO">
+    <xs:complexContent>
+      <xs:extension base="tns:p2BAbstractPresentationBean">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="deviceIdData" type="tns:deviceIdDataVO"/>
+          <xs:element minOccurs="0" name="otpData" type="xs:string"/>
+          <xs:element minOccurs="0" name="signatureData" type="xs:string"/>
+          <xs:element minOccurs="0" name="signatureDataHash" type="xs:string"/>
+          <xs:element name="transactionId" type="xs:long"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="deviceIdDataVO">
+    <xs:complexContent>
+      <xs:extension base="tns:p2BAbstractPresentationBean">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="hardwareId" type="xs:string"/>
+          <xs:element minOccurs="0" name="softwareId" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="contestoVO">
+    <xs:complexContent>
+      <xs:extension base="tns:p2BAbstractPresentationBean">
+        <xs:sequence>
+          <xs:element name="guid" type="xs:string"/>
+          <xs:element name="token" type="xs:string"/>
+          <xs:element name="utenteAttivo" type="tns:utenteAttivoVO"/>
+          <xs:element minOccurs="0" name="dataEsecuzione" type="xs:dateTime"/>
+          <xs:element minOccurs="0" name="sessionId" type="xs:string"/>
+          <xs:element minOccurs="0" name="ip" type="xs:string"/>
+          <xs:element minOccurs="0" name="lingua" type="tns:linguaEnum"/>
+          <xs:element minOccurs="0" name="device" type="xs:string"/>
+          <xs:element minOccurs="0" name="matricola" type="xs:string"/>
+          <xs:element minOccurs="0" name="versione" type="xs:string"/>
+          <xs:element minOccurs="0" name="clientTransactionId" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="utenteAttivoVO">
+    <xs:complexContent>
+      <xs:extension base="tns:utenteVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="deviceUniqueID" type="xs:string"/>
+          <xs:element minOccurs="0" name="tokenNotifiche" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="utenteVO">
+    <xs:complexContent>
+      <xs:extension base="tns:p2BAbstractPresentationBean">
+        <xs:sequence>
+          <xs:element name="codGruppo" type="xs:string"/>
+          <xs:element name="codIstituto" type="xs:string"/>
+          <xs:element name="codUtente" type="xs:string"/>
+          <xs:element minOccurs="0" name="nome" type="xs:string"/>
+          <xs:element minOccurs="0" name="cognome" type="xs:string"/>
+          <xs:element minOccurs="0" name="codiceFiscale" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="stornoPagamentoResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:responseStornoPagamentoVO"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="responseStornoPagamentoVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseResponseVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="endToEndIdStorno" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="baseResponseVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="esito" type="tns:esitoVO"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="esitoVO">
+    <xs:complexContent>
+      <xs:extension base="tns:p2BAbstractPresentationBean">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="avvertenza" type="xs:boolean"/>
+          <xs:element minOccurs="0" name="codice" type="xs:string"/>
+          <xs:element minOccurs="0" name="esito" type="xs:boolean"/>
+          <xs:element minOccurs="0" name="messaggio" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="inserimentoRichiestaPagamentoPagoPa">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="arg0" type="tns:requestInserimentoRichiestaPagamentoPagoPaVO"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="requestInserimentoRichiestaPagamentoPagoPaVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseRequestVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="richiestaPagamentoPagoPa" type="tns:richiestaPagamentoPagoPaVO"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="richiestaPagamentoPagoPaVO">
+    <xs:complexContent>
+      <xs:extension base="tns:richiestaPagamentoOnlineVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="numeroTelefonicoCriptato" type="xs:string"/>
+          <xs:element minOccurs="0" name="idPSP" type="xs:string"/>
+          <xs:element minOccurs="0" name="idPagoPa" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="richiestaPagamentoOnlineVO">
+    <xs:complexContent>
+      <xs:extension base="tns:p2BAbstractPresentationBean">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="id" type="xs:integer"/>
+          <xs:element name="idTransazione" type="xs:string"/>
+          <xs:element name="tag" type="xs:string"/>
+          <xs:element minOccurs="0" name="idNegozio" type="xs:integer"/>
+          <xs:element name="importo" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="causale" type="xs:string"/>
+          <xs:element name="numeroTelefonico" type="xs:string"/>
+          <xs:element minOccurs="0" name="merchantName" type="xs:string"/>
+          <xs:element minOccurs="0" name="utenza" type="xs:string"/>
+          <xs:element minOccurs="0" name="idOrdine" type="xs:string"/>
+          <xs:element minOccurs="0" name="categoriaPagamento" type="xs:string"/>
+          <xs:element minOccurs="0" name="tipoRichiestaPagamento" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="inserimentoRichiestaPagamentoPagoPaResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:responseInserimentoRichiestaPagamentoPagoPaVO"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="responseInserimentoRichiestaPagamentoPagoPaVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseResponseVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="correlationId" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="inquiryTransactionStatus">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="arg0" type="tns:requestInquiryTransactionStatusVO"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="requestInquiryTransactionStatusVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseRequestVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="correlationId" type="xs:string"/>
+          <xs:element minOccurs="0" name="idPagoPa" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="inquiryTransactionStatusResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:responseInquiryTransactionStatusVO"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="responseInquiryTransactionStatusVO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseResponseVO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="esitoPagamento" type="xs:string"/>
+          <xs:element minOccurs="0" name="endToEndId" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="linguaEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="IT"/>
+      <xs:enumeration value="EN"/>
+      <xs:enumeration value="DE"/>
+      <xs:enumeration value="AT"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="Exception" type="tns:Exception"/>
+  <xs:complexType name="Exception">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="message" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="Exception">
+    <wsdl:part name="Exception" element="tns:Exception">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="stornoPagamentoResponse">
+    <wsdl:part name="parameters" element="tns:stornoPagamentoResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="inquiryTransactionStatusResponse">
+    <wsdl:part name="parameters" element="tns:inquiryTransactionStatusResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="inserimentoRichiestaPagamentoPagoPaResponse">
+    <wsdl:part name="parameters" element="tns:inserimentoRichiestaPagamentoPagoPaResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="inquiryTransactionStatus">
+    <wsdl:part name="parameters" element="tns:inquiryTransactionStatus">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="stornoPagamento">
+    <wsdl:part name="parameters" element="tns:stornoPagamento">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="inserimentoRichiestaPagamentoPagoPa">
+    <wsdl:part name="parameters" element="tns:inserimentoRichiestaPagamentoPagoPa">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="PagoPaServiceFacade">
+    <wsdl:operation name="stornoPagamento">
+      <wsdl:input name="stornoPagamento" message="tns:stornoPagamento">
+    </wsdl:input>
+      <wsdl:output name="stornoPagamentoResponse" message="tns:stornoPagamentoResponse">
+    </wsdl:output>
+      <wsdl:fault name="Exception" message="tns:Exception">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="inserimentoRichiestaPagamentoPagoPa">
+      <wsdl:input name="inserimentoRichiestaPagamentoPagoPa" message="tns:inserimentoRichiestaPagamentoPagoPa">
+    </wsdl:input>
+      <wsdl:output name="inserimentoRichiestaPagamentoPagoPaResponse" message="tns:inserimentoRichiestaPagamentoPagoPaResponse">
+    </wsdl:output>
+      <wsdl:fault name="Exception" message="tns:Exception">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="inquiryTransactionStatus">
+      <wsdl:input name="inquiryTransactionStatus" message="tns:inquiryTransactionStatus">
+    </wsdl:input>
+      <wsdl:output name="inquiryTransactionStatusResponse" message="tns:inquiryTransactionStatusResponse">
+    </wsdl:output>
+      <wsdl:fault name="Exception" message="tns:Exception">
+    </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="PagoPaServicesSoapBinding" type="tns:PagoPaServiceFacade">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="stornoPagamento">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="stornoPagamento">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="stornoPagamentoResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Exception">
+        <soap:fault name="Exception" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="inquiryTransactionStatus">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="inquiryTransactionStatus">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="inquiryTransactionStatusResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Exception">
+        <soap:fault name="Exception" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="inserimentoRichiestaPagamentoPagoPa">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="inserimentoRichiestaPagamentoPagoPa">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="inserimentoRichiestaPagamentoPagoPaResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Exception">
+        <soap:fault name="Exception" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="PagoPaServices">
+    <wsdl:port name="PagoPaServicesPort" binding="tns:PagoPaServicesSoapBinding">
+      <soap:address location="http://localhost:9090/PagoPaServicesPort"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

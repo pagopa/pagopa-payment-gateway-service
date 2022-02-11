@@ -3,13 +3,16 @@ package it.pagopa.pm.gateway.client.payment.gateway.client;
 import it.pagopa.pm.gateway.client.*;
 import it.pagopa.pm.gateway.client.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 
 import javax.xml.bind.JAXBElement;
 import java.lang.Exception;
 
-public class BancomatPayClientV2 extends WebServiceGatewaySupport {
+@Component
+public class BancomatPayClientV2 {
 
     @Autowired
     private WebServiceTemplate webServiceTemplate;
@@ -24,6 +27,7 @@ public class BancomatPayClientV2 extends WebServiceGatewaySupport {
         richiestaPagamentoPagoPaVO.setIdPSP("idPsp");
         richiestaPagamentoPagoPaVO.setIdPagoPa("idPagopa");
         requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
+        inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
 
         JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
 

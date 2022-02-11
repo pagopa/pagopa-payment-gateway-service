@@ -10,6 +10,7 @@ import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 
 import javax.xml.bind.JAXBElement;
 import java.lang.Exception;
+import java.math.BigDecimal;
 
 @Component
 public class BancomatPayClientV2 {
@@ -26,6 +27,7 @@ public class BancomatPayClientV2 {
         RichiestaPagamentoPagoPaVO richiestaPagamentoPagoPaVO = new RichiestaPagamentoPagoPaVO();
         richiestaPagamentoPagoPaVO.setIdPSP("idPsp");
         richiestaPagamentoPagoPaVO.setIdPagoPa("idPagopa");
+        richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(100.0));
         requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
 

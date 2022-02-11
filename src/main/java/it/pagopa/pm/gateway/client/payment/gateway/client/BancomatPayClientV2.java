@@ -2,14 +2,19 @@ package it.pagopa.pm.gateway.client.payment.gateway.client;
 
 import it.pagopa.pm.gateway.client.*;
 import it.pagopa.pm.gateway.client.util.Util;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ws.client.core.WebServiceTemplate;
+import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 
 import javax.xml.bind.JAXBElement;
 import java.lang.Exception;
 
-public class BancomatPayClient  {
+public class BancomatPayClientV2 extends WebServiceGatewaySupport {
 
-    public void call() throws Exception {
+    @Autowired
+    private WebServiceTemplate webServiceTemplate;
+
+    public InserimentoRichiestaPagamentoPagoPaResponse getInserimentoRichiestaPagamentoPagoPaResponse() throws Exception {
 
         ObjectFactory objectFactory = new ObjectFactory();
 
@@ -22,14 +27,15 @@ public class BancomatPayClient  {
 
         JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
 
-        Util util = new Util();
-        WebServiceTemplate webServiceTemplate = util.webServiceTemplate();
+        //Util util = new Util();
+        //WebServiceTemplate webServiceTemplate = util.webServiceTemplate();
 
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
-        InserimentoRichiestaPagamentoPagoPaResponse recuperaInfoUtenzeResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
+        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponseResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
+
+        return inserimentoRichiestaPagamentoPagoPaResponseResponse;
+
 
     }
-
-
 
 }

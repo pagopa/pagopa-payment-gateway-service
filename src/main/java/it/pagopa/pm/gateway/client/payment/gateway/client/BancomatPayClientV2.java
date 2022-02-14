@@ -9,7 +9,7 @@ import javax.xml.bind.JAXBElement;
 import java.lang.Exception;
 import java.math.BigDecimal;
 
-@Component
+//@Component
 public class BancomatPayClientV2 {
 
     @Autowired
@@ -37,7 +37,7 @@ public class BancomatPayClientV2 {
 
         RichiestaPagamentoPagoPaVO richiestaPagamentoPagoPaVO = new RichiestaPagamentoPagoPaVO();
         richiestaPagamentoPagoPaVO.setIdPSP("idPsp");
-        richiestaPagamentoPagoPaVO.setIdPagoPa("PROVOST");
+        richiestaPagamentoPagoPaVO.setIdPagoPa("NJBG900");
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(100.0));
         richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato("CRYPTO_TEL");
         richiestaPagamentoPagoPaVO.setCausale("CAUSALE");

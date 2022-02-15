@@ -79,7 +79,7 @@ stages:
               goals: 'clean package'
               options: '-e -X -B -s $(settingsxml.secureFilePath) -DskipTests=true -Dmaven.repo.local=$(maven_cache_folder) -Drevision="$(var.outputBranchVersion)"'
               javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.8'
+              jdkVersionOption: '1.11'
               mavenVersionOption: 'Default'
               mavenOptions: '-Xmx3072m'
               mavenAuthenticateFeed: false

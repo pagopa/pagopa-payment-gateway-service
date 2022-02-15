@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>it.pagopa.pm.gateway</groupId>
 	<artifactId>pagopa-payment-transactions-gateway</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>${revision}</version>
 	<packaging>war</packaging>
 	<name>pagopa-payment-transactions-gateway</name>
 	<description>Payment transactions gateway for the pagoPA - Payment Manager</description>

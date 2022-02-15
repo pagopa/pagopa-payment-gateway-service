@@ -77,7 +77,7 @@ stages:
             inputs:
               mavenPomFile: './pom.xml'
               goals: 'clean package'
-              options: '-B -s $(settingsxml.secureFilePath) -DskipTests=true -Dmaven.repo.local=$(maven_cache_folder) -Drevision="$(var.outputBranchVersion)"'
+              options: '-e -X -B -s $(settingsxml.secureFilePath) -DskipTests=true -Dmaven.repo.local=$(maven_cache_folder) -Drevision="$(var.outputBranchVersion)"'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.8'
               mavenVersionOption: 'Default'

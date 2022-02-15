@@ -1,0 +1,179 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger:
+  branches:
+    include:
+      - releases/*
+pr: none
+
+variables:
+  branchBaseName: 'releases/'
+  poolName: 'pm-agent-pool-sit'
+  vmImageNameDefault: 'ubuntu-latest'
+  maven_cache_folder: $(Pipeline.Workspace)/.m2/repository
+  maven_opts: '-Dmaven.repo.local=$(maven_cache_folder)'
+
+stages:
+  - stage: stage_build
+    displayName: Create Build
+    jobs:
+      - job: job_build
+        displayName: Build
+        pool:
+          vmImage: $(vmImageNameDefault)
+        steps:
+#          - powershell: |
+#              if(!("$(Build.SourceBranch)" -Match "$(branchBaseName)")) {throw 'Please choose a releases branch'}
+#              $branchVersion = "$(Build.SourceBranch)" -replace "refs/heads/$(branchBaseName)", ""
+#              echo "##vso[task.setvariable variable=outputBranchVersion;isOutput=true]$branchVersion"
+#            name: var
+#            displayName: Get Branch Version
+          - powershell: |
+              $branchVersion = "01.01.01"
+              echo "##vso[task.setvariable variable=outputBranchVersion;isOutput=true]$branchVersion"
+            name: var
+            displayName: Get Branch Version
+          - powershell: |
+              $numbers="$(var.outputBranchVersion)".Split(".")
+              if ($numbers.Count -ne 3) {throw 'Please choose a releases branch'}
+              Foreach ($n in $numbers)
+              {
+                  if (!($n -match "^\d+$")) {throw 'Please choose a releases branch'}
+              }
+            displayName: Verify Branch Version
+          - script: echo "Source Version '$(var.outputBranchVersion)'"
+            displayName: Branch Version
+          - task: DownloadSecureFile@1
+            displayName: Download settings.xml for Maven
+            name: settingsxml
+            inputs:
+              secureFile: 'settings.xml'
+              retryCount: '2'
+          - task: Cache@2
+            displayName: Cache Maven
+            inputs:
+              key: 'maven | "$(Agent.OS)" | pm'
+              restoreKeys: |
+                maven | "$(Agent.OS)" | pm
+                maven | "$(Agent.OS)"
+                maven
+              path: $(maven_cache_folder)
+#          - task: Bash@3
+#            displayName: Install Ojdbc
+#            inputs:
+#              targetType: 'inline'
+#              script: |
+#                mvn install:install-file -Dfile=./wildfly/docker/oracle/ojdbc8-12.2.0.1.jar -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar -s $(settingsxml.secureFilePath) -Dmaven.repo.local=$(maven_cache_folder)
+#              failOnStderr: true
+#          - task: ShellScript@2
+#            displayName: Install Dependecies for S4S Client
+#            inputs:
+#              scriptPath: './externalDependecies/install_dependencies.sh'
+          - task: Maven@3
+            displayName: Build PTG
+            inputs:
+              mavenPomFile: './pom.xml'
+              goals: 'clean package'
+              options: '-B -s $(settingsxml.secureFilePath) -DskipTests=true -Dmaven.repo.local=$(maven_cache_folder) -Drevision="$(var.outputBranchVersion)"'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.8'
+              mavenVersionOption: 'Default'
+              mavenOptions: '-Xmx3072m'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: true
+              sonarQubeRunAnalysis: false
+              publishJUnitResults: false
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Archive
+            inputs:
+              pathToPublish: './target/pagopa-payment-transactions-gateway-$(var.outputBranchVersion).war'
+              artifactName: 'Build PTG $(var.outputBranchVersion)'
+  - stage: stage_testing
+    displayName: PTG Testing
+    dependsOn:
+      - stage_build
+    jobs:
+      - job: job_test
+        displayName: Unit and Integration tests
+        pool:
+          vmImage: $(vmImageNameDefault)
+        steps:
+          - task: Cache@2
+            displayName: Cache Maven
+            inputs:
+              key: 'maven | "$(Agent.OS)" | pm'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(maven_cache_folder)
+          - task: Maven@3
+            displayName: 'Unit test'
+            inputs:
+              mavenPomFile: './pom.xml'
+              goals: 'clean test'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.8'
+              mavenVersionOption: 'Default'
+              mavenOptions: '-Xmx3072m $(maven_opts)'
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: true
+              sonarQubeRunAnalysis: false
+              publishJUnitResults: true
+          - task: Maven@3
+            displayName: 'Integration test'
+            inputs:
+              mavenPomFile: './pom.xml'
+              goals: 'clean verify'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.8'
+              mavenVersionOption: 'Default'
+              mavenOptions: '-Xmx3072m $(maven_opts)'
+              testResultsFiles: '**/surefire-reports/IT-*.xml'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: true
+              sonarQubeRunAnalysis: false
+              publishJUnitResults: true
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish Code Coverage'
+            inputs:
+              codeCoverageTool: 'JaCoCo'
+              summaryFileLocation: './pp-report-coverage/target/site/jacoco-aggregate/*.xml'
+              reportDirectory: './pp-report-coverage/target/site/jacoco-aggregate'
+  - stage: stage_deploy_SIT
+    displayName: Execute Deploy SIT
+    dependsOn:
+      - stage_build
+      - stage_testing
+    variables:
+      - name: outputBranchVersion
+        value: $[stageDependencies.stage_build.job_build.outputs['var.outputBranchVersion']]
+    jobs:
+      - deployment: deploy_SIT
+        displayName: Deploy SIT
+        pool:
+          name: $(poolName)
+        environment: 'SIT'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo '$(outputBranchVersion)'
+                  displayName: Branch Version
+                - task: AzureKeyVault@2
+                  inputs:
+                    azureSubscription: 'PM-Subscription-sit'
+                    KeyVaultName: 'kmn-pm-pagopa-test'
+                    SecretsFilter: '*'
+                    RunAsPreJob: false
+                - template: 'templates/deploy-artifact-on-azure-appservice.yml'
+                  parameters:
+                    moduleName: 'PTG'
+                    artifactType: 'WAR'
+                    azureSubscription: 'PM-Subscription-sit'
+                    webAppName: '$(payment-gateway-appsrv-sit)'
+                    workingDir: '$(Pipeline.Workspace)'
+                    fileName: 'Build PTG $(outputBranchVersion)/pagopa-payment-transactions-gateway-$(outputBranchVersion).war'

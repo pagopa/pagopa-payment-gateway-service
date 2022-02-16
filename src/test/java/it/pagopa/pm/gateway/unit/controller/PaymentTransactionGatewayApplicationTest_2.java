@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.unit.controller;
 import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
 import it.pagopa.pm.gateway.client.util.ClientConfig;
+import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +27,17 @@ public class PaymentTransactionGatewayApplicationTest_2 {
             System.out.println("CLIENT IS NULL");
         }
 
+        BancomatPayPaymentRequest request = new BancomatPayPaymentRequest();
+        request.setIdPsp("Id_psp");
+        request.setIdPagoPa("039dbrvr");
+        request.setAmount(100d);
+        request.setSubject("causale");
+        request.setCryptedTelephoneNumber("pqimx8en49fbf");
+        request.setLanguage("IT");
+
         InserimentoRichiestaPagamentoPagoPaResponse response =
-                client.getInserimentoRichiestaPagamentoPagoPaResponse();
+                client.getInserimentoRichiestaPagamentoPagoPaResponse(request);
 
     }
-
-
-
 
 }

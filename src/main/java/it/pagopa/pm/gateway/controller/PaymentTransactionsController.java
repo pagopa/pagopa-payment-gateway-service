@@ -28,10 +28,14 @@ public class PaymentTransactionsController {
 	}
 
 	@PostMapping(REQUEST_PAYMENT + BPAY)
-	public void requestPaymentToBancomatPay( String idPsp, String idPagoPa,Double importo, String numeroTelefonicoCriptato, String tag ) throws Exception {
+	public void requestPaymentToBancomatPay(@RequestHeader String xCcrrelationId,
+											@RequestBody BancomatPayPaymentRequest request ) throws Exception {
 
 		InserimentoRichiestaPagamentoPagoPaResponse response =
-				client.getInserimentoRichiestaPagamentoPagoPaResponse( );
+				client.getInserimentoRichiestaPagamentoPagoPaResponse(request );
+
+		String correlationId = response.getReturn().getCorrelationId();
+
 
 
 	}

@@ -36,8 +36,7 @@ public class BancomatPayClientV2 {
     private String token;
 
     @Async
-    public InserimentoRichiestaPagamentoPagoPaResponse getInserimentoRichiestaPagamentoPagoPaResponse(BancomatPayPaymentRequest request)
-            throws Exception {
+    public InserimentoRichiestaPagamentoPagoPaResponse getInserimentoRichiestaPagamentoPagoPaResponse(BancomatPayPaymentRequest request) {
 
         ObjectFactory objectFactory = new ObjectFactory();
 
@@ -70,9 +69,9 @@ public class BancomatPayClientV2 {
         JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
 
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
-        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponseResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
+        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
 
-        return inserimentoRichiestaPagamentoPagoPaResponseResponse;
+        return inserimentoRichiestaPagamentoPagoPaResponse;
 
 
     }

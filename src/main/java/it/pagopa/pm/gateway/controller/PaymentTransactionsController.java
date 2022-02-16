@@ -30,19 +30,26 @@ public class PaymentTransactionsController {
 	@PostMapping(REQUEST_PAYMENTS + BPAY)
 	public void requestPaymentToBancomatPay(@RequestHeader String xCorrelationId,
 											@RequestBody BancomatPayPaymentRequest request ) throws Exception {
+		InserimentoRichiestaPagamentoPagoPaResponse response = null;
 
 		try {
-			InserimentoRichiestaPagamentoPagoPaResponse response =
-					client.getInserimentoRichiestaPagamentoPagoPaResponse(request);
-
-			//questo dato va salvato
-			String correlationId = response.getReturn().getCorrelationId();
+			response = client.getInserimentoRichiestaPagamentoPagoPaResponse(request);
 		} catch (Exception e){
-
+         //throw 502
 		}
 
-		response.getReturn().getEsito().isEsito();
+		//questo dato va salvato
 
+		if (!response.getReturn().getEsito().isEsito()){
+			//throw 424
+		};
+
+		String correlationId = response.getReturn().getCorrelationId();
+        try {
+        	//salva correlationID
+		} catch (Exception e){
+        	//throw 500
+		}
 
 
 

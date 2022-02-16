@@ -16,11 +16,11 @@ public class PaymentTransactionsController {
 	@Autowired
 	BancomatPayClientV2 client;
 
-	@PostMapping(REQUEST_PAYMENTS + BPAY)
+	/*@PostMapping(REQUEST_PAYMENTS + BPAY)
 	public ACKMessage getPaymentAuthorization(AuthMessage authMessage) {
 		ACKMessage response = new ACKMessage();
 		return response;
-	}
+	} */
 
 	@GetMapping("/test")
 	public String index() {

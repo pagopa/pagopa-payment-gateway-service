@@ -27,14 +27,22 @@ public class PaymentTransactionsController {
 		return "test";
 	}
 
-	@PostMapping(REQUEST_PAYMENT + BPAY)
-	public void requestPaymentToBancomatPay(@RequestHeader String xCcrrelationId,
+	@PostMapping(REQUEST_PAYMENTS + BPAY)
+	public void requestPaymentToBancomatPay(@RequestHeader String xCorrelationId,
 											@RequestBody BancomatPayPaymentRequest request ) throws Exception {
 
-		InserimentoRichiestaPagamentoPagoPaResponse response =
-				client.getInserimentoRichiestaPagamentoPagoPaResponse(request );
+		try {
+			InserimentoRichiestaPagamentoPagoPaResponse response =
+					client.getInserimentoRichiestaPagamentoPagoPaResponse(request);
 
-		String correlationId = response.getReturn().getCorrelationId();
+			//questo dato va salvato
+			String correlationId = response.getReturn().getCorrelationId();
+		} catch (Exception e){
+
+		}
+
+		response.getReturn().getEsito().isEsito();
+
 
 
 

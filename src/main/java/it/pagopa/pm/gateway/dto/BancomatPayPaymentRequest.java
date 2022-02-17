@@ -21,9 +21,6 @@ public class BancomatPayPaymentRequest {
     @NotNull(message = "'crypted Telephone Number' mandatory")
     String cryptedTelephoneNumber;
 
-//    @NotNull(message = "'tag' mandatory")
-//    String tag;
-
     String language;
 
 

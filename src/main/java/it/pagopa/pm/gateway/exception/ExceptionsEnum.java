@@ -3,9 +3,8 @@ package it.pagopa.pm.gateway.exception;
 public enum ExceptionsEnum {
 
     GENERIC_ERROR			("PPA000", "Unexpected error", 0),
-    UNAUTHORIZED			("PPA001", "Unauthorize", 1),
-    INVALID_ID_ERROR 		("PPA001", "Invalid id", 2),
-    INVALID_EMAIL_OR_FC("PPA002", "Email or fiscal Code not valid", 3);
+    BPAY_SERVICE_REQUEST_ERROR			("PPA001", "No response from Bpay service", 1),
+    BPAY_SERVICE_NEGATIVE_OUTCOME_ERROR 		("PPA001", "Negative outocme form Bpay Service", 2);
 
 
 

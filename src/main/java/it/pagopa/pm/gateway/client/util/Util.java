@@ -7,8 +7,6 @@ import org.springframework.ws.client.support.interceptor.ClientInterceptor;
 
 public class Util {
 
-
-
     private static String JIFFY_HOSTNAME = "JIFFY_HOSTNAME";
 
     public Jaxb2Marshaller jaxb2Marshaller() throws Exception {
@@ -21,9 +19,6 @@ public class Util {
 
 
     public WebServiceTemplate webServiceTemplate() throws Exception {
-
-        //ENDPOINT UAT https://app-te.vaservices.eu:443/p2penginectx/F1/services/ConsultazioneCrossServices
-        //ENDPOINT SIT https://app-te.vaservices.eu/sit-p2penginectx/F1/services/ConsultazioneCrossServices
         String path = "http://p2b.gft.it/srv/pp/inserimentoRichiestaPagamentoPagoPa";
         if (path == null) {
             throw new Exception("System properties JIFFY_HOSTNAME not found");
@@ -33,14 +28,6 @@ public class Util {
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(path);
-        //webServiceTemplate.setDefaultUri(customizedBasePath + "sit-p2penginectx/F1/services/ConsultazioneCrossServices");
-
-        // register the LogHttpHeaderClientInterceptor
-       // ClientInterceptor[] interceptors =
-         //       new ClientInterceptor[] {new CustomJiffyInterceptor(), new LogHttpHeaderClientInterceptor()};
-
-       // webServiceTemplate.setInterceptors(interceptors);
-
         return webServiceTemplate;
     }
 }

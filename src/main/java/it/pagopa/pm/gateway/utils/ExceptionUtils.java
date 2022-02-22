@@ -19,25 +19,4 @@ public class ExceptionUtils {
             throw new RestApiInternalException(ExceptionsEnum.GENERIC_ERROR.getRestApiCode(), ExceptionsEnum.GENERIC_ERROR.getDescription());
         }
     }
-
-    /*public static void handleNotFoundRestException(Exception e) throws RestApiException {
-        if (e instanceof BusinessException) {
-            ExceptionsEnum ee = ExceptionsEnum.fromCode(((BusinessException) e).getException().getCode());
-            if (StringUtils.equalsAny(ee.getCode(), PAYMENT_NOT_FOUND.getCode(), PSP_NOT_FOUND.getCode())) {
-                throw new RestApiNotFoundException(ee.getRestApiCode(), e.getMessage());
-            }
-        }
-        handleRestException(e);
-    }
-
-    public static void handleRestExceptionNoLogs(Exception e) throws RestApiNoLogException, RestApiInternalException {
-        if (e.getCause() instanceof BusinessRuntimeException) {
-            BusinessRuntimeException bre = (BusinessRuntimeException) e.getCause();
-            throw new RestApiNoLogException(bre.getException().getRestApiCode(), bre.getMessage());
-        } else {
-            log.error(e.getMessage(), e);
-            throw new RestApiInternalException(ExceptionsEnum.GENERIC_ERROR.getRestApiCode(), ExceptionsEnum.GENERIC_ERROR.getDescription());
-        }
-    } */
-
 }

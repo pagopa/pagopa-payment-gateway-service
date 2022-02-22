@@ -1,6 +1,7 @@
 package it.pagopa.pm.gateway.controller;
 
 import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
+import it.pagopa.pm.gateway.client.wsdl.generated.files.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
@@ -42,7 +43,7 @@ public class PaymentTransactionsController {
 		log.info("START requestPaymentToBancomatPay " + idPagoPa);
 
 		BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
-		bancomatPayPaymentResponse.setOutcome(Boolean.toString(true));
+		bancomatPayPaymentResponse.setOutcome(true);
 
 		executeCallToBancomatPay(request);
 
@@ -68,6 +69,12 @@ public class PaymentTransactionsController {
 		}
 
 		//TODO Salva a DB i dati di request/response compreso il correlation
+		BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
+		bancomatPayPaymentResponse.setOutcome(response.getReturn().getEsito().isEsito());
+		bancomatPayPaymentResponse.setMessage(response.getReturn().getEsito().getMessaggio());
+		bancomatPayPaymentResponse.setErrorCode(response.getReturn().getEsito().getCodice());
+		bancomatPayPaymentResponse.setCorrelationId(response.getReturn().getCorrelationId());
+
 		entityManager.persist(bancomatPayPaymentResponse);
 		//TODO aggiorna stato transazione
 

@@ -1,6 +1,8 @@
 package it.pagopa.pm.gateway.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
@@ -16,7 +18,7 @@ public class BancomatPayPaymentResponse {
     private Long id;
 
     @Column(name = "OUTCOME", nullable = false)
-    private String outcome;
+    private Boolean outcome;
 
     @Column(name = "ERROR_CODE", nullable = false)
     private String errorCode;

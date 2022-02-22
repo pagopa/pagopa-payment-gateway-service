@@ -5,6 +5,7 @@ import it.pagopa.pm.gateway.client.restapiCD.RestapiCdClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.ws.client.core.WebServiceTemplate;
@@ -34,7 +35,7 @@ public class ClientConfig {
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(bancomatPayClientUrl);
-        log.info("\n <<<<<<<<<<<<<<<<<<<<<>bancomatPayWebServiceTemplate - bancomatPayClientUrl " + bancomatPayClientUrl);
+        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + bancomatPayClientUrl);
 
         return webServiceTemplate;
     }
@@ -50,7 +51,6 @@ public class ClientConfig {
     public RestTemplate restTemplate(){
         RestTemplate restTemplate = new RestTemplate();
         return  restTemplate;
-
     }
 
 }

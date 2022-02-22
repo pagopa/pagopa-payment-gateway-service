@@ -59,3 +59,4 @@ target
 
 *.tempKey
 /src/main/java/it/pagopa/pm/gateway/client/wsdl/generated/files/
+/src/main/java/it/pagopa/pm/gateway/client/wsdl/generated/files/

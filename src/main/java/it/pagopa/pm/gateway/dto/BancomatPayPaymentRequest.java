@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.dto;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
+import java.math.BigInteger;
 
 @Data
 public class BancomatPayPaymentRequest {
@@ -11,7 +12,7 @@ public class BancomatPayPaymentRequest {
     String idPsp;
 
     @NotNull(message = "'idPagoPa' mandatory")
-    String idPagoPa;
+    Long idPagoPa;
 
     @NotNull(message = "'amount' mandatory")
     Double amount;

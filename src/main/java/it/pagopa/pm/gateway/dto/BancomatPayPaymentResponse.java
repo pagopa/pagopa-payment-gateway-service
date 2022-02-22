@@ -17,6 +17,9 @@ public class BancomatPayPaymentResponse {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BPAY_PAYMENT_RESPONSE")
     private Long id;
 
+    @Column(name = "ID_PAGOPA", nullable = false)
+    private Long idPagoPa;
+
     @Column(name = "OUTCOME", nullable = false)
     private Boolean outcome;
 

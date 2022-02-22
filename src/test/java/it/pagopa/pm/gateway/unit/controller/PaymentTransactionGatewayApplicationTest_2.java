@@ -55,11 +55,4 @@ public class PaymentTransactionGatewayApplicationTest_2 {
 
     }
 
-    @Test
-    public void canMockSystemProperties() {
-        PowerMockito.mockStatic(System.class);
-        PowerMockito.when(System.getProperty("flag")).thenReturn("true");
-
-       // assertEquals("true", System.getProperty("flag"));
-    }
 }

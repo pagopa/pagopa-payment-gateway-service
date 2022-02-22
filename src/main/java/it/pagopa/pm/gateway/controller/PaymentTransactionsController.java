@@ -13,6 +13,8 @@ import it.pagopa.pm.gateway.exception.RestApiInternalException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityManager;
+
 import static it.pagopa.pm.gateway.constant.ApiPaths.BPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS;
 
@@ -21,6 +23,8 @@ public class PaymentTransactionsController {
 
 	@Autowired
 	BancomatPayClientV2 client;
+
+	private EntityManager entityManager;
 
 	@PutMapping(REQUEST_PAYMENTS + BPAY)
 	public ACKMessage getPaymentAuthorization(AuthMessage authMessage) {
@@ -58,6 +62,7 @@ public class PaymentTransactionsController {
 		bancomatPayPaymentResponse.setErrorCode(response.getReturn().getEsito().getCodice());
 		bancomatPayPaymentResponse.setMessage(response.getReturn().getEsito().getMessaggio());
 
+		entityManager.persist(bancomatPayPaymentResponse);
 
         return bancomatPayPaymentResponse;
 	}

@@ -1,11 +1,9 @@
 package it.pagopa.pm.gateway.unit.controller;
 
-import it.pagopa.pm.gateway.client.wsdl.generated.files.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
 import it.pagopa.pm.gateway.client.util.ClientConfig;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.BeforeClass;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -14,7 +12,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 @Slf4j
@@ -31,6 +28,7 @@ public class PaymentTransactionGatewayApplicationTest_2 {
 
     @Test
     public void testClient() throws Exception {
+
 
         PowerMockito.mockStatic(System.class);
         PowerMockito.when(System.getProperty("bancomatPay.client.url")).thenReturn("http://bancomatPay:7954/bpay");

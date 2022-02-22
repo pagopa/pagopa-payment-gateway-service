@@ -184,7 +184,7 @@
 				<configuration>
 					<schemaLanguage>WSDL</schemaLanguage>
 					<generateDirectory>${project.basedir}/src/main/java</generateDirectory>
-					<generatePackage>it.pagopa.pm.gateway.client</generatePackage>
+					<generatePackage>it.pagopa.pm.gateway.client.wsdl.generated.files</generatePackage>
 					<schemaDirectory>${project.basedir}/src/main/resources/wsdl</schemaDirectory>
 					<schemaIncludes>
 						<include>PagoPaServiceFacade.wsdl</include>

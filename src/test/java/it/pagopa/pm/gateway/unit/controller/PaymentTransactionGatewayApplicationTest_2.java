@@ -2,7 +2,7 @@ package it.pagopa.pm.gateway.unit.controller;
 
 import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
 import it.pagopa.pm.gateway.client.util.ClientConfig;
-import it.pagopa.pm.gateway.client.wsdl.generated.files.InserimentoRichiestaPagamentoPagoPaResponse;
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;

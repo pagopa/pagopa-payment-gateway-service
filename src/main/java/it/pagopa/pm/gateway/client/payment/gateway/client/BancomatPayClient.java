@@ -1,7 +1,11 @@
 package it.pagopa.pm.gateway.client.payment.gateway.client;
 
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPa;
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
+import it.pagopa.pm.gateway.client.ObjectFactory;
+import it.pagopa.pm.gateway.client.RequestInserimentoRichiestaPagamentoPagoPaVO;
+import it.pagopa.pm.gateway.client.RichiestaPagamentoPagoPaVO;
 import it.pagopa.pm.gateway.client.util.Util;
-import it.pagopa.pm.gateway.client.wsdl.generated.files.*;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.JAXBElement;

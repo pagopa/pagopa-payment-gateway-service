@@ -1,7 +1,7 @@
 package it.pagopa.pm.gateway.controller;
 
 import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
-import it.pagopa.pm.gateway.client.wsdl.generated.files.InserimentoRichiestaPagamentoPagoPaResponse;
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;

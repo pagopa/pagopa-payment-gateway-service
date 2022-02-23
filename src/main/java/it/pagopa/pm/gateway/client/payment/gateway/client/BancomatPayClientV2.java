@@ -1,5 +1,13 @@
 package it.pagopa.pm.gateway.client.payment.gateway.client;
 
+import it.pagopa.pm.gateway.client.ContestoVO;
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPa;
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
+import it.pagopa.pm.gateway.client.LinguaEnum;
+import it.pagopa.pm.gateway.client.ObjectFactory;
+import it.pagopa.pm.gateway.client.RequestInserimentoRichiestaPagamentoPagoPaVO;
+import it.pagopa.pm.gateway.client.RichiestaPagamentoPagoPaVO;
+import it.pagopa.pm.gateway.client.UtenteAttivoVO;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
 import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;

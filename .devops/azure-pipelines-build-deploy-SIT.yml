@@ -32,11 +32,6 @@ stages:
             name: var
             displayName: Get Branch Version
           - powershell: |
-              $branchVersion = "$(Build.SourceBranch)" -replace "refs/heads/$(branchBaseName)", ""
-              echo "##vso[task.setvariable variable=outputBranchVersion;isOutput=true]$branchVersion"
-            name: var
-            displayName: Get Branch Version
-          - powershell: |
               $numbers="$(var.outputBranchVersion)".Split(".")
               if ($numbers.Count -ne 3) {throw 'Please choose a releases branch'}
               Foreach ($n in $numbers)

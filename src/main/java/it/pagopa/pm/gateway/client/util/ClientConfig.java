@@ -18,7 +18,7 @@ public class ClientConfig {
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
-        marshaller.setContextPath("it.pagopa.pm.gateway.client.wsdl.generated.files");
+        marshaller.setContextPath("it.pagopa.pm.gateway.client");
         return marshaller;
     }
 

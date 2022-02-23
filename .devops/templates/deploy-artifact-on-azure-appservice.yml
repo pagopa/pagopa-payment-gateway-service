@@ -1,0 +1,47 @@
+parameters:
+  - name: moduleName
+    default: ''
+  - name: artifactType
+    default: ''
+  - name: workingDir
+    default: ''
+  - name: fileName
+    default: ''
+  - name: azureSubscription
+    default: ''
+  - name: webAppName
+    default: ''
+  - name: deployToSlotOrASE
+    type: boolean
+    default: false
+  - name: resourceGroupName # if deployToSlotOrASE is true
+    default: ''
+  - name: slotName # if deployToSlotOrASE is true
+    default: ''
+
+steps:
+  - script: ls -l '${{ parameters.workingDir }}/${{ parameters.fileName }}'
+    displayName: Check ${{ parameters.artifactType }} file exists
+  - task: ArchiveFiles@2
+    displayName: Create Archive for ${{ parameters.moduleName }}
+    inputs:
+      rootFolderOrFile: '${{ parameters.workingDir }}/${{ parameters.fileName }}'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '${{ parameters.workingDir }}/${{ parameters.fileName }}.zip'
+      replaceExistingArchive: true
+      verbose: true
+  - script: ls -l '${{ parameters.workingDir }}/${{ parameters.fileName }}.zip'
+    displayName: Check zip file exists
+  - task: AzureRmWebAppDeployment@4
+    displayName: Deploy ${{ parameters.moduleName }}
+    inputs:
+      ConnectionType: 'AzureRM'
+      azureSubscription: ${{ parameters.azureSubscription }}
+      appType: 'webAppLinux'
+      WebAppName: ${{ parameters.webAppName }}
+      packageForLinux: '${{ parameters.workingDir }}/${{ parameters.fileName }}.zip'
+      ${{ if eq(parameters.deployToSlotOrASE, true) }}:
+        deployToSlotOrASE: true
+        ResourceGroupName: ${{ parameters.resourceGroupName }}
+        SlotName: ${{ parameters.slotName }}

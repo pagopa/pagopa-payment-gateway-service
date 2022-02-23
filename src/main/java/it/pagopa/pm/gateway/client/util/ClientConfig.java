@@ -9,7 +9,8 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.ws.client.core.WebServiceTemplate;
-import static it.pagopa.pm.gateway.client.util.Constants.bancomatPayClientUrl;
+
+import static it.pagopa.pm.gateway.client.util.Constants.BANCOMAT_PAY_CLIENT_URL;
 
 @Slf4j
 @Configuration
@@ -34,8 +35,8 @@ public class ClientConfig {
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
-        webServiceTemplate.setDefaultUri(bancomatPayClientUrl);
-        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + bancomatPayClientUrl);
+        webServiceTemplate.setDefaultUri(BANCOMAT_PAY_CLIENT_URL);
+        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BANCOMAT_PAY_CLIENT_URL);
 
         return webServiceTemplate;
     }

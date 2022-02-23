@@ -4,7 +4,7 @@ public enum ExceptionsEnum {
 
     GENERIC_ERROR			("PPA000", "Unexpected error", 0),
     BPAY_SERVICE_REQUEST_ERROR			("PPA001", "No response from Bpay service", 1),
-    BPAY_SERVICE_NEGATIVE_OUTCOME_ERROR 		("PPA001", "Negative outocme form Bpay Service", 2);
+    BPAY_SERVICE_NEGATIVE_OUTCOME_ERROR 		("PPA001", "Negative outcome form Bpay Service", 2);
 
 
 

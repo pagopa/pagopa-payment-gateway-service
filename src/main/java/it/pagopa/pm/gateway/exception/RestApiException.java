@@ -2,7 +2,6 @@ package it.pagopa.pm.gateway.exception;
 
 public class RestApiException extends Exception{
 
-    private static final long serialVersionUID = -858656501262531102L;
     private Integer errorCode;
     private String message;
 
@@ -33,9 +32,5 @@ public class RestApiException extends Exception{
     public void setMessage(String message) {
         this.message = message;
     }
-
-  //  public BaseError convertToBaseError() {
-    //    return new BaseError(errorCode.toString(), message);
-   // }
 
 }

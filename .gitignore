@@ -58,4 +58,3 @@ target
 /.nb-gradle/
 
 *.tempKey
-/src/main/java/it/pagopa/pm/gateway/client/wsdl/generated/files/

@@ -34,14 +34,14 @@ public class BancomatPayClientV2 {
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         ContestoVO contestoVO = new ContestoVO();
-        contestoVO.setGuid(guid);
-        contestoVO.setToken(token);
+        contestoVO.setGuid(GUID);
+        contestoVO.setToken(TOKEN);
         contestoVO.setLingua(LinguaEnum.fromValue(request.getLanguage()));
 
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();
-        utenteVO.setCodUtente(userCode);
-        utenteVO.setCodGruppo(groupCode);
-        utenteVO.setCodIstituto(instituteCode);
+        utenteVO.setCodUtente(USER_CODE);
+        utenteVO.setCodGruppo(GROUP_CODE);
+        utenteVO.setCodIstituto(INSTITUTE_CODE);
         contestoVO.setUtenteAttivo(utenteVO);
 
         requestInserimentoRichiestaPagamentoPagoPaVO.setContesto(contestoVO);
@@ -52,7 +52,7 @@ public class BancomatPayClientV2 {
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(request.getAmount()));
         richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getCryptedTelephoneNumber());
         richiestaPagamentoPagoPaVO.setCausale(request.getSubject());
-        richiestaPagamentoPagoPaVO.setTag(tag);
+        richiestaPagamentoPagoPaVO.setTag(TAG);
 
         requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);

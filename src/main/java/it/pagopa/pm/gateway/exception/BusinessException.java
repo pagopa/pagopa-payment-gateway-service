@@ -2,8 +2,6 @@ package it.pagopa.pm.gateway.exception;
 
 public class BusinessException extends Exception{
 
-    private static final long serialVersionUID = -5465596369601918545L;
-
     private ExceptionsEnum exception;
     private String message;
 

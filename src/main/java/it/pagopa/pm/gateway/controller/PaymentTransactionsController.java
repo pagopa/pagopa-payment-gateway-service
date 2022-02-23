@@ -1,5 +1,7 @@
 package it.pagopa.pm.gateway.controller;
 
+import it.pagopa.pm.gateway.client.EsitoVO;
+import it.pagopa.pm.gateway.client.ResponseInserimentoRichiestaPagamentoPagoPaVO;
 import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
 import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.dto.ACKMessage;
@@ -23,75 +25,75 @@ import javax.transaction.Transactional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.BPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 
 @RestController
 @Slf4j
 public class PaymentTransactionsController {
 
-	@Autowired
-	BancomatPayClientV2 client;
+    @Autowired
+    BancomatPayClientV2 client;
 
-	@PersistenceContext
-	EntityManager entityManager;
+    @PersistenceContext
+    EntityManager entityManager;
 
-	@Transactional
-	@PutMapping(REQUEST_PAYMENTS + BPAY)
-	public ACKMessage getPaymentAuthorization(AuthMessage authMessage) {
-		ACKMessage response = new ACKMessage();
-		return response;
-	}
+    @Transactional
+    @PutMapping(REQUEST_PAYMENTS_BPAY)
+    public ACKMessage getPaymentAuthorization(AuthMessage authMessage) {
+        ACKMessage response = new ACKMessage();
+        return response;
+    }
 
-	@Transactional
-	@PostMapping(REQUEST_PAYMENTS + BPAY)
-	public BancomatPayPaymentResponse requestPaymentToBancomatPay(@RequestBody BancomatPayPaymentRequest request ) throws Exception {
-		InserimentoRichiestaPagamentoPagoPaResponse response;
-		Long idPagoPa = request.getIdPagoPa();
+    @Transactional
+    @PostMapping(REQUEST_PAYMENTS_BPAY)
+    public BancomatPayPaymentResponse requestPaymentToBancomatPay(@RequestBody BancomatPayPaymentRequest request) throws Exception {
+        InserimentoRichiestaPagamentoPagoPaResponse response;
+        Long idPagoPa = request.getIdPagoPa();
 
-		log.info("START requestPaymentToBancomatPay " + idPagoPa);
+        log.info("START requestPaymentToBancomatPay " + idPagoPa);
 
-		BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
-		bancomatPayPaymentResponse.setOutcome(true);
-		bancomatPayPaymentResponse.setIdPagoPa(idPagoPa);
+        BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
+        bancomatPayPaymentResponse.setOutcome(true);
+        bancomatPayPaymentResponse.setIdPagoPa(idPagoPa);
 
-		executeCallToBancomatPay(request);
+        executeCallToBancomatPay(request);
 
-		log.info("END requestPaymentToBancomatPay " + idPagoPa);
+        log.info("END requestPaymentToBancomatPay " + idPagoPa);
 
-		return bancomatPayPaymentResponse;
-	}
+        return bancomatPayPaymentResponse;
+    }
 
-	@Async
-	private InserimentoRichiestaPagamentoPagoPaResponse  executeCallToBancomatPay(BancomatPayPaymentRequest request) throws BancomatPayClientException, RestApiInternalException {
-		InserimentoRichiestaPagamentoPagoPaResponse response;
-		Long idPagoPa = request.getIdPagoPa();
+    @Async
+    private InserimentoRichiestaPagamentoPagoPaResponse executeCallToBancomatPay(BancomatPayPaymentRequest request) throws BancomatPayClientException, RestApiInternalException {
+        InserimentoRichiestaPagamentoPagoPaResponse response;
+        Long idPagoPa = request.getIdPagoPa();
 
-		try {
-			response = client.getInserimentoRichiestaPagamentoPagoPaResponse(request);
-		} catch (BancomatPayClientException bpce){
-			log.error("BancomatPayClientException in requestPaymentToBancomatPay idPagopa: " + idPagoPa, bpce);
-			throw bpce;
-		} catch (Exception e ){
-			log.error("Exception in requestPaymentToBancomatPay idPagopa: " + idPagoPa, e);
-			throw new RestApiInternalException(ExceptionsEnum.GENERIC_ERROR.getRestApiCode(), ExceptionsEnum.GENERIC_ERROR.getDescription());
-		}
+        try {
+            response = client.getInserimentoRichiestaPagamentoPagoPaResponse(request);
+        } catch (BancomatPayClientException bpce) {
+            log.error("BancomatPayClientException in requestPaymentToBancomatPay idPagopa: " + idPagoPa, bpce);
+            throw bpce;
+        } catch (Exception e) {
+            log.error("Exception in requestPaymentToBancomatPay idPagopa: " + idPagoPa, e);
+            throw new RestApiInternalException(ExceptionsEnum.GENERIC_ERROR.getRestApiCode(), ExceptionsEnum.GENERIC_ERROR.getDescription());
+        }
 
-		BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
-		bancomatPayPaymentResponse.setIdPagoPa(idPagoPa);
-		bancomatPayPaymentResponse.setOutcome(response.getReturn().getEsito().isEsito());
-		bancomatPayPaymentResponse.setMessage(response.getReturn().getEsito().getMessaggio());
-		bancomatPayPaymentResponse.setErrorCode(response.getReturn().getEsito().getCodice());
-		bancomatPayPaymentResponse.setCorrelationId(response.getReturn().getCorrelationId());
+		ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
+		EsitoVO esitoVO= responseReturnVO.getEsito();
+        BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
+        bancomatPayPaymentResponse.setIdPagoPa(idPagoPa);
+        bancomatPayPaymentResponse.setOutcome(esitoVO.isEsito());
+        bancomatPayPaymentResponse.setMessage(esitoVO.getMessaggio());
+        bancomatPayPaymentResponse.setErrorCode(esitoVO.getCodice());
+        bancomatPayPaymentResponse.setCorrelationId(responseReturnVO.getCorrelationId());
 
-		entityManager.persist(bancomatPayPaymentResponse);
-		//TODO aggiorna stato transazione
+        entityManager.persist(bancomatPayPaymentResponse);
+        //TODO aggiorna stato transazione
 
-  		return response;
-		
-
-	}
-
+        return response;
 
 
+    }
 
 
 }

@@ -25,14 +25,14 @@ stages:
         pool:
           vmImage: $(vmImageNameDefault)
         steps:
-#          - powershell: |
-#              if(!("$(Build.SourceBranch)" -Match "$(branchBaseName)")) {throw 'Please choose a releases branch'}
-#              $branchVersion = "$(Build.SourceBranch)" -replace "refs/heads/$(branchBaseName)", ""
-#              echo "##vso[task.setvariable variable=outputBranchVersion;isOutput=true]$branchVersion"
-#            name: var
-#            displayName: Get Branch Version
           - powershell: |
-              $branchVersion = "01.01.01"
+              if(!("$(Build.SourceBranch)" -Match "$(branchBaseName)")) {throw 'Please choose a releases branch'}
+              $branchVersion = "$(Build.SourceBranch)" -replace "refs/heads/$(branchBaseName)", ""
+              echo "##vso[task.setvariable variable=outputBranchVersion;isOutput=true]$branchVersion"
+            name: var
+            displayName: Get Branch Version
+          - powershell: |
+              $branchVersion = "$(Build.SourceBranch)" -replace "refs/heads/$(branchBaseName)", ""
               echo "##vso[task.setvariable variable=outputBranchVersion;isOutput=true]$branchVersion"
             name: var
             displayName: Get Branch Version
@@ -61,17 +61,17 @@ stages:
                 maven | "$(Agent.OS)"
                 maven
               path: $(maven_cache_folder)
-#          - task: Bash@3
-#            displayName: Install Ojdbc
-#            inputs:
-#              targetType: 'inline'
-#              script: |
-#                mvn install:install-file -Dfile=./wildfly/docker/oracle/ojdbc8-12.2.0.1.jar -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar -s $(settingsxml.secureFilePath) -Dmaven.repo.local=$(maven_cache_folder)
-#              failOnStderr: true
-#          - task: ShellScript@2
-#            displayName: Install Dependecies for S4S Client
-#            inputs:
-#              scriptPath: './externalDependecies/install_dependencies.sh'
+          - task: Bash@3
+            displayName: Install Ojdbc
+            inputs:
+              targetType: 'inline'
+              script: |
+                mvn install:install-file -Dfile=./.db/oracle/ojdbc8-12.2.0.1.jar -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar -s $(settingsxml.secureFilePath) -Dmaven.repo.local=$(maven_cache_folder)
+              failOnStderr: true
+          - task: ShellScript@2
+            displayName: Install Dependecies for S4S Client
+            inputs:
+              scriptPath: './externalDependecies/install_dependencies.sh'
           - task: Maven@3
             displayName: Build PTG
             inputs:

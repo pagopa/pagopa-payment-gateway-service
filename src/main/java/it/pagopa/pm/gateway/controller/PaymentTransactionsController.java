@@ -78,21 +78,26 @@ public class PaymentTransactionsController {
             throw new RestApiInternalException(ExceptionsEnum.GENERIC_ERROR.getRestApiCode(), ExceptionsEnum.GENERIC_ERROR.getDescription());
         }
 
-		ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
-		EsitoVO esitoVO= responseReturnVO.getEsito();
+        BancomatPayPaymentResponse bancomatPayPaymentResponse = getBancomatPayPaymentResponse(response, idPagoPa);
+
+        entityManager.persist(bancomatPayPaymentResponse);
+        //TODO aggiorna stato transazione
+
+
+        return response;
+
+    }
+
+    private BancomatPayPaymentResponse getBancomatPayPaymentResponse(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
+        ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
+        EsitoVO esitoVO = responseReturnVO.getEsito();
         BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
         bancomatPayPaymentResponse.setIdPagoPa(idPagoPa);
         bancomatPayPaymentResponse.setOutcome(esitoVO.isEsito());
         bancomatPayPaymentResponse.setMessage(esitoVO.getMessaggio());
         bancomatPayPaymentResponse.setErrorCode(esitoVO.getCodice());
         bancomatPayPaymentResponse.setCorrelationId(responseReturnVO.getCorrelationId());
-
-        entityManager.persist(bancomatPayPaymentResponse);
-        //TODO aggiorna stato transazione
-
-        return response;
-
-
+        return bancomatPayPaymentResponse;
     }
 
 

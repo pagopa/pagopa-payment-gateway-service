@@ -1,6 +1,5 @@
 package it.pagopa.pm.gateway.client.payment.gateway.client;
 
-import it.pagopa.pm.gateway.client.wsdl.generated.files.*;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
 import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;

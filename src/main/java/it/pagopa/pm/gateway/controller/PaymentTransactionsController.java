@@ -1,9 +1,9 @@
 package it.pagopa.pm.gateway.controller;
 
 import it.pagopa.pm.gateway.client.EsitoVO;
-import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.client.ResponseInserimentoRichiestaPagamentoPagoPaVO;
-import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
+import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
@@ -30,7 +30,7 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 public class PaymentTransactionsController {
 
     @Autowired
-    BancomatPayClientV2 client;
+    BancomatPayClient client;
 
     @PersistenceContext
     EntityManager entityManager;

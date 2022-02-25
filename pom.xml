@@ -15,7 +15,7 @@
 	<name>pagopa-payment-transactions-gateway</name>
 	<description>Payment transactions gateway for the pagoPA - Payment Manager</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>1.8</java.version>
 		<revision>0.0.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -183,7 +183,7 @@
 				<configuration>
 					<schemaLanguage>WSDL</schemaLanguage>
 					<generateDirectory>${project.basedir}/target/generated</generateDirectory>
-					<generatePackage>it.pagopa.pm.gateway.client</generatePackage>
+					<generatePackage>it.pagopa.pm.gateway.client.bpay.generated</generatePackage>
 					<schemaDirectory>${project.basedir}/src/main/resources/wsdl</schemaDirectory>
 					<schemaIncludes>
 						<include>PagoPaServiceFacade.wsdl</include>

@@ -1,6 +1,6 @@
 package it.pagopa.pm.gateway.client.util;
 
-import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
+import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.restapiCD.RestapiCdClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +23,8 @@ public class ClientConfig {
     }
 
     @Bean
-    public BancomatPayClientV2 bancomatPayClientV2(Jaxb2Marshaller marshaller) {
-        BancomatPayClientV2 client = new BancomatPayClientV2();
+    public BancomatPayClient bancomatPayClientV2(Jaxb2Marshaller marshaller) {
+        BancomatPayClient client = new BancomatPayClient();
         return client;
     }
 

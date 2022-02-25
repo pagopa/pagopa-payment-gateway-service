@@ -20,21 +20,20 @@ public class BancomatPayClient {
     private WebServiceTemplate webServiceTemplate;
 
     @Value("${bancomatPay.client.user.code}")
-    public static String USER_CODE;
+    public String USER_CODE;
     @Value("${bancomatPay.client.group.code}")
-    public static String GROUP_CODE;
+    public String GROUP_CODE;
     @Value("${bancomatPay.client.institute.code}")
-    public static String INSTITUTE_CODE;
+    public String INSTITUTE_CODE;
     @Value("${bancomatPay.client.tag}")
-    public static String TAG;
+    public String TAG;
     @Value("${bancomatPay.client.guid}")
-    public static String GUID;
+    public String GUID;
     @Value("${bancomatPay.client.token}")
-    public static String TOKEN;
+    public String TOKEN;
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
-    @Async
     public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request) throws BancomatPayClientException {
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();

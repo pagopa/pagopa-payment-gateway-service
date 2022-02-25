@@ -17,7 +17,7 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 public class ClientConfig {
 
     @Value("${bancomatPay.client.url}")
-    public static String BANCOMAT_PAY_CLIENT_URL;
+    public String BANCOMAT_PAY_CLIENT_URL;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -37,6 +37,7 @@ public class ClientConfig {
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(BANCOMAT_PAY_CLIENT_URL);
+
         log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BANCOMAT_PAY_CLIENT_URL);
         return webServiceTemplate;
     }

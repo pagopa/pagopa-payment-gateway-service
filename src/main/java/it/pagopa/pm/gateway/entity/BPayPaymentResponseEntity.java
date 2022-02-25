@@ -1,15 +1,13 @@
-package it.pagopa.pm.gateway.dto;
+package it.pagopa.pm.gateway.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Data
 @Entity
 @Table(name = "PP_BPAY_PAYMENT_RESPONSE")
-public class BancomatPayPaymentResponse {
+public class BPayPaymentResponseEntity {
 
     @Id
     @Column(name = "ID", nullable = false)

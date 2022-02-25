@@ -1,10 +1,9 @@
-package it.pagopa.pm.gateway;
+package it.pagopa.pm.gateway.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jndi.JndiTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -44,7 +43,6 @@ public class CoreDataSourceConfiguration {
 
         return transactionManager;
     }
-
 
     @Bean
     public DataSource productDataSource() throws NamingException {

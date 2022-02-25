@@ -15,6 +15,6 @@ public class Constants {
 
     public static final String TOKEN =System.getProperty("bancomatPay.client.token");
 
-    public static final String BANCOMAT_PAY_CLIENT_URL = System.getProperty("bancomatPay.client.url");
+    public static String BANCOMAT_PAY_CLIENT_URL = System.getProperty("bancomatPay.client.url");
 
 }

@@ -1,13 +1,12 @@
 package it.pagopa.pm.gateway.client.util;
 
-import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
-import it.pagopa.pm.gateway.client.restapiCD.RestapiCdClient;
+import it.pagopa.pm.gateway.client.bpay.*;
+import it.pagopa.pm.gateway.client.restapicd.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import static it.pagopa.pm.gateway.client.util.Constants.BANCOMAT_PAY_CLIENT_URL;
@@ -19,16 +18,14 @@ public class ClientConfig {
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
-        marshaller.setContextPath("it.pagopa.pm.gateway.client");
+        marshaller.setContextPath("it.pagopa.pm.gateway.client.bpay.generated");
         return marshaller;
     }
 
     @Bean
-    public BancomatPayClientV2 bancomatPayClientV2(Jaxb2Marshaller marshaller) {
-        BancomatPayClientV2 client = new BancomatPayClientV2();
-        return client;
+    public BancomatPayClient bancomatPayClient(Jaxb2Marshaller marshaller) {
+        return new BancomatPayClient();
     }
-
 
     @Bean
     public WebServiceTemplate bancomatPayWebServiceTemplate() {
@@ -37,21 +34,17 @@ public class ClientConfig {
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(BANCOMAT_PAY_CLIENT_URL);
         log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BANCOMAT_PAY_CLIENT_URL);
-
         return webServiceTemplate;
     }
 
     @Bean
     public RestapiCdClient restapiCdClient(){
-        RestapiCdClient restapiCdClient = new RestapiCdClient();
-        return  restapiCdClient;
-
+        return new RestapiCdClient();
     }
 
     @Bean
     public RestTemplate restTemplate(){
-        RestTemplate restTemplate = new RestTemplate();
-        return  restTemplate;
+        return new RestTemplate();
     }
 
 }

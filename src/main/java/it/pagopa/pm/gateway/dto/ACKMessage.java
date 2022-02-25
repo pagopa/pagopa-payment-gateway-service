@@ -3,7 +3,6 @@ package it.pagopa.pm.gateway.dto;
 import lombok.*;
 
 import javax.validation.constraints.*;
-import it.pagopa.pm.gateway.dto.AuthMessage;
 
 @Data
 @NoArgsConstructor

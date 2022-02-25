@@ -1,10 +1,10 @@
 package it.pagopa.pm.gateway.client.bpay;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
 import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
@@ -12,18 +12,28 @@ import javax.xml.bind.*;
 import java.lang.Exception;
 import java.math.BigDecimal;
 
-import static it.pagopa.pm.gateway.client.util.Constants.*;
-
 public class BancomatPayClient {
-
 
     @Autowired
     private WebServiceTemplate webServiceTemplate;
 
+    @Value("${bancomatPay.client.user.code}")
+    public static String USER_CODE;
+    @Value("${bancomatPay.client.group.code}")
+    public static String GROUP_CODE;
+    @Value("${bancomatPay.client.institute.code}")
+    public static String INSTITUTE_CODE;
+    @Value("${bancomatPay.client.tag}")
+    public static String TAG;
+    @Value("${bancomatPay.client.guid}")
+    public static String GUID;
+    @Value("${bancomatPay.client.token}")
+    public static String TOKEN;
+
     private final ObjectFactory objectFactory = new ObjectFactory();
 
     @Async
-    public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BancomatPayPaymentRequest request) throws BancomatPayClientException {
+    public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request) throws BancomatPayClientException {
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         ContestoVO contestoVO = new ContestoVO();

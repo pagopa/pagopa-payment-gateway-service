@@ -1,19 +1,23 @@
-package it.pagopa.pm.gateway.client.util;
+package it.pagopa.pm.gateway.config;
 
 import it.pagopa.pm.gateway.client.bpay.*;
 import it.pagopa.pm.gateway.client.restapicd.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
+import org.springframework.scheduling.annotation.*;
 import org.springframework.web.client.*;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
-import static it.pagopa.pm.gateway.client.util.Constants.BANCOMAT_PAY_CLIENT_URL;
-
 @Slf4j
 @Configuration
+@EnableAsync
 public class ClientConfig {
+
+    @Value("${bancomatPay.client.url}")
+    public static String BANCOMAT_PAY_CLIENT_URL;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {

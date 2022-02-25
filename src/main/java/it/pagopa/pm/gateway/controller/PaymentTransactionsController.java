@@ -4,11 +4,12 @@ import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
-import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiInternalException;
+import it.pagopa.pm.gateway.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -17,8 +18,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
 import java.lang.Exception;
@@ -32,8 +31,8 @@ public class PaymentTransactionsController {
     @Autowired
     BancomatPayClient client;
 
-    @PersistenceContext
-    EntityManager entityManager;
+    @Autowired
+    BPayPaymentResponseRepository bPayPaymentResponseRepository;
 
     @Transactional
     @PutMapping(REQUEST_PAYMENTS_BPAY)
@@ -43,25 +42,19 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BancomatPayPaymentRequest request) throws Exception {
-        InserimentoRichiestaPagamentoPagoPaResponse response;
+    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request) throws Exception {
         Long idPagoPa = request.getIdPagoPa();
-
         log.info("START requestPaymentToBancomatPay " + idPagoPa);
-
         BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
         bPayPaymentResponseEntity.setOutcome(true);
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
-
         executeCallToBancomatPay(request);
-
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
-
         return bPayPaymentResponseEntity;
     }
 
     @Async
-    private void executeCallToBancomatPay(BancomatPayPaymentRequest request) throws BancomatPayClientException, RestApiInternalException {
+    public void executeCallToBancomatPay(BPayPaymentRequest request) throws BancomatPayClientException, RestApiInternalException {
         InserimentoRichiestaPagamentoPagoPaResponse response;
         Long idPagoPa = request.getIdPagoPa();
         try {
@@ -73,10 +66,8 @@ public class PaymentTransactionsController {
             log.error("Exception in requestPaymentToBancomatPay idPagopa: " + idPagoPa, e);
             throw new RestApiInternalException(ExceptionsEnum.GENERIC_ERROR.getRestApiCode(), ExceptionsEnum.GENERIC_ERROR.getDescription());
         }
-
         BPayPaymentResponseEntity bPayPaymentResponseEntity = getBancomatPayPaymentResponse(response, idPagoPa);
-
-        entityManager.persist(bPayPaymentResponseEntity);
+        bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         //TODO aggiorna stato transazione
     }
 

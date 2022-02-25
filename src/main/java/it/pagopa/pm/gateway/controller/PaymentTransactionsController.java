@@ -1,9 +1,7 @@
 package it.pagopa.pm.gateway.controller;
 
-import it.pagopa.pm.gateway.client.EsitoVO;
-import it.pagopa.pm.gateway.client.ResponseInserimentoRichiestaPagamentoPagoPaVO;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
-import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
+import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
@@ -23,6 +21,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
+import java.lang.Exception;
+
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 
 @RestController
@@ -38,8 +38,7 @@ public class PaymentTransactionsController {
     @Transactional
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage getPaymentAuthorization(AuthMessage authMessage) {
-        ACKMessage response = new ACKMessage();
-        return response;
+        return new ACKMessage();
     }
 
     @Transactional
@@ -62,12 +61,11 @@ public class PaymentTransactionsController {
     }
 
     @Async
-    private InserimentoRichiestaPagamentoPagoPaResponse executeCallToBancomatPay(BancomatPayPaymentRequest request) throws BancomatPayClientException, RestApiInternalException {
+    private void executeCallToBancomatPay(BancomatPayPaymentRequest request) throws BancomatPayClientException, RestApiInternalException {
         InserimentoRichiestaPagamentoPagoPaResponse response;
         Long idPagoPa = request.getIdPagoPa();
-
         try {
-            response = client.getInserimentoRichiestaPagamentoPagoPaResponse(request);
+            response = client.sendPaymentRequest(request);
         } catch (BancomatPayClientException bpce) {
             log.error("BancomatPayClientException in requestPaymentToBancomatPay idPagopa: " + idPagoPa, bpce);
             throw bpce;
@@ -80,10 +78,6 @@ public class PaymentTransactionsController {
 
         entityManager.persist(bancomatPayPaymentResponse);
         //TODO aggiorna stato transazione
-
-
-        return response;
-
     }
 
     private BancomatPayPaymentResponse getBancomatPayPaymentResponse(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
@@ -97,6 +91,5 @@ public class PaymentTransactionsController {
         bancomatPayPaymentResponse.setCorrelationId(responseReturnVO.getCorrelationId());
         return bancomatPayPaymentResponse;
     }
-
 
 }

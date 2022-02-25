@@ -77,7 +77,7 @@ public class PaymentTransactionGatewayApplicationTest_2 {
 
 
     @Test
-    public void shouldThrowBancomatPayClientException () throws BancomatPayClientException {
+    public void shouldThrowBancomatPayClientException () {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setContextPath("it.pagopa.pm.gateway.client");
 

@@ -1,9 +1,9 @@
 package it.pagopa.pm.gateway.controller;
 
 import it.pagopa.pm.gateway.client.EsitoVO;
+import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.client.ResponseInserimentoRichiestaPagamentoPagoPaVO;
 import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
-import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
@@ -23,8 +23,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.BPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 
 @RestController

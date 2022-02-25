@@ -8,7 +8,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "PP_BANCOMAT_PAY_PAYMENT_RESPONSE")
+@Table(name = "PP_BPAY_PAYMENT_RESPONSE")
 public class BancomatPayPaymentResponse {
 
     @Id

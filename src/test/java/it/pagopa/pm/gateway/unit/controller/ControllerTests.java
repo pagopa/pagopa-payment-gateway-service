@@ -15,14 +15,15 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class PaymentTransactionsControllerTest {
+class ControllerTests {
 
     @Autowired
     private MockMvc mvc;
 
     @Test
-    public void test() throws Exception {
+    void test() throws Exception {
         mvc.perform(MockMvcRequestBuilders.get("/test").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                 .andExpect(content().string(equalTo("test")));
     }
+
 }

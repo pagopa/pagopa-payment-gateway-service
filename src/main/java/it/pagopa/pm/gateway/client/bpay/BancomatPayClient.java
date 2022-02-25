@@ -1,4 +1,4 @@
-package it.pagopa.pm.gateway.client.payment.gateway.client;
+package it.pagopa.pm.gateway.client.bpay;
 
 import it.pagopa.pm.gateway.client.ContestoVO;
 import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPa;
@@ -15,23 +15,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
-import javax.xml.bind.JAXBElement;
-import java.lang.Exception;
+import javax.xml.bind.*;
 import java.math.BigDecimal;
 
 import static it.pagopa.pm.gateway.client.util.Constants.*;
 
-public class BancomatPayClientV2 {
+public class BancomatPayClient {
 
 
     @Autowired
     private WebServiceTemplate bancomatPayWebServiceTemplate;
 
+    private final ObjectFactory objectFactory = new ObjectFactory();
+
     @Async
     public InserimentoRichiestaPagamentoPagoPaResponse getInserimentoRichiestaPagamentoPagoPaResponse(BancomatPayPaymentRequest request) throws BancomatPayClientException {
-
-        ObjectFactory objectFactory = new ObjectFactory();
-
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         ContestoVO contestoVO = new ContestoVO();
@@ -59,18 +57,15 @@ public class BancomatPayClientV2 {
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
 
         JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
-        JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = null;
-        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse = null;
-
+        JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement;
+        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse;
         try {
             inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) bancomatPayWebServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
             inserimentoRichiestaPagamentoPagoPaResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
         } catch (Exception e){
                 throw new BancomatPayClientException(ExceptionsEnum.BPAY_SERVICE_REQUEST_ERROR.getRestApiCode(), ExceptionsEnum.BPAY_SERVICE_REQUEST_ERROR.getDescription()) ;
         }
-
         return inserimentoRichiestaPagamentoPagoPaResponse;
-
     }
 
 }

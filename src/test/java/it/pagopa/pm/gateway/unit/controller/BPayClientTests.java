@@ -3,12 +3,11 @@ package it.pagopa.pm.gateway.unit.controller;
 import it.pagopa.pm.gateway.client.EsitoVO;
 import it.pagopa.pm.gateway.client.InserimentoRichiestaPagamentoPagoPaResponse;
 import it.pagopa.pm.gateway.client.ResponseInserimentoRichiestaPagamentoPagoPaVO;
-import it.pagopa.pm.gateway.client.payment.gateway.client.BancomatPayClientV2;
+import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.util.ClientConfig;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
 import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -24,10 +23,10 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 @Slf4j
 @SpringBootTest
 @ContextConfiguration(classes = ClientConfig.class, loader = AnnotationConfigContextLoader.class)
-public class PaymentTransactionGatewayApplicationTest_2 {
+class BPayClientTests {
 
     @InjectMocks
-    BancomatPayClientV2 client;
+    BancomatPayClient client;
 
     @Mock
     ClientConfig clientConfig;
@@ -36,14 +35,12 @@ public class PaymentTransactionGatewayApplicationTest_2 {
     WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
 
     @Test
-    public void testBpayClient() throws Exception {
-
+    void testBpayClient() throws Exception {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setContextPath("it.pagopa.pm.gateway.client");
 
         webServiceTemplate.setMarshaller(marshaller);
         webServiceTemplate.setUnmarshaller(marshaller);
-        //webServiceTemplate.setDefaultUri("http://localhost:7954/bpa");
         webServiceTemplate.setDefaultUri("https://api.dev.platform.pagopa.it/mock-psp/api/bpay");
 
         Mockito.when(clientConfig.bancomatPayWebServiceTemplate()).thenReturn(webServiceTemplate);
@@ -64,9 +61,7 @@ public class PaymentTransactionGatewayApplicationTest_2 {
 
         inserimentoRichiestaPagamentoPagoPaResponse.setReturn(responseInserimentoRichiestaPagamentoPagoPaVO);
 
-        Assert.assertEquals(response.getReturn().getEsito().getCodice(),
-                inserimentoRichiestaPagamentoPagoPaResponse.getReturn().getEsito().getCodice());
-
+        Assertions.assertEquals(response.getReturn().getEsito().getCodice(), inserimentoRichiestaPagamentoPagoPaResponse.getReturn().getEsito().getCodice());
     }
 
     private long generateRandomIdPagoPa(){
@@ -77,7 +72,7 @@ public class PaymentTransactionGatewayApplicationTest_2 {
 
 
     @Test
-    public void shouldThrowBancomatPayClientException () throws BancomatPayClientException {
+    void shouldThrowBancomatPayClientException () {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setContextPath("it.pagopa.pm.gateway.client");
 
@@ -90,7 +85,6 @@ public class PaymentTransactionGatewayApplicationTest_2 {
         BancomatPayPaymentRequest request = getBancomatPayPaymentRequest();
 
         Assertions.assertThrows(BancomatPayClientException.class, () ->  client.getInserimentoRichiestaPagamentoPagoPaResponse(request));
-
     }
 
     private BancomatPayPaymentRequest getBancomatPayPaymentRequest() {
@@ -104,6 +98,5 @@ public class PaymentTransactionGatewayApplicationTest_2 {
         request.setLanguage("IT");
         return request;
     }
-
 
 }

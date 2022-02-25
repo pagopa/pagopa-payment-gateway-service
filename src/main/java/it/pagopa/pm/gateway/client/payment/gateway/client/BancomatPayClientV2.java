@@ -23,6 +23,7 @@ import static it.pagopa.pm.gateway.client.util.Constants.*;
 
 public class BancomatPayClientV2 {
 
+
     @Autowired
     private WebServiceTemplate bancomatPayWebServiceTemplate;
 
@@ -70,12 +71,6 @@ public class BancomatPayClientV2 {
 
         return inserimentoRichiestaPagamentoPagoPaResponse;
 
-
     }
-
-    public WebServiceTemplate getBancomatPayWebServiceTemplate(){
-        return bancomatPayWebServiceTemplate;
-    }
-
 
 }

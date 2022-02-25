@@ -2,13 +2,12 @@ package it.pagopa.pm.gateway.dto;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
-import java.math.BigInteger;
+import javax.validation.constraints.*;
 
 @Data
 public class BancomatPayPaymentRequest {
 
-    @NotNull(message = "'idPsp' mandatory")
+    @NotEmpty(message = "'idPsp' mandatory")
     String idPsp;
 
     @NotNull(message = "'idPagoPa' mandatory")
@@ -19,10 +18,9 @@ public class BancomatPayPaymentRequest {
 
     String subject;
 
-    @NotNull(message = "'crypted Telephone Number' mandatory")
-    String cryptedTelephoneNumber;
+    @NotEmpty(message = "'encrypted Telephone Number' mandatory")
+    String encryptedTelephoneNumber;
 
     String language;
-
 
 }

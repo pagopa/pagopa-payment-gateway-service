@@ -5,7 +5,7 @@ import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.BancomatPayPaymentRequest;
-import it.pagopa.pm.gateway.dto.BancomatPayPaymentResponse;
+import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiInternalException;
@@ -43,21 +43,21 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BancomatPayPaymentResponse requestPaymentToBancomatPay(@RequestBody BancomatPayPaymentRequest request) throws Exception {
+    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BancomatPayPaymentRequest request) throws Exception {
         InserimentoRichiestaPagamentoPagoPaResponse response;
         Long idPagoPa = request.getIdPagoPa();
 
         log.info("START requestPaymentToBancomatPay " + idPagoPa);
 
-        BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
-        bancomatPayPaymentResponse.setOutcome(true);
-        bancomatPayPaymentResponse.setIdPagoPa(idPagoPa);
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
+        bPayPaymentResponseEntity.setOutcome(true);
+        bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
 
         executeCallToBancomatPay(request);
 
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
 
-        return bancomatPayPaymentResponse;
+        return bPayPaymentResponseEntity;
     }
 
     @Async
@@ -74,22 +74,22 @@ public class PaymentTransactionsController {
             throw new RestApiInternalException(ExceptionsEnum.GENERIC_ERROR.getRestApiCode(), ExceptionsEnum.GENERIC_ERROR.getDescription());
         }
 
-        BancomatPayPaymentResponse bancomatPayPaymentResponse = getBancomatPayPaymentResponse(response, idPagoPa);
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = getBancomatPayPaymentResponse(response, idPagoPa);
 
-        entityManager.persist(bancomatPayPaymentResponse);
+        entityManager.persist(bPayPaymentResponseEntity);
         //TODO aggiorna stato transazione
     }
 
-    private BancomatPayPaymentResponse getBancomatPayPaymentResponse(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
+    private BPayPaymentResponseEntity getBancomatPayPaymentResponse(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
         ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
         EsitoVO esitoVO = responseReturnVO.getEsito();
-        BancomatPayPaymentResponse bancomatPayPaymentResponse = new BancomatPayPaymentResponse();
-        bancomatPayPaymentResponse.setIdPagoPa(idPagoPa);
-        bancomatPayPaymentResponse.setOutcome(esitoVO.isEsito());
-        bancomatPayPaymentResponse.setMessage(esitoVO.getMessaggio());
-        bancomatPayPaymentResponse.setErrorCode(esitoVO.getCodice());
-        bancomatPayPaymentResponse.setCorrelationId(responseReturnVO.getCorrelationId());
-        return bancomatPayPaymentResponse;
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
+        bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
+        bPayPaymentResponseEntity.setOutcome(esitoVO.isEsito());
+        bPayPaymentResponseEntity.setMessage(esitoVO.getMessaggio());
+        bPayPaymentResponseEntity.setErrorCode(esitoVO.getCodice());
+        bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
+        return bPayPaymentResponseEntity;
     }
 
 }

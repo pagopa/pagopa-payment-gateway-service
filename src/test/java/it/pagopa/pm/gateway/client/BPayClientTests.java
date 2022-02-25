@@ -50,7 +50,7 @@ class BPayClientTests {
         request.setIdPagoPa(idPagoPa);
         request.setAmount(100d);
         request.setSubject("causale");
-        request.setCryptedTelephoneNumber("pqimx8en49fbf");
+        request.setEncryptedTelephoneNumber("pqimx8en49fbf");
         request.setLanguage("IT");
         return request;
     }

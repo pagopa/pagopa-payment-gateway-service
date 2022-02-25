@@ -43,7 +43,7 @@ public class BancomatPayClient {
         richiestaPagamentoPagoPaVO.setIdPSP(request.getIdPsp());
         richiestaPagamentoPagoPaVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(request.getAmount()));
-        richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getCryptedTelephoneNumber());
+        richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getEncryptedTelephoneNumber());
         richiestaPagamentoPagoPaVO.setCausale(request.getSubject());
         richiestaPagamentoPagoPaVO.setTag(TAG);
 

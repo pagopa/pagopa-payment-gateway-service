@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway;
 
+import it.pagopa.pm.gateway.config.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;

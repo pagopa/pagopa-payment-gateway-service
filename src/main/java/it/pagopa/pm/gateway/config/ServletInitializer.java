@@ -1,5 +1,6 @@
-package it.pagopa.pm.gateway;
+package it.pagopa.pm.gateway.config;
 
+import it.pagopa.pm.gateway.*;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 

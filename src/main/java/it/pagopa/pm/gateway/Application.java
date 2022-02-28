@@ -3,14 +3,18 @@ package it.pagopa.pm.gateway;
 import it.pagopa.pm.gateway.config.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.domain.*;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.*;
 
 @ComponentScan(basePackages = "it.pagopa.pm.gateway")
 @EnableAutoConfiguration(exclude = DataSourceAutoConfiguration.class)
+@EntityScan({"it.pagopa.pm.gateway.entity"})
+@EnableJpaRepositories({"it.pagopa.pm.gateway.repository"})
 @Configuration
 public class Application extends SpringBootServletInitializer {
 

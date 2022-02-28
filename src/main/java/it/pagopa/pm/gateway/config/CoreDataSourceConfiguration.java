@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.data.jpa.repository.config.*;
 import org.springframework.jndi.JndiTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.Objects;
 
 @Configuration
+@EnableJpaRepositories(transactionManagerRef = "transactionManager")
 public class CoreDataSourceConfiguration {
 
     @Autowired
@@ -25,7 +27,7 @@ public class CoreDataSourceConfiguration {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(productDataSource());
-        em.setPackagesToScan("it.pagopa.pm.gateway.dto");
+        em.setPackagesToScan("it.pagopa.pm.gateway.entity");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

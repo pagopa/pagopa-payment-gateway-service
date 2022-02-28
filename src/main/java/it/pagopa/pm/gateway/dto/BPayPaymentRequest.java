@@ -5,7 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.*;
 
 @Data
-public class BancomatPayPaymentRequest {
+public class BPayPaymentRequest {
 
     @NotEmpty(message = "'idPsp' mandatory")
     String idPsp;

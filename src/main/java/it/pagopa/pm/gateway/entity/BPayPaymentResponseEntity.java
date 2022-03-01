@@ -30,4 +30,6 @@ public class BPayPaymentResponseEntity {
     @Column(name = "CORRELATION_ID", nullable = false)
     private String correlationId;
 
+    @Column(name = "CLIENT_GUID")
+    private String clientGuid;
 }

@@ -73,6 +73,10 @@ public class PaymentTransactionsController {
 
     private BPayPaymentResponseEntity getBancomatPayPaymentResponse(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
         ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
+        String clientGuid = null;
+        if (responseReturnVO.getContesto()!=null){
+            clientGuid  = responseReturnVO.getContesto().getGuid();
+        }
         EsitoVO esitoVO = responseReturnVO.getEsito();
         BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
@@ -80,6 +84,7 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setMessage(esitoVO.getMessaggio());
         bPayPaymentResponseEntity.setErrorCode(esitoVO.getCodice());
         bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
+        bPayPaymentResponseEntity.setClientGuid(clientGuid);
         return bPayPaymentResponseEntity;
     }
 

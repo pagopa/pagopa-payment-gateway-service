@@ -26,6 +26,9 @@ public class ValidBeans {
         esitoVO.setCodice("0");
         esitoVO.setMessaggio("messaggio");
         responseData.setEsito(esitoVO);
+        ContestoVO contestoVO = new ContestoVO();
+        contestoVO.setGuid("client-guid");
+        responseData.setContesto(contestoVO);
         response.setReturn(responseData);
         return response;
     }
@@ -44,6 +47,7 @@ public class ValidBeans {
         entity.setCorrelationId("id");
         entity.setMessage("messaggio");
         entity.setErrorCode("0");
+        entity.setClientGuid("client-guid");
         return entity;
     }
 

@@ -21,8 +21,6 @@ public class BancomatPayClient {
     @Autowired
     private WebServiceTemplate webServiceTemplate;
 
-    @Value("${bancomatPay.client.user.code}")
-    public String USER_CODE;
     @Value("${bancomatPay.client.group.code}")
     public String GROUP_CODE;
     @Value("${bancomatPay.client.institute.code}")
@@ -41,7 +39,7 @@ public class BancomatPayClient {
         UUID uuid = UUID.randomUUID();
         contestoVO.setGuid(uuid.toString());
         contestoVO.setToken(TOKEN);
-        contestoVO.setLingua(LinguaEnum.fromValue(request.getLanguage()));
+        contestoVO.setLingua(LinguaEnum.fromValue(ClientUtil.getLanguageCode(request.getLanguage())));
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();
         utenteVO.setCodUtente(null);
         utenteVO.setCodGruppo(GROUP_CODE);

@@ -2,7 +2,6 @@ package it.pagopa.pm.gateway.controller;
 
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
@@ -12,16 +11,15 @@ import it.pagopa.pm.gateway.exception.RestApiInternalException;
 import it.pagopa.pm.gateway.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 
 import java.lang.Exception;
 
+import static it.pagopa.pm.gateway.constant.ApiPaths.ID_PATH_PARAM;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 
 @RestController
@@ -35,9 +33,9 @@ public class PaymentTransactionsController {
     BPayPaymentResponseRepository bPayPaymentResponseRepository;
 
     @Transactional
-    @PutMapping(REQUEST_PAYMENTS_BPAY)
-    public ACKMessage getPaymentAuthorization(AuthMessage authMessage) {
-        return new ACKMessage();
+    @PutMapping(REQUEST_PAYMENTS_BPAY + ID_PATH_PARAM)
+    public ResponseEntity updateTransaction(@RequestBody AuthMessage authMessage, @PathVariable Long id) {
+        return ResponseEntity.ok().build();
     }
 
     @Transactional

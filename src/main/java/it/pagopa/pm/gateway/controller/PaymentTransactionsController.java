@@ -71,6 +71,30 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setOutcome(true);
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
         executeCallToBancomatPay(request);
+        log.info("END requestPaymentToBancomatPay " + idPagoPa);
+        return bPayPaymentResponseEntity;
+    }
+
+    @Async
+    public void executeCallToBancomatPay(BPayPaymentRequest request) throws RestApiException {
+        InserimentoRichiestaPagamentoPagoPaResponse response;
+        Long idPagoPa = request.getIdPagoPa();
+        log.info("START executeCallToBancomatPay " + idPagoPa);
+        try {
+            response = client.sendPaymentRequest(request);
+            if (response == null || response.getReturn() == null || response.getReturn().getEsito() == null) {
+                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            }
+            EsitoVO esitoVO = response.getReturn().getEsito();
+            log.info("Response from bpay sendPaymentRequest - idPagopa: " + idPagoPa
+                    + " esito codice" + esitoVO.getCodice()
+                    + " esito messaggio" + esitoVO.getMessaggio());
+        } catch (Exception e) {
+            log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayResponseToEntity(response, idPagoPa);
+        bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         try {
             TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null);
             restapiCdClient.callTransactionUpdate(idPagoPa, transactionUpdate);
@@ -78,38 +102,10 @@ public class PaymentTransactionsController {
             log.error("Exception calling RestapiCD transaction update", e);
             throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, e.status());
         }
-        log.info("END requestPaymentToBancomatPay " + idPagoPa);
-        return bPayPaymentResponseEntity;
-    }
-
-    @Async
-    public void executeCallToBancomatPay(BPayPaymentRequest request) throws RestApiException {
-
-        InserimentoRichiestaPagamentoPagoPaResponse response;
-        Long idPagoPa = request.getIdPagoPa();
-        log.info("START executeCallToBancomatPay " + idPagoPa);
-
-        try {
-            response = client.sendPaymentRequest(request);
-            if (response != null && response.getReturn() != null && response.getReturn().getEsito() != null) {
-                EsitoVO esitoVO = response.getReturn().getEsito();
-                log.info("Response from bpay sendPaymentRequest - idPagopa: " + idPagoPa
-                        + " esito codice" + esitoVO.getCodice()
-                        + " esito messaggio" + esitoVO.getMessaggio());
-            }
-        } catch (Exception e) {
-            log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
-            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
-        }
-        BPayPaymentResponseEntity bPayPaymentResponseEntity = getBancomatPayPaymentResponse(response, idPagoPa);
-        bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
-
-        //TODO aggiorna stato transazione
         log.info("END executeCallToBancomatPay " + idPagoPa);
-
     }
 
-    private BPayPaymentResponseEntity getBancomatPayPaymentResponse(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
+    private BPayPaymentResponseEntity convertBpayResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
         ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
         String clientGuid = null;
         if (responseReturnVO.getContesto() != null) {

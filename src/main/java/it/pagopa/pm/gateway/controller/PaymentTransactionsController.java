@@ -19,8 +19,7 @@ import javax.transaction.Transactional;
 import java.lang.Exception;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_ACCEPTED;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_PROCESSING;
+import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 
 @RestController
 @Slf4j
@@ -43,7 +42,8 @@ public class PaymentTransactionsController {
         } else if (Boolean.TRUE.equals(alreadySaved.getIsProcessed())) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
         }
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_ACCEPTED.getId(), authMessage.getAuthCode(), null);
+        TransactionUpdateRequest transactionUpdate;
+        transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OutcomeEnum.OK) ? TX_ACCEPTED.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);

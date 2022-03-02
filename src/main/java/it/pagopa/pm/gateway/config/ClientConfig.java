@@ -31,17 +31,6 @@ public class ClientConfig {
     }
 
     @Bean
-    public RestapiCdClientImpl restapiCdClientImpl(){
-        return new RestapiCdClientImpl();
-    }
-
-    @Bean
-    public RestapiCdClientImpl restapiCdClient(){
-        return new RestapiCdClientImpl();
-    }
-
-
-    @Bean
     public WebServiceTemplate bancomatPayWebServiceTemplate() {
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());

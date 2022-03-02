@@ -1,36 +1,15 @@
 package it.pagopa.pm.gateway.exception;
 
-public class RestApiException extends Exception{
+import lombok.*;
 
-    private Integer errorCode;
-    private String message;
+public class RestApiException extends Exception {
 
-    public RestApiException(Integer errorCode, String message) {
-        super(message);
-        this.errorCode = errorCode;
-        this.message = message;
-    }
+    @Getter
+    private final ExceptionsEnum exceptionsEnum;
 
-    /**
-     * @return the errorCode
-     */
-    public Integer getErrorCode() {
-        return errorCode;
-    }
-
-    /**
-     * @param errorCode the errorCode to set
-     */
-    public void setErrorCode(Integer errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    public RestApiException(ExceptionsEnum exceptionsEnum) {
+        super();
+        this.exceptionsEnum = exceptionsEnum;
     }
 
 }

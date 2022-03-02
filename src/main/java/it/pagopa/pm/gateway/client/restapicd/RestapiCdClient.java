@@ -1,11 +1,12 @@
 package it.pagopa.pm.gateway.client.restapicd;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.client.RestTemplate;
+import feign.*;
+import it.pagopa.pm.gateway.dto.*;
 
-public class RestapiCdClient {
+@Headers({"Content-Type: application/json"})
+public interface RestapiCdClient {
 
-    @Autowired
-    RestTemplate restTemplatePoolConnection;
+    @RequestLine("PATCH /v1/transactions/{id}")
+    void updateTransaction(@Param Long id, TransactionUpdateRequest transactionUpdateRequest);
 
 }

@@ -32,4 +32,8 @@ public class BPayPaymentResponseEntity {
 
     @Column(name = "CLIENT_GUID")
     private String clientGuid;
+
+    @Column(name = "IS_PROCESSED")
+    private Boolean isProcessed;
+
 }

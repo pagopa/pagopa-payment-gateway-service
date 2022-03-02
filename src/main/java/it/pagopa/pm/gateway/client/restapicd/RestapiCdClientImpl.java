@@ -29,7 +29,7 @@ public class RestapiCdClientImpl {
     private RestapiCdClient restapiCdClient;
 
     public void callTransactionUpdate(Long id, TransactionUpdateRequest request) {
-        log.info("Calling PM...");
+        log.info("Calling PATCH to update transaction " + id);
         restapiCdClient.updateTransaction(id, new TransactionUpdateRequestData(request));
     }
 

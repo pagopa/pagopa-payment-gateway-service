@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway.controller;
 
+import feign.*;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.client.restapicd.*;
@@ -48,10 +49,12 @@ public class PaymentTransactionsController {
             alreadySaved.setIsProcessed(true);
             bPayPaymentResponseRepository.save(alreadySaved);
             return new ACKMessage(OutcomeEnum.OK);
+        } catch (FeignException fe) {
+            log.error("Exception calling RestapiCD to update transaction", fe);
+            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());
         } catch (Exception e) {
-            log.error("Exception calling RestapiCD transaction update", e);
-            //TODO prendi http status error
-            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR);
+            log.error("Exception updating transaction", e);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
     }
 
@@ -71,10 +74,9 @@ public class PaymentTransactionsController {
         try {
             TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null);
             restapiCdClient.callTransactionUpdate(idPagoPa, transactionUpdate);
-        } catch (Exception e) {
+        } catch (FeignException e) {
             log.error("Exception calling RestapiCD transaction update", e);
-            //TODO prendi http status error
-            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR);
+            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, e.status());
         }
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
         return bPayPaymentResponseEntity;

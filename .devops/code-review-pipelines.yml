@@ -37,7 +37,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        mvn install:install-file -Dfile=./.db/oracle/ojdbc8-12.2.0.1.jar -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar -s $(settingsxml.secureFilePath) -Dmaven.repo.local=$(maven_cache_folder)
+        mvn install:install-file -Dfile=./.db/oracle/ojdbc8-12.2.0.1.jar -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar
       failOnStderr: true      
 
   - task: Maven@3

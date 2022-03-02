@@ -1,7 +1,6 @@
 package it.pagopa.pm.gateway.config;
 
 import it.pagopa.pm.gateway.client.bpay.*;
-import it.pagopa.pm.gateway.client.restapicd.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.context.annotation.Bean;
@@ -30,17 +29,6 @@ public class ClientConfig {
     public BancomatPayClient bancomatPayClient(Jaxb2Marshaller marshaller) {
         return new BancomatPayClient();
     }
-
-    @Bean
-    public RestapiCdClientImpl restapiCdClientImpl(){
-        return new RestapiCdClientImpl();
-    }
-
-    @Bean
-    public RestapiCdClientImpl restapiCdClient(){
-        return new RestapiCdClientImpl();
-    }
-
 
     @Bean
     public WebServiceTemplate bancomatPayWebServiceTemplate() {

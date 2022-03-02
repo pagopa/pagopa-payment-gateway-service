@@ -29,10 +29,16 @@ steps:
         sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
         sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
         sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*
-      #  sonar.coverage.jacoco.xmlReportPaths=./report/target/site/jacoco-aggregate/jacoco.xml
-      #  sonar.junit.reportPaths=target/surefire-reports/
-        
-
+        sonar.coverage.jacoco.xmlReportPaths=./report/target/site/jacoco-aggregate/jacoco.xml
+        sonar.junit.reportPaths=target/surefire-reports/
+  
+  - task: Bash@3
+    displayName: Install Ojdbc
+    inputs:
+      targetType: 'inline'
+      script: |
+        mvn install:install-file -Dfile=./.db/oracle/ojdbc8-12.2.0.1.jar -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar
+      failOnStderr: true      
 
   - task: Maven@3
     inputs:

@@ -19,6 +19,7 @@ import java.lang.Exception;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_ACCEPTED;
+import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_PROCESSING;
 
 @RestController
 @Slf4j
@@ -45,6 +46,7 @@ public class PaymentTransactionsController {
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
+            bPayPaymentResponseRepository.save(alreadySaved);
             return new ACKMessage(OutcomeEnum.OK);
         } catch (Exception e) {
             log.error("Exception calling RestapiCD transaction update", e);
@@ -66,6 +68,14 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setOutcome(true);
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
         executeCallToBancomatPay(request);
+        try {
+            TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null);
+            restapiCdClient.callTransactionUpdate(idPagoPa, transactionUpdate);
+        } catch (Exception e) {
+            log.error("Exception calling RestapiCD transaction update", e);
+            //TODO prendi http status error
+            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR);
+        }
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
         return bPayPaymentResponseEntity;
     }

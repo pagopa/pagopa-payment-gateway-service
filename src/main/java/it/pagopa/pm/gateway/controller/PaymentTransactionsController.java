@@ -17,7 +17,6 @@ import javax.transaction.Transactional;
 
 import java.lang.Exception;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.ID_PATH_PARAM;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_ACCEPTED;
 
@@ -34,20 +33,22 @@ public class PaymentTransactionsController {
     @Autowired
     RestapiCdClientImpl restapiCdClient;
 
-    @PutMapping(REQUEST_PAYMENTS_BPAY + ID_PATH_PARAM)
+    @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader("X-Correlation-ID") String correlationId) throws RestApiException {
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByCorrelationId(correlationId);
         if (alreadySaved == null) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
-        } else if (alreadySaved.getIsProcessed()) {
+        } else if (Boolean.TRUE.equals(alreadySaved.getIsProcessed())) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
         }
         TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_ACCEPTED.getId(), authMessage.getAuthCode(), null);
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
+            alreadySaved.setIsProcessed(true);
             return new ACKMessage(OutcomeEnum.OK);
         } catch (Exception e) {
             log.error("Exception calling RestapiCD transaction update", e);
+            //TODO prendi http status error
             throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR);
         }
     }
@@ -98,7 +99,6 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setErrorCode(esitoVO.getCodice());
         bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
         bPayPaymentResponseEntity.setClientGuid(clientGuid);
-        bPayPaymentResponseEntity.setIsProcessed(true);
         return bPayPaymentResponseEntity;
     }
 

@@ -1,6 +1,8 @@
-trigger:
-  - main
-  - develop
+trigger: none
+pr:
+  branches:
+    include:
+      - develop
 
 pool:
   vmImage: ubuntu-latest

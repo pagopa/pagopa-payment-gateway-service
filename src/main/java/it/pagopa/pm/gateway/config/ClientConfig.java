@@ -41,10 +41,7 @@ public class ClientConfig {
         return webServiceTemplate;
     }
 
-    @Bean
-    public RestapiCdClientImpl restapiCdClient(){
-        return new RestapiCdClientImpl();
-    }
+
 
     @Bean
     public RestTemplate restTemplate(){

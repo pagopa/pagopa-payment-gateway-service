@@ -5,7 +5,6 @@ import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
-import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,8 +16,10 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.*;
 
+import java.lang.*;
+import java.lang.Exception;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -36,7 +37,7 @@ class BPayClientTests {
     WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
 
     @Test
-    void testBpayClient() throws BancomatPayClientException {
+    void testBpayClient() {
         InserimentoRichiestaPagamentoPagoPaResponse response = new InserimentoRichiestaPagamentoPagoPaResponse();
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> jaxbResponse = objectFactory.createInserimentoRichiestaPagamentoPagoPaResponse(response);
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
@@ -47,13 +48,11 @@ class BPayClientTests {
 
 
     @Test
-    void shouldReturnBancomatPayClientException() throws BancomatPayClientException {
+    void shouldReturnBancomatPayClientException() {
         InserimentoRichiestaPagamentoPagoPaResponse response = new InserimentoRichiestaPagamentoPagoPaResponse();
-        JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> jaxbResponse = objectFactory.createInserimentoRichiestaPagamentoPagoPaResponse(response);
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
         webServiceTemplate.setDefaultUri("http://incorrectUrl");
-        Assertions.assertThrows(BancomatPayClientException.class,()-> client.sendPaymentRequest(request));
+        Assertions.assertThrows(Exception.class,()-> client.sendPaymentRequest(request));
     }
-
 
 }

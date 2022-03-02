@@ -75,11 +75,8 @@ public class PaymentTransactionsController {
         Long idPagoPa = request.getIdPagoPa();
         try {
             response = client.sendPaymentRequest(request);
-        } catch (BancomatPayClientException bpce) {
-            log.error("BancomatPayClientException in requestPaymentToBancomatPay idPagopa: " + idPagoPa, bpce);
-            throw bpce;
         } catch (Exception e) {
-            log.error("Exception in requestPaymentToBancomatPay idPagopa: " + idPagoPa, e);
+            log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
         BPayPaymentResponseEntity bPayPaymentResponseEntity = getBancomatPayPaymentResponse(response, idPagoPa);

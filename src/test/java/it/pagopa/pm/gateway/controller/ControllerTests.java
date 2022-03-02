@@ -16,7 +16,6 @@ import it.pagopa.pm.gateway.client.bpay.generated.InserimentoRichiestaPagamentoP
 import it.pagopa.pm.gateway.client.bpay.generated.ObjectFactory;
 import it.pagopa.pm.gateway.constant.*;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import it.pagopa.pm.gateway.repository.*;
 import org.junit.*;
 import org.junit.jupiter.api.Assertions;
@@ -74,8 +73,7 @@ public class ControllerTests {
     @Test
     public void givenIncorrectBpayEndopointUrl_shouldReturn5xxStatus() throws Exception {
          BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
-        given(client.sendPaymentRequest(request)).willThrow(BancomatPayClientException.class);
-
+        given(client.sendPaymentRequest(request)).willThrow(Exception.class);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
                 .content(mapper.writeValueAsString(request))
                 .contentType(MediaType.APPLICATION_JSON))

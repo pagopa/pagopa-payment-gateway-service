@@ -5,8 +5,8 @@ import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
-import it.pagopa.pm.gateway.exception.BancomatPayClientException;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,6 +15,9 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.*;
+
+import java.lang.*;
+import java.lang.Exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -34,7 +37,7 @@ class BPayClientTests {
     WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
 
     @Test
-    void testBpayClient() throws BancomatPayClientException {
+    void testBpayClient() {
         InserimentoRichiestaPagamentoPagoPaResponse response = new InserimentoRichiestaPagamentoPagoPaResponse();
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> jaxbResponse = objectFactory.createInserimentoRichiestaPagamentoPagoPaResponse(response);
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
@@ -44,5 +47,12 @@ class BPayClientTests {
     }
 
 
+    @Test
+    void shouldReturnBancomatPayClientException() {
+        InserimentoRichiestaPagamentoPagoPaResponse response = new InserimentoRichiestaPagamentoPagoPaResponse();
+        BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
+        webServiceTemplate.setDefaultUri("http://incorrectUrl");
+        Assertions.assertThrows(Exception.class,()-> client.sendPaymentRequest(request));
+    }
 
 }

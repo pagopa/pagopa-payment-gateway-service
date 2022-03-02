@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway.dto;
 
+import it.pagopa.pm.gateway.dto.enums.*;
 import lombok.*;
 
 import javax.validation.constraints.*;
@@ -9,7 +10,7 @@ import javax.validation.constraints.*;
 @AllArgsConstructor
 public class ACKMessage {
 
-    @NotEmpty
-    private String outcome;
+    @NotNull
+    private OutcomeEnum outcome;
 
 }

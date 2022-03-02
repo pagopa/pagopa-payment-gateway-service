@@ -43,8 +43,8 @@ public class ClientConfig {
     }
 
     @Bean
-    public RestapiCdClient restapiCdClient(){
-        return new RestapiCdClient();
+    public RestapiCdClientImpl restapiCdClient(){
+        return new RestapiCdClientImpl();
     }
 
     @Bean

@@ -30,6 +30,7 @@ public class BancomatPayClient {
     private final ObjectFactory objectFactory = new ObjectFactory();
 
     public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request) {
+        log.info("START sendPaymentRequest");
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         ContestoVO contestoVO = new ContestoVO();
@@ -57,6 +58,8 @@ public class BancomatPayClient {
         InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse;
         inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
         inserimentoRichiestaPagamentoPagoPaResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
+        log.info("END sendPaymentRequest");
+
         return inserimentoRichiestaPagamentoPagoPaResponse;
     }
 

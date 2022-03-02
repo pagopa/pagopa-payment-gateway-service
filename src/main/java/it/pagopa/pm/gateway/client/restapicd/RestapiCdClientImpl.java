@@ -2,11 +2,10 @@ package it.pagopa.pm.gateway.client.restapicd;
 
 import feign.*;
 import feign.jackson.*;
+import feign.okhttp.*;
 import it.pagopa.pm.gateway.dto.*;
 import lombok.extern.log4j.*;
-import org.apache.commons.lang3.*;
 import org.springframework.beans.factory.annotation.*;
-import org.springframework.scheduling.annotation.*;
 import org.springframework.stereotype.*;
 
 import javax.annotation.*;
@@ -15,26 +14,23 @@ import javax.annotation.*;
 @Component
 public class RestapiCdClientImpl {
 
-    @Value("${HOSTNAME}")
-    public String hostname;
-
     @Value("${HOSTNAME_PM}")
     public String hostnamePm;
 
     @PostConstruct
     public void init() {
         restapiCdClient = Feign.builder()
+                .client(new OkHttpClient())
                 .encoder(new JacksonEncoder())
                 .decoder(new JacksonDecoder())
-                .target(RestapiCdClient.class, StringUtils.firstNonBlank(hostname, hostnamePm));
+                .target(RestapiCdClient.class, hostnamePm);
     }
 
     private RestapiCdClient restapiCdClient;
 
-    @Async
     public void callTransactionUpdate(Long id, TransactionUpdateRequest request) {
-        log.info("Calling PM...");
-        restapiCdClient.updateTransaction(id, request);
+        log.info("Calling PATCH to update transaction " + id);
+        restapiCdClient.updateTransaction(id, new TransactionUpdateRequestData(request));
     }
 
 }

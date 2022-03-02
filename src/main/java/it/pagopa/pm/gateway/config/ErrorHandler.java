@@ -22,7 +22,7 @@ public class ErrorHandler {
         HttpStatus status = e.getExceptionsEnum().getRestApiCode();
         ErrorResponse errorResponse = new ErrorResponse();
         if (status.equals(HttpStatus.FAILED_DEPENDENCY)) {
-            //errorResponse.setCode(HTTP STATUS DAL PM);
+            errorResponse.setCode(e.getCode());
         }
         switch (status) {
             case UNAUTHORIZED:

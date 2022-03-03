@@ -16,7 +16,6 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.*;
 
-import java.lang.*;
 import java.lang.Exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,17 +41,15 @@ class BPayClientTests {
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> jaxbResponse = objectFactory.createInserimentoRichiestaPagamentoPagoPaResponse(response);
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
         when(webServiceTemplate.marshalSendAndReceive(Mockito.any(JAXBElement.class))).thenReturn(jaxbResponse);
-        InserimentoRichiestaPagamentoPagoPaResponse actualResponse = client.sendPaymentRequest(request);
+        InserimentoRichiestaPagamentoPagoPaResponse actualResponse = client.sendPaymentRequest(request, "null-null-null-null-null");
         assertEquals(response, actualResponse);
     }
 
-
     @Test
     void shouldReturnBancomatPayClientException() {
-        InserimentoRichiestaPagamentoPagoPaResponse response = new InserimentoRichiestaPagamentoPagoPaResponse();
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
         webServiceTemplate.setDefaultUri("http://incorrectUrl");
-        Assertions.assertThrows(Exception.class,()-> client.sendPaymentRequest(request));
+        Assertions.assertThrows(Exception.class,()-> client.sendPaymentRequest(request, "null-null-null-null-null"));
     }
 
 }

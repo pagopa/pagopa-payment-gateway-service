@@ -12,7 +12,7 @@ import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,7 +23,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
+import java.util.*;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,21 +63,25 @@ public class ControllerTests {
 
     @Test
     public void givenBancomatPayPaymentRequest_returnBPayPaymentResponseEntity() throws Exception {
-        BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
-        given(client.sendPaymentRequest(request)).willReturn(ValidBeans.inserimentoRichiestaPagamentoPagoPaResponse());
-        mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
-                        .content(mapper.writeValueAsString(request))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bPayPaymentResponseEntityToReturn())));
-        verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave());
-        verify(client).sendPaymentRequest(request);
+        final UUID uuid = UUID.fromString("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
+        try (MockedStatic<UUID> mockedUuid = Mockito.mockStatic(UUID.class)) {
+            mockedUuid.when(UUID::randomUUID).thenReturn(uuid);
+            BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
+            given(client.sendPaymentRequest(any(BPayPaymentRequest.class), anyString())).willReturn(ValidBeans.inserimentoRichiestaPagamentoPagoPaResponse());
+            mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                            .content(mapper.writeValueAsString(request))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bPayPaymentResponseEntityToReturn())));
+            //verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave());
+            verify(client).sendPaymentRequest(request, "null-null-null-null-null");
+        }
     }
 
     @Test
     public void givenIncorrectBpayEndpointUrl_shouldReturn5xxStatus(){
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
-       when(client.sendPaymentRequest(request)).thenAnswer(invocation -> {throw new Exception();});
+       when(client.sendPaymentRequest(request, "null-null-null-null-null")).thenAnswer(invocation -> {throw new Exception();});
         assertThatThrownBy(() -> mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
                 .content(mapper.writeValueAsString(request))
                 .contentType(MediaType.APPLICATION_JSON)))

@@ -35,7 +35,9 @@ public class BancomatPayClient {
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         ContestoVO contestoVO = new ContestoVO();
         UUID uuid = UUID.randomUUID();
-        contestoVO.setGuid(uuid.toString());
+        String uuidStringValue = uuid.toString();
+        contestoVO.setGuid(uuidStringValue);
+        log.info("sendPaymentRequest  guid: " + uuidStringValue);
         contestoVO.setToken(TOKEN);
         contestoVO.setLingua(LinguaEnum.fromValue(ClientUtil.getLanguageCode(request.getLanguage())));
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();

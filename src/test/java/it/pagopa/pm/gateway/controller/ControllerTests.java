@@ -1,40 +1,35 @@
 package it.pagopa.pm.gateway.controller;
 
-import static org.mockito.ArgumentMatchers.any;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pm.gateway.beans.ValidBeans;
+import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
+import it.pagopa.pm.gateway.client.bpay.generated.ObjectFactory;
+import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.constant.ApiPaths;
+import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
+import it.pagopa.pm.gateway.exception.RestApiException;
+import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.ws.client.core.WebServiceTemplate;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.*;
-import it.pagopa.pm.gateway.beans.*;
-import it.pagopa.pm.gateway.client.bpay.*;
-import it.pagopa.pm.gateway.client.bpay.generated.InserimentoRichiestaPagamentoPagoPa;
-import it.pagopa.pm.gateway.client.bpay.generated.InserimentoRichiestaPagamentoPagoPaResponse;
-import it.pagopa.pm.gateway.client.bpay.generated.ObjectFactory;
-import it.pagopa.pm.gateway.client.restapicd.*;
-import it.pagopa.pm.gateway.constant.*;
-import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.repository.*;
-import org.junit.*;
-import org.junit.jupiter.api.Assertions;
-import org.junit.runner.*;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.*;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.*;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.servlet.config.annotation.*;
-import org.springframework.ws.client.core.WebServiceTemplate;
-
-import javax.xml.bind.JAXBElement;
-import java.lang.Exception;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = PaymentTransactionsController.class)
@@ -75,15 +70,14 @@ public class ControllerTests {
         verify(client).sendPaymentRequest(request);
     }
 
-    //TODO fix
-   /* @Test
-    public void givenIncorrectBpayEndopointUrl_shouldReturn5xxStatus() throws Exception {
+    @Test
+    public void givenIncorrectBpayEndpointUrl_shouldReturn5xxStatus(){
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
-        when(client.sendPaymentRequest(request)).thenAnswer(invocation -> {throw new Exception();});
-        mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
+       when(client.sendPaymentRequest(request)).thenAnswer(invocation -> {throw new Exception();});
+        assertThatThrownBy(() -> mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
                 .content(mapper.writeValueAsString(request))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is5xxServerError());
-    } */
+                .contentType(MediaType.APPLICATION_JSON)))
+               .hasCause(new RestApiException(ExceptionsEnum.GENERIC_ERROR));
+    }
 
 }

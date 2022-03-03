@@ -76,7 +76,7 @@ public class ControllerTests {
     }
 
     //TODO fix
-    /*@Test
+   /* @Test
     public void givenIncorrectBpayEndopointUrl_shouldReturn5xxStatus() throws Exception {
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
         when(client.sendPaymentRequest(request)).thenAnswer(invocation -> {throw new Exception();});
@@ -84,6 +84,6 @@ public class ControllerTests {
                 .content(mapper.writeValueAsString(request))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is5xxServerError());
-    }*/
+    } */
 
 }

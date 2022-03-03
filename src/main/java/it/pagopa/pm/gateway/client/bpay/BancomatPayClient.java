@@ -10,7 +10,6 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Slf4j
 public class BancomatPayClient {
@@ -29,15 +28,12 @@ public class BancomatPayClient {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
-    public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request) {
+    public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) {
         log.info("START sendPaymentRequest");
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         ContestoVO contestoVO = new ContestoVO();
-        UUID uuid = UUID.randomUUID();
-        String uuidStringValue = uuid.toString();
-        contestoVO.setGuid(uuidStringValue);
-        log.info("sendPaymentRequest  idPagopa: " + request.getIdPagoPa() + " guid: " + uuidStringValue);
+        contestoVO.setGuid(guid);
         contestoVO.setToken(TOKEN);
         contestoVO.setLingua(LinguaEnum.fromValue(ClientUtil.getLanguageCode(request.getLanguage())));
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();

@@ -42,12 +42,14 @@ public class PaymentTransactionsController {
         } else if (Boolean.TRUE.equals(alreadySaved.getIsProcessed())) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
         }
+
         TransactionUpdateRequest transactionUpdate;
         transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OutcomeEnum.OK) ? TX_ACCEPTED.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
             bPayPaymentResponseRepository.save(alreadySaved);
+
             return new ACKMessage(OutcomeEnum.OK);
         } catch (FeignException fe) {
             log.error("Exception calling RestapiCD to update transaction", fe);

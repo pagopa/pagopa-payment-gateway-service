@@ -24,10 +24,12 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -71,7 +73,7 @@ public class ControllerTests {
     }
 
     @Test
-    public void givenIncorrectBpayEndpointUrl_shouldReturn5xxStatus(){
+    public void givenIncorrectBpayEndpointUrl_shouldReturnGenericErrorException(){
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
        when(client.sendPaymentRequest(request)).thenAnswer(invocation -> {throw new Exception();});
         assertThatThrownBy(() -> mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
@@ -79,5 +81,62 @@ public class ControllerTests {
                 .contentType(MediaType.APPLICATION_JSON)))
                .hasCause(new RestApiException(ExceptionsEnum.GENERIC_ERROR));
     }
+
+    @Test
+    public void givenAuthMessage_returnACKMessage() throws Exception {
+
+        given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToFind());
+        doNothing().when(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+
+        mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                .header("X-Correlation-ID", "correlationId")
+                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.ackMessageResponse())));
+        verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave_2());
+        verify(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+    }
+
+    @Test
+    public void givenProcessedPaymentResponse_shouldReturnTransactionAlreadyProcessed(){
+
+        given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToSave_2());
+        doNothing().when(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+        assertThatThrownBy(() -> mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                .header("X-Correlation-ID", "correlationId")
+                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                .contentType(MediaType.APPLICATION_JSON)))
+                .hasCause(new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED));
+    }
+
+    @Test
+    public void givenNotFoundProcessedPaymentResponse_shouldReturnTransactionNotFound(){
+
+        given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(null);
+        doNothing().when(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+        assertThatThrownBy(() -> mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                .header("X-Correlation-ID", "correlationId")
+                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                .contentType(MediaType.APPLICATION_JSON)))
+                .hasCause(new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND));
+    }
+
+
+    @Test
+    public void givenExceptionThrownByClient_shouldReturnGenericError(){
+
+        given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(null);
+        doThrow(RuntimeException.class)
+                .when(restapiCdClient)
+                .callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+
+        assertThatThrownBy(() -> mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                .header("X-Correlation-ID", "correlationId")
+                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                .contentType(MediaType.APPLICATION_JSON)))
+                .hasCause(new RestApiException(ExceptionsEnum.GENERIC_ERROR));
+    }
+
 
 }

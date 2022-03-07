@@ -5,8 +5,6 @@ import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.entity.*;
 
-import java.util.UUID;
-
 public class ValidBeans {
 
     public static BPayPaymentRequest bPayPaymentRequest() {
@@ -50,7 +48,7 @@ public class ValidBeans {
         entity.setCorrelationId("id");
         entity.setMessage("messaggio");
         entity.setErrorCode("0");
-         entity.setClientGuid("7c7c201a-c198-31c7-864c-21d61b2bd810");
+        entity.setClientGuid("null-null-null-null-null");
         return entity;
     }
 

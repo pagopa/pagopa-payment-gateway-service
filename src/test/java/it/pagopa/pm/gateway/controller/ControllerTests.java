@@ -1,6 +1,8 @@
 package it.pagopa.pm.gateway.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.ObjectFactory;
@@ -10,7 +12,11 @@ import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
+import it.pagopa.pm.gateway.ExceptionUtil.ExceptionEnumMatcher;
+
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.util.NestedServletException;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import java.util.UUID;
@@ -34,6 +41,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.core.IsEqual.equalTo;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = PaymentTransactionsController.class)
@@ -41,6 +49,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableWebMvc
 
 public class ControllerTests {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Autowired
     private MockMvc mvc;
@@ -70,8 +81,8 @@ public class ControllerTests {
             BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
             given(client.sendPaymentRequest(any(BPayPaymentRequest.class), anyString())).willReturn(ValidBeans.inserimentoRichiestaPagamentoPagoPaResponse());
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
-                            .content(mapper.writeValueAsString(request))
-                            .contentType(MediaType.APPLICATION_JSON))
+                    .content(mapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bPayPaymentResponseEntityToReturn())));
             verify(bPayPaymentResponseRepository).findByIdPagoPa(1L);
@@ -81,15 +92,17 @@ public class ControllerTests {
     }
 
     @Test
-    public void givenIncorrectBpayEndpointUrl_shouldReturnGenericErrorException(){
+    public void givenIncorrectBpayEndpointUrl_shouldReturnGenericErrorException() {
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
         String guid = "guid";
 
-        when(client.sendPaymentRequest(request, guid)).thenAnswer(invocation -> {throw new Exception();});
+        when(client.sendPaymentRequest(request, guid)).thenAnswer(invocation -> {
+            throw new Exception();
+        });
         assertThatThrownBy(() -> mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
                 .content(mapper.writeValueAsString(request))
                 .contentType(MediaType.APPLICATION_JSON)))
-               .hasCause(new RestApiException(ExceptionsEnum.GENERIC_ERROR));
+                .hasCause(new RestApiException(ExceptionsEnum.GENERIC_ERROR));
     }
 
     @Test
@@ -109,43 +122,70 @@ public class ControllerTests {
     }
 
     @Test
-    public void givenProcessedPaymentResponse_shouldReturnTransactionAlreadyProcessed(){
-
+    public void givenProcessedPaymentResponse_shouldReturnTransactionAlreadyProcessed() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED)));
         given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToSave_2());
-        doNothing().when(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
-        assertThatThrownBy(() -> mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
-                .header("X-Correlation-ID", "correlationId")
-                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
-                .contentType(MediaType.APPLICATION_JSON)))
-                .hasCause(new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED));
+
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                    .header("X-Correlation-ID", "correlationId")
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
     }
 
     @Test
-    public void givenNotFoundProcessedPaymentResponse_shouldReturnTransactionNotFound(){
-
+    public void givenNotFoundProcessedPaymentResponse_shouldReturnTransactionNotFound() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_NOT_FOUND)));
         given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(null);
-        doNothing().when(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
-        assertThatThrownBy(() -> mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
-                .header("X-Correlation-ID", "correlationId")
-                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
-                .contentType(MediaType.APPLICATION_JSON)))
-                .hasCause(new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND));
+
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                    .header("X-Correlation-ID", "correlationId")
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
     }
 
 
     @Test
-    public void givenExceptionThrownByClient_shouldReturnGenericError(){
-
-        given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(null);
+    public void givenExceptionThrownByClient_shouldReturnGenericError() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
+        given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToFind());
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)
                 .callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
 
-        assertThatThrownBy(() -> mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
-                .header("X-Correlation-ID", "correlationId")
-                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
-                .contentType(MediaType.APPLICATION_JSON)))
-                .hasCause(new RestApiException(ExceptionsEnum.GENERIC_ERROR));
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                    .header("X-Correlation-ID", "correlationId")
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+
+    }
+
+    @Test
+    public void givenFeignExceptionThrownByClient_shouldReturnRestapiCDClientError() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR)));
+        given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToFind());
+        doThrow(FeignException.class)
+                .when(restapiCdClient)
+                .callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
+                    .header("X-Correlation-ID", "correlationId")
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
     }
 
 

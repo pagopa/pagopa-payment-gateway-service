@@ -48,7 +48,6 @@ public class PaymentTransactionsController {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
             bPayPaymentResponseRepository.save(alreadySaved);
-
             return new ACKMessage(OutcomeEnum.OK);
         } catch (FeignException fe) {
             log.error("Exception calling RestapiCD to update transaction", fe);

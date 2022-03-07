@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 
 import java.lang.Exception;
+import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
@@ -81,9 +82,10 @@ public class PaymentTransactionsController {
     public void executeCallToBancomatPay(BPayPaymentRequest request) throws RestApiException {
         InserimentoRichiestaPagamentoPagoPaResponse response;
         Long idPagoPa = request.getIdPagoPa();
-        log.info("START executeCallToBancomatPay " + idPagoPa);
+        String guid = UUID.randomUUID().toString();
+        log.info("START executeCallToBancomatPay " + idPagoPa + " guid: " + guid);
         try {
-            response = client.sendPaymentRequest(request);
+            response = client.sendPaymentRequest(request, guid);
             if (response == null || response.getReturn() == null || response.getReturn().getEsito() == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
@@ -95,7 +97,7 @@ public class PaymentTransactionsController {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayResponseToEntity(response, idPagoPa);
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayResponseToEntity(response, idPagoPa, guid);
         bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         try {
             TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null);
@@ -107,12 +109,8 @@ public class PaymentTransactionsController {
         log.info("END executeCallToBancomatPay " + idPagoPa);
     }
 
-    private BPayPaymentResponseEntity convertBpayResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa) {
+    private BPayPaymentResponseEntity convertBpayResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa, String guid) {
         ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
-        String clientGuid = null;
-        if (responseReturnVO.getContesto() != null) {
-            clientGuid = responseReturnVO.getContesto().getGuid();
-        }
         EsitoVO esitoVO = responseReturnVO.getEsito();
         BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
@@ -120,7 +118,7 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setMessage(esitoVO.getMessaggio());
         bPayPaymentResponseEntity.setErrorCode(esitoVO.getCodice());
         bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
-        bPayPaymentResponseEntity.setClientGuid(clientGuid);
+        bPayPaymentResponseEntity.setClientGuid(guid);
         return bPayPaymentResponseEntity;
     }
 

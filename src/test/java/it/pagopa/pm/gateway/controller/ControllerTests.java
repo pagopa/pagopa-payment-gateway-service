@@ -87,7 +87,7 @@ public class ControllerTests {
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bPayPaymentResponseEntityToReturn())));
             verify(bPayPaymentResponseRepository).findByIdPagoPa(1L);
             verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave());
-            verify(client).sendPaymentRequest(request, "null-null-null-null-null");
+            verify(client).sendPaymentRequest(request, "8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         }
     }
 

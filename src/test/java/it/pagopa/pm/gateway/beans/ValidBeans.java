@@ -48,7 +48,7 @@ public class ValidBeans {
         entity.setCorrelationId("id");
         entity.setMessage("messaggio");
         entity.setErrorCode("0");
-        entity.setClientGuid("null-null-null-null-null");
+        entity.setClientGuid("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         return entity;
     }
 

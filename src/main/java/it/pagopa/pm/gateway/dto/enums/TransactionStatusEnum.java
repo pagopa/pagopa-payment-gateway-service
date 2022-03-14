@@ -26,7 +26,10 @@ public enum TransactionStatusEnum {
     TX_RESUME_3DS2_ACS_METHOD(17L, "Ritornando dal metodo 3ds2", false),
     TX_RESUME_3DS2_ACS_CHALLENGE(18L, "Ritornando dalla challenge 3ds2", false),
     TX_TO_BE_REVERTED(19L, "Transazione da stornare con batch", true),
-    TX_REVERTED(20L, "Transazione stornata con batch", true);
+    TX_REVERTED(20L, "Transazione stornata con batch", true),
+
+    //BPAY
+    TX_AUTHORIZED_BANCOMAT_PAY(21L, "Pagamento autorizzato da Bancomat Pay", true);
 
     @Getter
     private final Long id;

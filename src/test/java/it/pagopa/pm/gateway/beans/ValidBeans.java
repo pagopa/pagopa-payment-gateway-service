@@ -2,6 +2,7 @@ package it.pagopa.pm.gateway.beans;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.entity.*;
 
 public class ValidBeans {
@@ -27,7 +28,7 @@ public class ValidBeans {
         esitoVO.setMessaggio("messaggio");
         responseData.setEsito(esitoVO);
         ContestoVO contestoVO = new ContestoVO();
-        contestoVO.setGuid("null-null-null-null-null");
+        contestoVO.setGuid("7c7c201a-c198-31c7-864c-21d61b2bd810");
         responseData.setContesto(contestoVO);
         response.setReturn(responseData);
         return response;
@@ -47,8 +48,52 @@ public class ValidBeans {
         entity.setCorrelationId("id");
         entity.setMessage("messaggio");
         entity.setErrorCode("0");
-        entity.setClientGuid("null-null-null-null-null");
+        entity.setClientGuid("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         return entity;
     }
 
+    public static BPayPaymentResponseEntity bPayPaymentResponseEntityToSave_2() {
+        BPayPaymentResponseEntity entity = new BPayPaymentResponseEntity();
+        entity.setIdPagoPa(1L);
+        entity.setOutcome(true);
+        entity.setCorrelationId("id");
+        entity.setMessage("messaggio");
+        entity.setErrorCode("0");
+        entity.setClientGuid("client-guid");
+        entity.setIsProcessed(true);
+        return entity;
+    }
+
+
+    public static BPayPaymentResponseEntity bPayPaymentResponseEntityToFind() {
+        BPayPaymentResponseEntity entity = new BPayPaymentResponseEntity();
+        entity.setIdPagoPa(1L);
+        entity.setOutcome(true);
+        entity.setCorrelationId("id");
+        entity.setMessage("messaggio");
+        entity.setErrorCode("0");
+        entity.setClientGuid("client-guid");
+        return entity;
+    }
+
+    public static AuthMessage authMessage(){
+        AuthMessage authMessage = new AuthMessage();
+        authMessage.setAuthCode("authCode");
+        authMessage.setAuthOutcome(OutcomeEnum.OK);
+        return authMessage;
+    }
+
+    public static ACKMessage ackMessageResponse(){
+        ACKMessage ackMessage = new ACKMessage();
+        ackMessage.setOutcome(OutcomeEnum.OK);
+        return ackMessage;
+
+    }
+
+    public static TransactionUpdateRequest transactionUpdateRequest(){
+             TransactionUpdateRequest transactionUpdateRequest = new TransactionUpdateRequest();
+             transactionUpdateRequest.setStatus(3L);
+             transactionUpdateRequest.setAuthCode("authCode");
+             return  transactionUpdateRequest;
+    }
 }

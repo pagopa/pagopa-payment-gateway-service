@@ -43,7 +43,7 @@ public class PaymentTransactionsController {
         } else if (Boolean.TRUE.equals(alreadySaved.getIsProcessed())) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
         }
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OutcomeEnum.OK) ? TX_ACCEPTED.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
+        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OutcomeEnum.OK) ? TX_AUTHORIZED_BANCOMAT_PAY.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);

@@ -116,6 +116,7 @@ public class ControllerTests {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.ackMessageResponse())));
+        verify(bPayPaymentResponseRepository).findByCorrelationId("correlationId");
         verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave_2());
         verify(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
     }

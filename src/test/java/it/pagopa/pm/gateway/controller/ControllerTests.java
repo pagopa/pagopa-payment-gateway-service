@@ -109,7 +109,6 @@ public class ControllerTests {
     public void givenAuthMessage_returnACKMessage() throws Exception {
 
         given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToFind());
-        doNothing().when(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
                 .header("X-Correlation-ID", "correlationId")

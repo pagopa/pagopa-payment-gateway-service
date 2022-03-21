@@ -1,0 +1,180 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger: none
+pr: none
+
+parameters:
+  - name: 'buildVersion'
+    displayName: 'Build Version'
+    type: string
+  - name: 'env'
+    displayName: 'Environment'
+    type: string
+    default: 'UAT'
+    values:
+      - 'UAT'
+      - 'PROD'
+
+variables:
+  poolNameUAT: 'pm-agent-pool-uat'
+  poolNamePROD: 'pm-agent-pool-prod'
+  definitionId: 113
+
+stages:
+  - stage: stage_deploy_UAT
+    displayName: Execute Deploy UAT
+    condition: ${{ eq(parameters.env, 'UAT') }}
+    pool:
+      name: $(poolNameUAT)
+    jobs:
+      - deployment: deploy_UAT
+        displayName: Deploy UAT
+        environment: 'UAT'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: Bash@3
+                  displayName: Verify Branch Version
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      numbers=$(echo ${{parameters.buildVersion}} | tr "." "\n")
+                      if [ $(echo "$numbers" | wc -l) -ne 3 ]; then
+                        echo 'Please choose a releases branch'
+                        exit 1
+                      fi
+
+                      for n in $numbers
+                      do
+                        if ! [[ "$n" =~ [0-9] ]]; then
+                          echo 'Please choose a releases branch'
+                          exit 2
+                        fi
+                      done
+                    failOnStderr: true
+                - script: echo '${{parameters.buildVersion}}'
+                  displayName: Branch Version
+                - task: DownloadPipelineArtifact@2
+                  displayName: Download Artifact
+                  inputs:
+                    source: 'specific'
+                    project: 'PaymentManager'
+                    pipeline: $(definitionId)
+                    runVersion: 'latestFromBranch'
+                    runBranch: 'refs/heads/releases/${{parameters.buildVersion}}'
+                    allowPartiallySucceededBuilds: true
+                    artifact: 'Build PTG ${{parameters.buildVersion}}'
+                    path: '$(Pipeline.Workspace)'
+                - task: Bash@3
+                  displayName: Check File
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      if ! [ -f $(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war ]; then
+                        echo 'pagopa-payment-transactions-gateway not found'
+                        exit 1
+                      fi
+                    failOnStderr: true
+                - task: AzureKeyVault@2
+                  inputs:
+                    azureSubscription: 'Pm-Subscription-uat'
+                    KeyVaultName: 'u87-kmn-pm-uat-pci'
+                    SecretsFilter: '*'
+                    RunAsPreJob: false
+                - template: 'templates/deploy-artifact-on-azure-appservice.yml'
+                  parameters:
+                    moduleName: 'PTG'
+                    artifactType: 'WAR'
+                    azureSubscription: 'Pm-Subscription-uat'
+                    webAppName: '$(payment-gateway-appsrv-uat)'
+                    workingDir: '$(Pipeline.Workspace)'
+                    fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
+                    deployToSlotOrASE: true
+                    resourceGroupName: U87-PM-AppServices-pci-uat
+                    slotName: release
+                - task: PublishBuildArtifacts@1
+                  displayName: Publish Artifact
+                  inputs:
+                    pathToPublish: '$(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
+                    artifactName: 'UAT - Deployed PTG ${{parameters.buildVersion}}'
+  - stage: stage_deploy_PROD
+    displayName: Execute Deploy PROD
+    condition: ${{ eq(parameters.env, 'PROD') }}
+    pool:
+      name: $(poolNamePROD)
+    jobs:
+      - deployment: deploy_PROD
+        displayName: Deploy PROD
+        environment: 'PROD'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: Bash@3
+                  displayName: Verify Branch Version
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      numbers=$(echo ${{parameters.buildVersion}} | tr "." "\n")
+                      if [ $(echo "$numbers" | wc -l) -ne 3 ]; then
+                        echo 'Please choose a releases branch'
+                        exit 1
+                      fi
+
+                      for n in $numbers
+                      do
+                        if ! [[ "$n" =~ [0-9] ]]; then
+                          echo 'Please choose a releases branch'
+                          exit 2
+                        fi
+                      done
+                    failOnStderr: true
+                - script: echo '${{parameters.buildVersion}}'
+                  displayName: Branch Version
+                - task: DownloadPipelineArtifact@2
+                  displayName: Download Artifact
+                  inputs:
+                    source: 'specific'
+                    project: 'PaymentManager'
+                    pipeline: $(definitionId)
+                    runVersion: 'latestFromBranch'
+                    runBranch: 'refs/heads/releases/${{parameters.buildVersion}}'
+                    allowPartiallySucceededBuilds: true
+                    artifact: 'Build PTG ${{parameters.buildVersion}}'
+                    path: '$(Pipeline.Workspace)'
+                - task: Bash@3
+                  displayName: Check File
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      if ! [ -f $(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war ]; then
+                        echo 'pagopa-payment-transactions-gateway not found'
+                        exit 1
+                      fi
+                    failOnStderr: true
+                - task: AzureKeyVault@2
+                  inputs:
+                    azureSubscription: 'Pm-Subscription-prod'
+                    KeyVaultName: 'u87-kmn-pm-prod-pci'
+                    SecretsFilter: '*'
+                    RunAsPreJob: false
+                - template: 'templates/deploy-artifact-on-azure-appservice.yml'
+                  parameters:
+                    moduleName: 'PTG'
+                    artifactType: 'WAR'
+                    azureSubscription: 'Pm-Subscription-prod'
+                    webAppName: '$(payment-gateway-appsrv-prod)'
+                    workingDir: '$(Pipeline.Workspace)'
+                    fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
+                    deployToSlotOrASE: true
+                    resourceGroupName: U87-PM-AppServices-pci-prod
+                    slotName: release
+                - task: PublishBuildArtifacts@1
+                  displayName: Publish Artifact
+                  inputs:
+                    pathToPublish: '$(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
+                    artifactName: 'PROD - Deployed PTG ${{parameters.buildVersion}}'

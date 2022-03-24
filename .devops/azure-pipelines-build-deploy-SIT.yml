@@ -95,45 +95,55 @@ stages:
           - task: Cache@2
             displayName: Cache Maven
             inputs:
-              key: 'maven | "$(Agent.OS)" | pm'
+              key: 'maven | "$(Agent.OS)" | pom.xml'
               restoreKeys: |
                 maven | "$(Agent.OS)"
                 maven
               path: $(maven_cache_folder)
+          - task: SonarCloudPrepare@1
+            displayName: 'Prepare SonarCloud Analysis Configuration'
+            inputs:
+              SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
+              organization: '$(SONARCLOUD_ORG)'
+              scannerMode: Other
+              extraProperties: |
+                sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
+                sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
+                sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*
           - task: Maven@3
             displayName: 'Unit test'
             inputs:
-              mavenPomFile: './pom.xml'
+              mavenPomFile: 'pom.xml'
               goals: 'clean test'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.8'
+              jdkArchitectureOption: 'x64'
               mavenVersionOption: 'Default'
               mavenOptions: '-Xmx3072m $(maven_opts)'
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               mavenAuthenticateFeed: false
               effectivePomSkip: true
-              sonarQubeRunAnalysis: false
-              publishJUnitResults: true
+              sonarQubeRunAnalysis: true
+              publishJUnitResults: false
           - task: Maven@3
             displayName: 'Integration test'
             inputs:
-              mavenPomFile: './pom.xml'
+              mavenPomFile: 'pom.xml'
               goals: 'clean verify'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.8'
+              jdkArchitectureOption: 'x64'
               mavenVersionOption: 'Default'
               mavenOptions: '-Xmx3072m $(maven_opts)'
               testResultsFiles: '**/surefire-reports/IT-*.xml'
               mavenAuthenticateFeed: false
               effectivePomSkip: true
-              sonarQubeRunAnalysis: false
-              publishJUnitResults: true
-          - task: PublishCodeCoverageResults@1
-            displayName: 'Publish Code Coverage'
+              sonarQubeRunAnalysis: true
+              publishJUnitResults: false
+          - task: SonarCloudPublish@1
+            displayName: 'Publish SonarCloud Results'
             inputs:
-              codeCoverageTool: 'JaCoCo'
-              summaryFileLocation: './pp-report-coverage/target/site/jacoco-aggregate/*.xml'
-              reportDirectory: './pp-report-coverage/target/site/jacoco-aggregate'
+              pollingTimeoutSec: '300'
   - stage: stage_deploy_SIT
     displayName: Execute Deploy SIT
     dependsOn:

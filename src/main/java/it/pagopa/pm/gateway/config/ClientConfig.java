@@ -9,6 +9,7 @@ import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.scheduling.annotation.*;
 import org.springframework.web.client.*;
 import org.springframework.ws.client.core.WebServiceTemplate;
+import org.springframework.ws.transport.http.*;
 
 @Slf4j
 @Configuration
@@ -16,7 +17,10 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 public class ClientConfig {
 
     @Value("${bancomatPay.client.url}")
-    public String BANCOMAT_PAY_CLIENT_URL;
+    public String BPAY_CLIENT_URL;
+
+    @Value("${bancomatPay.client.timeout.ms}")
+    public String BPAY_CLIENT_TIMEOUT_MS;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -35,13 +39,15 @@ public class ClientConfig {
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
-        webServiceTemplate.setDefaultUri(BANCOMAT_PAY_CLIENT_URL);
-
-        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BANCOMAT_PAY_CLIENT_URL);
+        webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
+        HttpComponentsMessageSender sender = new HttpComponentsMessageSender();
+        int timeout = Integer.parseInt(BPAY_CLIENT_TIMEOUT_MS);
+        sender.setConnectionTimeout(timeout);
+        sender.setReadTimeout(timeout);
+        webServiceTemplate.setMessageSender(sender);
+        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BPAY_CLIENT_URL);
         return webServiceTemplate;
     }
-
-
 
     @Bean
     public RestTemplate restTemplate(){

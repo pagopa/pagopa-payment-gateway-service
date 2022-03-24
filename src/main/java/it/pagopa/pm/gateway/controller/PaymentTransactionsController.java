@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 
 import java.lang.Exception;
+import java.net.*;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
@@ -129,6 +130,10 @@ public class PaymentTransactionsController {
                     + " esito codice" + esitoVO.getCodice()
                     + " esito messaggio" + esitoVO.getMessaggio());
         } catch (Exception e) {
+            if (e.getCause() instanceof SocketTimeoutException) {
+                log.error("Timeout calling BancomatPay with idPagopa: " + idPagoPa);
+                throw new RestApiException(ExceptionsEnum.TIMEOUT);
+            }
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }

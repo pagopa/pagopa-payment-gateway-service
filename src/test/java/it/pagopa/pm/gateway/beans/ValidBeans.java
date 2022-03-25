@@ -96,4 +96,15 @@ public class ValidBeans {
              transactionUpdateRequest.setAuthCode("authCode");
              return  transactionUpdateRequest;
     }
+
+    public static TransactionUpdateRequest transactionUpdateRequestStatus21(){
+        TransactionUpdateRequest transactionUpdateRequest = new TransactionUpdateRequest();
+        transactionUpdateRequest.setStatus(21L);
+        transactionUpdateRequest.setAuthCode("authCode");
+        return  transactionUpdateRequest;
+    }
+
 }
+
+
+

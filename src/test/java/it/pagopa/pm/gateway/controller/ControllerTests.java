@@ -118,7 +118,7 @@ public class ControllerTests {
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.ackMessageResponse())));
         verify(bPayPaymentResponseRepository).findByCorrelationId("correlationId");
         verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave_2());
-        verify(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+        verify(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequestStatus21());
     }
 
     @Test
@@ -177,7 +177,7 @@ public class ControllerTests {
         given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToFind());
         doThrow(FeignException.class)
                 .when(restapiCdClient)
-                .callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
+                .callTransactionUpdate(1L, ValidBeans.transactionUpdateRequestStatus21());
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
                     .header("X-Correlation-ID", "correlationId")

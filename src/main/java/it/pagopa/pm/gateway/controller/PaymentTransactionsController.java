@@ -37,6 +37,7 @@ public class PaymentTransactionsController {
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader("X-Correlation-ID") String correlationId) throws RestApiException {
+        log.info("START Update transaction request for correlation-id: " + correlationId + ": " + authMessage);
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByCorrelationId(correlationId);
         if (alreadySaved == null) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
@@ -55,6 +56,8 @@ public class PaymentTransactionsController {
         } catch (Exception e) {
             log.error("Exception updating transaction", e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        } finally {
+            log.info("END Update transaction request for correlation-id: " + correlationId);
         }
     }
 

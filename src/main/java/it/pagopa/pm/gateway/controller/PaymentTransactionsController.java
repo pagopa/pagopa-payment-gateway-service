@@ -104,17 +104,7 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             EsitoVO esitoVO = response.getEsito();
-            BPayOutcomeEnum code = BPayOutcomeEnum.fromCode(esitoVO.getCodice());
-            log.info("Response from bpay sendRefundRequest - idPagopa: " + idPagoPa + " - codice esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
-            switch (code) {
-                case PAYMENT_NOT_FOUND:
-                    throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
-                case OK:
-                    log.info("Refund complete");
-                    break;
-                default:
-                    throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
-            }
+            log.info("Response from bpay sendRefundRequest - idPagopa: " + idPagoPa + " esito codice" + esitoVO.getCodice() + " esito messaggio" + esitoVO.getMessaggio());
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);

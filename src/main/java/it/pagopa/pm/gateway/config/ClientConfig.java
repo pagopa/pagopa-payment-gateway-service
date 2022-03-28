@@ -16,6 +16,8 @@ import org.springframework.ws.transport.http.*;
 @EnableAsync
 public class ClientConfig {
 
+    public static int BPAY_CLIENT_TIMEOUT_MS_DEFAULT = 5000;
+
     @Value("${bancomatPay.client.url}")
     public String BPAY_CLIENT_URL;
 
@@ -41,7 +43,13 @@ public class ClientConfig {
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
         HttpComponentsMessageSender sender = new HttpComponentsMessageSender();
-        int timeout = Integer.parseInt(BPAY_CLIENT_TIMEOUT_MS);
+        int timeout = BPAY_CLIENT_TIMEOUT_MS_DEFAULT;
+        try {
+            timeout = Integer.parseInt(BPAY_CLIENT_TIMEOUT_MS);
+        } catch (NumberFormatException ex)
+        {
+            log.error("Unable to parse BPAY_CLIENT_TIMEOUT_MS " +  BPAY_CLIENT_TIMEOUT_MS + " - using default timeout");
+        }
         sender.setConnectionTimeout(timeout);
         sender.setReadTimeout(timeout);
         webServiceTemplate.setMessageSender(sender);

@@ -1,14 +1,15 @@
 package it.pagopa.pm.gateway.client.bpay;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.utils.ClientUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
-import javax.xml.bind.JAXBElement;
+import javax.xml.bind.*;
+import javax.xml.namespace.*;
 import java.math.BigDecimal;
 
 @Slf4j
@@ -32,16 +33,7 @@ public class BancomatPayClient {
         log.info("START sendPaymentRequest");
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
-        ContestoVO contestoVO = new ContestoVO();
-        contestoVO.setGuid(guid);
-        contestoVO.setToken(TOKEN);
-        contestoVO.setLingua(LinguaEnum.fromValue(ClientUtil.getLanguageCode(request.getLanguage())));
-        UtenteAttivoVO utenteVO = new UtenteAttivoVO();
-        utenteVO.setCodUtente(null);
-        utenteVO.setCodGruppo(GROUP_CODE);
-        utenteVO.setCodIstituto(INSTITUTE_CODE);
-        contestoVO.setUtenteAttivo(utenteVO);
-        requestInserimentoRichiestaPagamentoPagoPaVO.setContesto(contestoVO);
+        requestInserimentoRichiestaPagamentoPagoPaVO.setContesto(createContesto(guid, request.getLanguage()));
         RichiestaPagamentoPagoPaVO richiestaPagamentoPagoPaVO = new RichiestaPagamentoPagoPaVO();
         richiestaPagamentoPagoPaVO.setIdPSP(request.getIdPsp()!=null? ClientUtil.intesaSPCodiceAbi:null);
         richiestaPagamentoPagoPaVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
@@ -53,12 +45,38 @@ public class BancomatPayClient {
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
         JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement;
-        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse;
         inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
-        inserimentoRichiestaPagamentoPagoPaResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
+        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
         log.info("END sendPaymentRequest");
-
         return inserimentoRichiestaPagamentoPagoPaResponse;
+    }
+
+    public StornoPagamentoResponse sendRefundRequest(BPayRefundRequest request, String guid) {
+        log.info("START sendRefundRequest");
+        RequestStornoPagamentoVO requestStornoPagamentoVO = new RequestStornoPagamentoVO();
+        requestStornoPagamentoVO.setContesto(createContesto(guid, request.getLanguage()));
+        requestStornoPagamentoVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
+        requestStornoPagamentoVO.setCausale(request.getSubject());
+        requestStornoPagamentoVO.setEndToEndId(request.getCorrelationId());
+        StornoPagamento stornoPagamento = new StornoPagamento();
+        stornoPagamento.setArg0(requestStornoPagamentoVO);
+        JAXBElement<StornoPagamento> stornoPagamentoJAXBElement = objectFactory.createStornoPagamento(stornoPagamento);
+        JAXBElement<StornoPagamentoResponse> responseStornoPagamento = (JAXBElement<StornoPagamentoResponse>) webServiceTemplate.marshalSendAndReceive(stornoPagamentoJAXBElement);
+        log.info("END sendRefundRequest");
+        return responseStornoPagamento.getValue();
+    }
+
+    private ContestoVO createContesto(String guid, String language) {
+        ContestoVO contestoVO = new ContestoVO();
+        contestoVO.setGuid(guid);
+        contestoVO.setToken(TOKEN);
+        contestoVO.setLingua(LinguaEnum.fromValue(ClientUtil.getLanguageCode(language)));
+        UtenteAttivoVO utenteVO = new UtenteAttivoVO();
+        utenteVO.setCodUtente(null);
+        utenteVO.setCodGruppo(GROUP_CODE);
+        utenteVO.setCodIstituto(INSTITUTE_CODE);
+        contestoVO.setUtenteAttivo(utenteVO);
+        return contestoVO;
     }
 
 }

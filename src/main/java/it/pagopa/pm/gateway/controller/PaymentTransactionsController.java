@@ -94,17 +94,17 @@ public class PaymentTransactionsController {
 
     @Async
     public void executeRefundRequest(BPayRefundRequest request) throws RestApiException {
-        ResponseStornoPagamentoVO response;
+        StornoPagamentoResponse response;
         Long idPagoPa = request.getIdPagoPa();
         String guid = UUID.randomUUID().toString();
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
             response = client.sendRefundRequest(request, guid);
-            if (response == null || response.getEsito() == null) {
+            if (response == null || response.getReturn().getEsito() == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
-            EsitoVO esitoVO = response.getEsito();
-            log.info("Response from bpay sendRefundRequest - idPagopa: " + idPagoPa + " esito codice" + esitoVO.getCodice() + " esito messaggio" + esitoVO.getMessaggio());
+            EsitoVO esitoVO = response.getReturn().getEsito();
+            log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
@@ -124,13 +124,12 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             EsitoVO esitoVO = response.getReturn().getEsito();
-            log.info("Response from bpay sendRefundRequest - idPagopa: " + idPagoPa + " - codice esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
+            log.info("Response from BPay sendPaymentRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
         } catch (Exception e) {
+            log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             if (e.getCause() instanceof SocketTimeoutException) {
-                log.error("Timeout calling BancomatPay with idPagopa: " + idPagoPa);
                 throw new RestApiException(ExceptionsEnum.TIMEOUT);
             }
-            log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
         BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid);

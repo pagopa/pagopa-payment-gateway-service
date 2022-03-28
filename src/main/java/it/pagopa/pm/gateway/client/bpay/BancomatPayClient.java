@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.*;
+import javax.xml.namespace.*;
 import java.math.BigDecimal;
 
 @Slf4j
@@ -44,23 +45,25 @@ public class BancomatPayClient {
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
         JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement;
-        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse;
         inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
-        inserimentoRichiestaPagamentoPagoPaResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
+        InserimentoRichiestaPagamentoPagoPaResponse inserimentoRichiestaPagamentoPagoPaResponse = inserimentoRichiestaPagamentoPagoPaResponseJAXBElement.getValue();
         log.info("END sendPaymentRequest");
         return inserimentoRichiestaPagamentoPagoPaResponse;
     }
 
-    public ResponseStornoPagamentoVO sendRefundRequest(BPayRefundRequest request, String guid) {
+    public StornoPagamentoResponse sendRefundRequest(BPayRefundRequest request, String guid) {
         log.info("START sendRefundRequest");
         RequestStornoPagamentoVO requestStornoPagamentoVO = new RequestStornoPagamentoVO();
         requestStornoPagamentoVO.setContesto(createContesto(guid, request.getLanguage()));
         requestStornoPagamentoVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
         requestStornoPagamentoVO.setCausale(request.getSubject());
         requestStornoPagamentoVO.setEndToEndId(request.getCorrelationId());
-        ResponseStornoPagamentoVO responseStornoPagamentoVO = (ResponseStornoPagamentoVO) webServiceTemplate.marshalSendAndReceive(requestStornoPagamentoVO);
+        StornoPagamento stornoPagamento = new StornoPagamento();
+        stornoPagamento.setArg0(requestStornoPagamentoVO);
+        JAXBElement<StornoPagamento> stornoPagamentoJAXBElement = objectFactory.createStornoPagamento(stornoPagamento);
+        JAXBElement<StornoPagamentoResponse> responseStornoPagamento = (JAXBElement<StornoPagamentoResponse>) webServiceTemplate.marshalSendAndReceive(stornoPagamentoJAXBElement);
         log.info("END sendRefundRequest");
-        return responseStornoPagamentoVO;
+        return responseStornoPagamento.getValue();
     }
 
     private ContestoVO createContesto(String guid, String language) {

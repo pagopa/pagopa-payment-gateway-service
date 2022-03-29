@@ -92,7 +92,7 @@ public class ValidBeans {
 
     public static TransactionUpdateRequest transactionUpdateRequest(){
              TransactionUpdateRequest transactionUpdateRequest = new TransactionUpdateRequest();
-             transactionUpdateRequest.setStatus(3L);
+             transactionUpdateRequest.setStatus(21L);
              transactionUpdateRequest.setAuthCode("authCode");
              return  transactionUpdateRequest;
     }

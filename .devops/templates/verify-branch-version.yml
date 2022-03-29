@@ -1,0 +1,24 @@
+parameters:
+  - name: buildVersion
+    default: ''
+
+steps:
+  - task: Bash@3
+    displayName: Verify Branch Version
+    inputs:
+      targetType: 'inline'
+      script: |
+        numbers=$(echo ${{parameters.buildVersion}} | tr "." "\n")
+        if [ $(echo "$numbers" | wc -l) -ne 3 ]; then
+          echo 'Please choose a releases branch'
+          exit 1
+        fi
+
+        for n in $numbers
+        do
+          if ! [[ "$n" =~ [0-9] ]]; then
+            echo 'Please choose a releases branch'
+            exit 2
+          fi
+        done
+      failOnStderr: true

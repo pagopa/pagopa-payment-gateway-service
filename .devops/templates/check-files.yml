@@ -1,0 +1,15 @@
+parameters:
+  - name: buildVersion
+    default: ''
+
+steps:
+  - task: Bash@3
+    displayName: Check File
+    inputs:
+      targetType: 'inline'
+      script: |
+        if ! [ -f $(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war ]; then
+          echo 'pagopa-payment-transactions-gateway not found'
+          exit 1
+        fi
+      failOnStderr: true

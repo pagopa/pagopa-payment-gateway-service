@@ -1,15 +1,18 @@
 package it.pagopa.pm.gateway.config;
 
-import it.pagopa.pm.gateway.client.bpay.*;
+import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
-import org.springframework.scheduling.annotation.*;
-import org.springframework.web.client.*;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.ws.client.core.WebServiceTemplate;
-import org.springframework.ws.transport.http.*;
+import org.springframework.ws.transport.WebServiceMessageSender;
+import org.springframework.ws.transport.http.HttpUrlConnectionMessageSender;
+
+import java.time.Duration;
 
 @Slf4j
 @Configuration
@@ -42,7 +45,7 @@ public class ClientConfig {
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
-        HttpComponentsMessageSender sender = new HttpComponentsMessageSender();
+
         int timeout = BPAY_CLIENT_TIMEOUT_MS_DEFAULT;
         try {
             timeout = Integer.parseInt(BPAY_CLIENT_TIMEOUT_MS);
@@ -50,9 +53,17 @@ public class ClientConfig {
         {
             log.error("Unable to parse BPAY_CLIENT_TIMEOUT_MS " +  BPAY_CLIENT_TIMEOUT_MS + " - using default timeout");
         }
-        sender.setConnectionTimeout(timeout);
-        sender.setReadTimeout(timeout);
-        webServiceTemplate.setMessageSender(sender);
+
+        for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders())
+        {
+            Duration durationTimeout = Duration.ofMillis(timeout);
+
+            if (sender instanceof  HttpUrlConnectionMessageSender) {
+                ((HttpUrlConnectionMessageSender) sender).setConnectionTimeout(durationTimeout);
+                ((HttpUrlConnectionMessageSender) sender).setReadTimeout(durationTimeout);
+            }
+        }
+
         log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BPAY_CLIENT_URL);
         return webServiceTemplate;
     }

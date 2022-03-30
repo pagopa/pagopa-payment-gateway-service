@@ -10,10 +10,12 @@ import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.*;
 import it.pagopa.pm.gateway.repository.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.*;
+import javax.servlet.http.*;
 import javax.transaction.Transactional;
 
 import java.lang.Exception;
@@ -22,6 +24,7 @@ import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
+import static it.pagopa.pm.gateway.constant.SessionParams.ID_PAGOPA_PARAM;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 
 @RestController
@@ -36,6 +39,20 @@ public class PaymentTransactionsController {
 
     @Autowired
     RestapiCdClientImpl restapiCdClient;
+
+    private int BPAY_SESSION_TIMEOUT = 60;
+
+    @Value("${bancomatPay.session.timeout.s}")
+    public String BPAY_SESSION_TIMEOUT_CONFIG;
+
+    @PostConstruct
+    public void init() {
+        try {
+            BPAY_SESSION_TIMEOUT = Integer.parseInt(BPAY_SESSION_TIMEOUT_CONFIG);
+        } catch (NumberFormatException ex) {
+            log.error("Unable to parse BPAY_SESSION_TIMEOUT_CONFIG " +  BPAY_SESSION_TIMEOUT_CONFIG + " - using default timeout");
+        }
+    }
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader("X-Correlation-ID") String correlationId) throws RestApiException {
@@ -65,7 +82,7 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request) throws Exception {
+    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, HttpServletRequest servletRequest) throws Exception {
         Long idPagoPa = request.getIdPagoPa();
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
         if (alreadySaved != null) {
@@ -76,6 +93,9 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setOutcome(true);
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
         executePaymentRequest(request);
+        HttpSession session = servletRequest.getSession();
+        session.setMaxInactiveInterval(BPAY_SESSION_TIMEOUT);
+        session.setAttribute(ID_PAGOPA_PARAM, idPagoPa);
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
         return bPayPaymentResponseEntity;
     }

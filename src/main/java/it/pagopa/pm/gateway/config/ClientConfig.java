@@ -45,25 +45,19 @@ public class ClientConfig {
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
-
         int timeout = BPAY_CLIENT_TIMEOUT_MS_DEFAULT;
         try {
             timeout = Integer.parseInt(BPAY_CLIENT_TIMEOUT_MS);
-        } catch (NumberFormatException ex)
-        {
+        } catch (NumberFormatException ex) {
             log.error("Unable to parse BPAY_CLIENT_TIMEOUT_MS " +  BPAY_CLIENT_TIMEOUT_MS + " - using default timeout");
         }
-
-        for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders())
-        {
+        for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders()) {
             Duration durationTimeout = Duration.ofMillis(timeout);
-
-            if (sender instanceof  HttpUrlConnectionMessageSender) {
+            if (sender instanceof HttpUrlConnectionMessageSender) {
                 ((HttpUrlConnectionMessageSender) sender).setConnectionTimeout(durationTimeout);
                 ((HttpUrlConnectionMessageSender) sender).setReadTimeout(durationTimeout);
             }
         }
-
         log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BPAY_CLIENT_URL);
         return webServiceTemplate;
     }

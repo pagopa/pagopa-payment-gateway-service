@@ -10,8 +10,8 @@ public class BPayRefundRequest {
     @NotNull(message = "'idPagoPa' mandatory")
     Long idPagoPa;
 
-    @NotNull(message = "'correlationId' mandatory")
-    String correlationId;
+    @NotNull(message = "'endToEndId' mandatory")
+    String endToEndId;
 
     String subject;
 

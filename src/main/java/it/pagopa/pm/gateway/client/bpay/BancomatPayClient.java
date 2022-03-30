@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.*;
-import javax.xml.namespace.*;
 import java.math.BigDecimal;
 
 @Slf4j
@@ -57,7 +56,7 @@ public class BancomatPayClient {
         requestStornoPagamentoVO.setContesto(createContesto(guid, request.getLanguage()));
         requestStornoPagamentoVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
         requestStornoPagamentoVO.setCausale(request.getSubject());
-        requestStornoPagamentoVO.setEndToEndId(request.getCorrelationId());
+        requestStornoPagamentoVO.setEndToEndId(request.getEndToEndId());
         StornoPagamento stornoPagamento = new StornoPagamento();
         stornoPagamento.setArg0(requestStornoPagamentoVO);
         JAXBElement<StornoPagamento> stornoPagamentoJAXBElement = objectFactory.createStornoPagamento(stornoPagamento);

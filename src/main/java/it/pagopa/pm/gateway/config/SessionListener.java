@@ -4,7 +4,7 @@ import it.pagopa.pm.gateway.client.restapicd.*;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.entity.*;
 import it.pagopa.pm.gateway.repository.*;
-import lombok.extern.log4j.*;
+import lombok.extern.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.*;
 
@@ -14,7 +14,7 @@ import static it.pagopa.pm.gateway.constant.SessionParams.ID_PAGOPA_PARAM;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 
 
-@Log4j
+@Slf4j
 @Component
 public class SessionListener implements HttpSessionListener {
 

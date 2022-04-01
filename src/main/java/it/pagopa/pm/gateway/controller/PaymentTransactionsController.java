@@ -42,7 +42,7 @@ public class PaymentTransactionsController {
 
     private int BPAY_SESSION_TIMEOUT = 60;
 
-    @Value("${bancomatPay.session.timeout.s}")
+    @Value("${bancomatPay.session.timeout.s:60}")
     public String BPAY_SESSION_TIMEOUT_CONFIG;
 
     @PostConstruct

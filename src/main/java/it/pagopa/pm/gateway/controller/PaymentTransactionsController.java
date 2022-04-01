@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.*;
 import javax.servlet.http.*;
 import javax.transaction.Transactional;
 
@@ -40,19 +39,8 @@ public class PaymentTransactionsController {
     @Autowired
     RestapiCdClientImpl restapiCdClient;
 
-    private int BPAY_SESSION_TIMEOUT = 60;
-
-    @Value("${bancomatPay.session.timeout.s}")
-    public String BPAY_SESSION_TIMEOUT_CONFIG;
-
-    @PostConstruct
-    public void init() {
-        try {
-            BPAY_SESSION_TIMEOUT = Integer.parseInt(BPAY_SESSION_TIMEOUT_CONFIG);
-        } catch (NumberFormatException ex) {
-            log.error("Unable to parse BPAY_SESSION_TIMEOUT_CONFIG " +  BPAY_SESSION_TIMEOUT_CONFIG + " - using default timeout");
-        }
-    }
+    @Value("${bancomatPay.session.timeout.s:60}")
+    public String BPAY_SESSION_TIMEOUT;
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader("X-Correlation-ID") String correlationId) throws RestApiException {
@@ -94,7 +82,7 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
         executePaymentRequest(request);
         HttpSession session = servletRequest.getSession();
-        session.setMaxInactiveInterval(BPAY_SESSION_TIMEOUT);
+        session.setMaxInactiveInterval(Integer.parseInt(BPAY_SESSION_TIMEOUT));
         session.setAttribute(ID_PAGOPA_PARAM, idPagoPa);
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
         return bPayPaymentResponseEntity;

@@ -2,6 +2,8 @@ package it.pagopa.pm.gateway.config;
 
 import it.pagopa.pm.gateway.client.restapicd.*;
 import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.entity.*;
+import it.pagopa.pm.gateway.repository.*;
 import lombok.extern.log4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.*;
@@ -19,10 +21,18 @@ public class SessionListener implements HttpSessionListener {
     @Autowired
     RestapiCdClientImpl restapiCdClient;
 
+    @Autowired
+    BPayPaymentResponseRepository bPayPaymentResponseRepository;
+
     @Override
     public void sessionDestroyed(HttpSessionEvent event) {
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_TO_BE_REVERTED.getId(), null, null);
-        restapiCdClient.callTransactionUpdate((Long)event.getSession().getAttribute(ID_PAGOPA_PARAM), transactionUpdate);
+        Long idPagoPa = (Long) event.getSession().getAttribute(ID_PAGOPA_PARAM);
+        BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
+        if (!alreadySaved.getIsProcessed()) {
+            restapiCdClient.callTransactionUpdate(idPagoPa, new TransactionUpdateRequest(TX_TO_BE_REVERTED.getId(), null, null));
+            alreadySaved.setIsProcessed(true);
+            bPayPaymentResponseRepository.save(alreadySaved);
+        }
     }
 
 }

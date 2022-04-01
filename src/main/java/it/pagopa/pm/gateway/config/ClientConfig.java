@@ -19,12 +19,10 @@ import java.time.Duration;
 @EnableAsync
 public class ClientConfig {
 
-    public static int BPAY_CLIENT_TIMEOUT_MS_DEFAULT = 5000;
-
     @Value("${bancomatPay.client.url}")
     public String BPAY_CLIENT_URL;
 
-    @Value("${bancomatPay.client.timeout.ms}")
+    @Value("${bancomatPay.client.timeout.ms:5000}")
     public String BPAY_CLIENT_TIMEOUT_MS;
 
     @Bean
@@ -45,14 +43,8 @@ public class ClientConfig {
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
-        int timeout = BPAY_CLIENT_TIMEOUT_MS_DEFAULT;
-        try {
-            timeout = Integer.parseInt(BPAY_CLIENT_TIMEOUT_MS);
-        } catch (NumberFormatException ex) {
-            log.error("Unable to parse BPAY_CLIENT_TIMEOUT_MS " +  BPAY_CLIENT_TIMEOUT_MS + " - using default timeout");
-        }
         for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders()) {
-            Duration durationTimeout = Duration.ofMillis(timeout);
+            Duration durationTimeout = Duration.ofMillis(Integer.parseInt(BPAY_CLIENT_TIMEOUT_MS));
             if (sender instanceof HttpUrlConnectionMessageSender) {
                 ((HttpUrlConnectionMessageSender) sender).setConnectionTimeout(durationTimeout);
                 ((HttpUrlConnectionMessageSender) sender).setReadTimeout(durationTimeout);

@@ -34,6 +34,6 @@ public class BPayPaymentResponseEntity {
     private String clientGuid;
 
     @Column(name = "IS_PROCESSED")
-    private Boolean isProcessed;
+    private Boolean isProcessed = false;
 
 }

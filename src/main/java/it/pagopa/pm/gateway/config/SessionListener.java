@@ -28,7 +28,7 @@ public class SessionListener implements HttpSessionListener {
     public void sessionDestroyed(HttpSessionEvent event) {
         Long idPagoPa = (Long) event.getSession().getAttribute(ID_PAGOPA_PARAM);
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
-        if (!alreadySaved.getIsProcessed()) {
+        if (alreadySaved != null && !alreadySaved.getIsProcessed()) {
             restapiCdClient.callTransactionUpdate(idPagoPa, new TransactionUpdateRequest(TX_TO_BE_REVERTED.getId(), null, null));
             alreadySaved.setIsProcessed(true);
             bPayPaymentResponseRepository.save(alreadySaved);

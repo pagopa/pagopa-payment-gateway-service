@@ -42,6 +42,9 @@ public class PaymentTransactionsController {
     @Value("${bancomatPay.session.timeout.s:60}")
     public String BPAY_SESSION_TIMEOUT;
 
+    @Autowired
+    HttpServletRequest servletRequest;
+
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader("X-Correlation-ID") String correlationId) throws RestApiException {
         log.info("START Update transaction request for correlation-id: " + correlationId + ": " + authMessage);
@@ -70,7 +73,7 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, HttpServletRequest servletRequest) throws Exception {
+    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request) throws Exception {
         Long idPagoPa = request.getIdPagoPa();
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
         if (alreadySaved != null) {

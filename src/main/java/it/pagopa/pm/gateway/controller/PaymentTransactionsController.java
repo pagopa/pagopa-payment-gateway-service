@@ -102,6 +102,9 @@ public class PaymentTransactionsController {
             }
             EsitoVO esitoVO = response.getReturn().getEsito();
             log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
+            if (Boolean.FALSE.equals(esitoVO.isEsito())) {
+                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            }
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);

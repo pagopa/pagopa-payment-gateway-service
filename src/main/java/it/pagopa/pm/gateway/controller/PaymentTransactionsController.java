@@ -1,5 +1,8 @@
 package it.pagopa.pm.gateway.controller;
 
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.type.*;
+import com.fasterxml.jackson.databind.*;
 import feign.*;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
@@ -10,9 +13,12 @@ import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.*;
 import it.pagopa.pm.gateway.repository.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.*;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
+import org.apache.commons.codec.binary.Base64;
 
 import javax.transaction.Transactional;
 
@@ -22,6 +28,7 @@ import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
+import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 
 @RestController
@@ -29,16 +36,18 @@ import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 public class PaymentTransactionsController {
 
     @Autowired
-    BancomatPayClient client;
+    private BancomatPayClient client;
 
     @Autowired
-    BPayPaymentResponseRepository bPayPaymentResponseRepository;
+    private BPayPaymentResponseRepository bPayPaymentResponseRepository;
 
     @Autowired
-    RestapiCdClientImpl restapiCdClient;
+    private RestapiCdClientImpl restapiCdClient;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
-    public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader("X-Correlation-ID") String correlationId) throws RestApiException {
+    public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         log.info("START Update transaction request for correlation-id: " + correlationId + ": " + authMessage);
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByCorrelationId(correlationId);
         if (alreadySaved == null) {
@@ -65,7 +74,8 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request) throws Exception {
+    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(MDC_FIELDS) String mdcFields) throws Exception {
+        setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
         if (alreadySaved != null) {
@@ -82,7 +92,8 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request) throws Exception {
+    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(MDC_FIELDS) String mdcFields) throws Exception {
+        setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         log.info("START requestRefundToBancomatPay " + idPagoPa);
         executeRefundRequest(request);
@@ -155,6 +166,13 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
         bPayPaymentResponseEntity.setClientGuid(guid);
         return bPayPaymentResponseEntity;
+    }
+
+    private void setMdcFields(String mdcFields) throws JsonProcessingException {
+        if (StringUtils.isNotBlank(mdcFields)) {
+            objectMapper.readValue(new String(Base64.decodeBase64(mdcFields)), new TypeReference<HashMap<String, String>>() {
+            }).forEach(MDC::put);
+        }
     }
 
 }

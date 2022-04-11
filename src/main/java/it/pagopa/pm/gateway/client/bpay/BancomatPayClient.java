@@ -42,6 +42,7 @@ public class BancomatPayClient {
         richiestaPagamentoPagoPaVO.setTag(TAG);
         requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
+        log.info("Payment request to be sent to BPay: " + inserimentoRichiestaPagamentoPagoPa);
         JAXBElement<InserimentoRichiestaPagamentoPagoPa> objectFactoryInserimentoRichiestaPagamentoPagoPa = objectFactory.createInserimentoRichiestaPagamentoPagoPa(inserimentoRichiestaPagamentoPagoPa);
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> inserimentoRichiestaPagamentoPagoPaResponseJAXBElement;
         inserimentoRichiestaPagamentoPagoPaResponseJAXBElement = (JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInserimentoRichiestaPagamentoPagoPa);
@@ -58,6 +59,7 @@ public class BancomatPayClient {
         requestStornoPagamentoVO.setCausale(request.getSubject());
         StornoPagamento stornoPagamento = new StornoPagamento();
         stornoPagamento.setArg0(requestStornoPagamentoVO);
+        log.info("Refund request to be sent to BPay: " + stornoPagamento);
         JAXBElement<StornoPagamento> stornoPagamentoJAXBElement = objectFactory.createStornoPagamento(stornoPagamento);
         JAXBElement<StornoPagamentoResponse> responseStornoPagamento = (JAXBElement<StornoPagamentoResponse>) webServiceTemplate.marshalSendAndReceive(stornoPagamentoJAXBElement);
         log.info("END sendRefundRequest");

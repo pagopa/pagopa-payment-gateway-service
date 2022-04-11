@@ -152,6 +152,11 @@
             <version>3.12.0</version>
         </dependency>
         <dependency>
+            <groupId>org.jvnet.jaxb2_commons</groupId>
+            <artifactId>jaxb2-basics-runtime</artifactId>
+            <version>0.12.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>4.3.1</version>
@@ -209,6 +214,16 @@
                     <schemaIncludes>
                         <include>PagoPaServiceFacade.wsdl</include>
                     </schemaIncludes>
+                    <args>
+                        <arg>-XtoString</arg>
+                    </args>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.jvnet.jaxb2_commons</groupId>
+                            <artifactId>jaxb2-basics</artifactId>
+                            <version>0.12.0</version>
+                        </plugin>
+                    </plugins>
                 </configuration>
             </plugin>
             <plugin>

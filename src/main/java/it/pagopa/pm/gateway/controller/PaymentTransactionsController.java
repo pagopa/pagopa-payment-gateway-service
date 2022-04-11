@@ -1,6 +1,5 @@
 package it.pagopa.pm.gateway.controller;
 
-import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.type.*;
 import com.fasterxml.jackson.databind.*;
 import feign.*;
@@ -135,7 +134,7 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             EsitoVO esitoVO = response.getReturn().getEsito();
-            log.info("Response from BPay sendPaymentRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
+            log.info("Response from BPay sendPaymentRequest - idPagopa: " + idPagoPa + " - correlationId: " + response.getReturn().getCorrelationId() + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             if (e.getCause() instanceof SocketTimeoutException) {
@@ -168,10 +167,14 @@ public class PaymentTransactionsController {
         return bPayPaymentResponseEntity;
     }
 
-    private void setMdcFields(String mdcFields) throws JsonProcessingException {
-        if (StringUtils.isNotBlank(mdcFields)) {
-            objectMapper.readValue(new String(Base64.decodeBase64(mdcFields)), new TypeReference<HashMap<String, String>>() {
-            }).forEach(MDC::put);
+    private void setMdcFields(String mdcFields) {
+        try {
+            if (StringUtils.isNotBlank(mdcFields)) {
+                objectMapper.readValue(new String(Base64.decodeBase64(mdcFields)), new TypeReference<HashMap<String, String>>() {
+                }).forEach(MDC::put);
+            }
+        } catch (Exception e) {
+            log.error("Exception parsing MDC fields. Raw data: " + mdcFields, e);
         }
     }
 

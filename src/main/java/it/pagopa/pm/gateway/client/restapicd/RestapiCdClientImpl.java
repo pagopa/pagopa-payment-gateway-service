@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.*;
 
 import javax.annotation.*;
+import java.util.*;
+
+import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 
 @Slf4j
 @Component
@@ -30,7 +33,8 @@ public class RestapiCdClientImpl {
 
     public void callTransactionUpdate(Long id, TransactionUpdateRequest request) {
         log.info("Calling PATCH to update transaction " + id);
-        restapiCdClient.updateTransaction(id, new TransactionUpdateRequestData(request));
+        Map<String, Object> headerMap = buildMdcHeader();
+        restapiCdClient.updateTransaction(id, headerMap, new TransactionUpdateRequestData(request));
     }
 
 }

@@ -10,6 +10,7 @@ import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.*;
 import it.pagopa.pm.gateway.repository.*;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
@@ -22,29 +23,35 @@ import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
+import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
+import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
 @Slf4j
 public class PaymentTransactionsController {
 
     @Autowired
-    BancomatPayClient client;
+    private BancomatPayClient client;
 
     @Autowired
-    BPayPaymentResponseRepository bPayPaymentResponseRepository;
+    private BPayPaymentResponseRepository bPayPaymentResponseRepository;
 
     @Autowired
-    RestapiCdClientImpl restapiCdClient;
+    private RestapiCdClientImpl restapiCdClient;
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
-    public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader("X-Correlation-ID") String correlationId) throws RestApiException {
+    public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
+        MDC.clear();
         log.info("START Update transaction request for correlation-id: " + correlationId + ": " + authMessage);
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByCorrelationId(correlationId);
         if (alreadySaved == null) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
-        } else if (Boolean.TRUE.equals(alreadySaved.getIsProcessed())) {
-            throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
+        } else {
+            setMdcFields(alreadySaved.getMdcInfo());
+            if (Boolean.TRUE.equals(alreadySaved.getIsProcessed())) {
+                throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
+            }
         }
         TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OutcomeEnum.OK) ? TX_AUTHORIZED_BANCOMAT_PAY.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
         try {
@@ -65,7 +72,8 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request) throws Exception {
+    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+        setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
         if (alreadySaved != null) {
@@ -75,14 +83,15 @@ public class PaymentTransactionsController {
         BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
         bPayPaymentResponseEntity.setOutcome(true);
         bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
-        executePaymentRequest(request);
+        executePaymentRequest(request, mdcFields);
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
         return bPayPaymentResponseEntity;
     }
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request) throws Exception {
+    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+        setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         log.info("START requestRefundToBancomatPay " + idPagoPa);
         executeRefundRequest(request);
@@ -113,7 +122,7 @@ public class PaymentTransactionsController {
     }
 
     @Async
-    public void executePaymentRequest(BPayPaymentRequest request) throws RestApiException {
+    public void executePaymentRequest(BPayPaymentRequest request, String mdcInfo) throws RestApiException {
         InserimentoRichiestaPagamentoPagoPaResponse response;
         Long idPagoPa = request.getIdPagoPa();
         String guid = UUID.randomUUID().toString();
@@ -124,7 +133,7 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             EsitoVO esitoVO = response.getReturn().getEsito();
-            log.info("Response from BPay sendPaymentRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
+            log.info("Response from BPay sendPaymentRequest - idPagopa: " + idPagoPa + " - correlationId: " + response.getReturn().getCorrelationId() + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             if (e.getCause() instanceof SocketTimeoutException) {
@@ -132,7 +141,7 @@ public class PaymentTransactionsController {
             }
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid);
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid, mdcInfo);
         bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         try {
             TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null);
@@ -144,7 +153,7 @@ public class PaymentTransactionsController {
         log.info("END executePaymentRequest for transaction " + idPagoPa);
     }
 
-    private BPayPaymentResponseEntity convertBpayPaymentResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa, String guid) {
+    private BPayPaymentResponseEntity convertBpayPaymentResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa, String guid, String mdcInfo) {
         ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
         EsitoVO esitoVO = responseReturnVO.getEsito();
         BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
@@ -154,6 +163,7 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setErrorCode(esitoVO.getCodice());
         bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
         bPayPaymentResponseEntity.setClientGuid(guid);
+        bPayPaymentResponseEntity.setMdcInfo(mdcInfo);
         return bPayPaymentResponseEntity;
     }
 

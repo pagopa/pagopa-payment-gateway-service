@@ -36,4 +36,7 @@ public class BPayPaymentResponseEntity {
     @Column(name = "IS_PROCESSED")
     private Boolean isProcessed = false;
 
+    @Column(name = "MDC_INFO")
+    private String mdcInfo;
+
 }

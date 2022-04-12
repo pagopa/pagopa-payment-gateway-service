@@ -2,7 +2,7 @@ package it.pagopa.pm.gateway.client.bpay;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.utils.ClientUtil;
+import it.pagopa.pm.gateway.utils.ClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +34,7 @@ public class BancomatPayClient {
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         requestInserimentoRichiestaPagamentoPagoPaVO.setContesto(createContesto(guid, request.getLanguage()));
         RichiestaPagamentoPagoPaVO richiestaPagamentoPagoPaVO = new RichiestaPagamentoPagoPaVO();
-        richiestaPagamentoPagoPaVO.setIdPSP(request.getIdPsp()!=null? ClientUtil.intesaSPCodiceAbi:null);
+        richiestaPagamentoPagoPaVO.setIdPSP(request.getIdPsp()!=null? ClientUtils.INTESA_SP_CODICE_ABI :null);
         richiestaPagamentoPagoPaVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(request.getAmount()));
         richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getEncryptedTelephoneNumber());
@@ -68,7 +68,7 @@ public class BancomatPayClient {
         ContestoVO contestoVO = new ContestoVO();
         contestoVO.setGuid(guid);
         contestoVO.setToken(TOKEN);
-        contestoVO.setLingua(LinguaEnum.fromValue(ClientUtil.getLanguageCode(language)));
+        contestoVO.setLingua(LinguaEnum.fromValue(ClientUtils.getLanguageCode(language)));
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();
         utenteVO.setCodUtente(null);
         utenteVO.setCodGruppo(GROUP_CODE);

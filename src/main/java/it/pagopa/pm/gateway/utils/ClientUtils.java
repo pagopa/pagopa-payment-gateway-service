@@ -4,13 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Collections;
 
-public class ClientUtil {
+public class ClientUtils {
 
-    public static final String intesaSPCodiceAbi = "03069";
+    private ClientUtils(){}
+
+    public static final String INTESA_SP_CODICE_ABI = "03069";
 
     static final Map<String, String> languageCodeMap;
 
-    static  {
+    static {
         Map<String, String> map = new HashMap<>();
         map.put("IT", "IT");
         map.put("EN", "EN");
@@ -19,11 +21,10 @@ public class ClientUtil {
         map.put("en", "EN");
         map.put("de", "DE");
         languageCodeMap = Collections.unmodifiableMap(map);
-    };
+    }
 
-
-    public static String getLanguageCode(String code){
-        return languageCodeMap.get(code)!=null?languageCodeMap.get(code):"IT";
+    public static String getLanguageCode(String code) {
+        return languageCodeMap.get(code) != null ? languageCodeMap.get(code) : "IT";
     }
 
 }

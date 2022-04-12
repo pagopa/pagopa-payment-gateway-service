@@ -1,7 +1,5 @@
 package it.pagopa.pm.gateway.controller;
 
-import com.fasterxml.jackson.core.type.*;
-import com.fasterxml.jackson.databind.*;
 import feign.*;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
@@ -12,12 +10,10 @@ import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.*;
 import it.pagopa.pm.gateway.repository.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.*;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
-import org.apache.commons.codec.binary.Base64;
 
 import javax.transaction.Transactional;
 
@@ -29,6 +25,7 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
 import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
+import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
 @Slf4j
@@ -42,8 +39,6 @@ public class PaymentTransactionsController {
 
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
@@ -170,17 +165,6 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setClientGuid(guid);
         bPayPaymentResponseEntity.setMdcInfo(mdcInfo);
         return bPayPaymentResponseEntity;
-    }
-
-    private void setMdcFields(String mdcFields) {
-        try {
-            if (StringUtils.isNotBlank(mdcFields)) {
-                objectMapper.readValue(new String(Base64.decodeBase64(mdcFields)), new TypeReference<HashMap<String, String>>() {
-                }).forEach(MDC::put);
-            }
-        } catch (Exception e) {
-            log.error("Exception parsing MDC fields. Raw data: " + mdcFields, e);
-        }
     }
 
 }

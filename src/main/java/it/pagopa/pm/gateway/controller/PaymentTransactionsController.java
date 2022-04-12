@@ -72,7 +72,7 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(MDC_FIELDS) String mdcFields) throws Exception {
+    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
@@ -90,7 +90,7 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(MDC_FIELDS) String mdcFields) throws Exception {
+    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         log.info("START requestRefundToBancomatPay " + idPagoPa);

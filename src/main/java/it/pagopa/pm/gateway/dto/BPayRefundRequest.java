@@ -14,4 +14,6 @@ public class BPayRefundRequest {
 
     String language;
 
+    Integer refundAttempt;
+
 }

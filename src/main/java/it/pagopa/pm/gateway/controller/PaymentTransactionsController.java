@@ -93,36 +93,35 @@ public class PaymentTransactionsController {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         log.info("START requestRefundToBancomatPay " + idPagoPa);
-        executeRefundRequest(request);
-        log.info("END requestRefundToBancomatPay " + idPagoPa);
+        BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
+        if (alreadySaved == null) {
+            throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
+        }
+        String inquiryResponse = requestInquiryToBancomatPay(alreadySaved.getCorrelationId(), idPagoPa, request.getLanguage());
+        log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
+        switch (inquiryResponse) {
+            case "EFF":
+                executeRefundRequest(request);
+                break;
+            case "ERR":
+                break;
+            default:
+                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
     }
 
-
-    @PostMapping(INQUIRY_TRANSACTION_STATUS_BPAY)
-    public String requestInquiryTransactionToBancomatPay(@RequestBody BPayInquiryTransactionStatusRequest request) throws Exception {
+    private String requestInquiryToBancomatPay(String correlationId, Long idPagoPa, String language) throws Exception {
         MDC.clear();
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse;
-        Long idPagoPa = request.getIdPagoPa();
         String guid = UUID.randomUUID().toString();
         log.info("START requestInquiryTransactionToBancomatPay " + idPagoPa);
-
-        inquiryTransactionStatusResponse = client.sendInquiryRequest(request, guid);
+        inquiryTransactionStatusResponse = client.sendInquiryRequest(correlationId, idPagoPa, language, guid);
         if (inquiryTransactionStatusResponse == null) {
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-
         log.info("END requestInquiryTransactionToBancomatPay " + idPagoPa);
         return inquiryTransactionStatusResponse.getReturn().getEsitoPagamento();
-
     }
-
-    private void validateBpayInquiryTransactionStatusRequest(BPayInquiryTransactionStatusRequest bPayInquiryTransactionStatusRequest) throws RestApiException {
-         if (Objects.isNull(bPayInquiryTransactionStatusRequest.getCorrelationId())
-                 && Objects.isNull(bPayInquiryTransactionStatusRequest.getIdPagoPa())){
-             throw new RestApiException(ExceptionsEnum.MISSING_IDPAGOPA_AND_CORRELATIONID);
-         }
-    }
-
 
     @Async
     public void executeRefundRequest(BPayRefundRequest request) throws RestApiException {

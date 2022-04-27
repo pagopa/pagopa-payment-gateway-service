@@ -21,8 +21,7 @@ import java.lang.Exception;
 import java.net.*;
 import java.util.*;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
@@ -97,6 +96,33 @@ public class PaymentTransactionsController {
         executeRefundRequest(request);
         log.info("END requestRefundToBancomatPay " + idPagoPa);
     }
+
+
+    @PostMapping(INQUIRY_TRANSACTION_STATUS_BPAY)
+    public String requestInquiryTransactionToBancomatPay(@RequestBody BPayInquiryTransactionStatusRequest request) throws Exception {
+        MDC.clear();
+        InquiryTransactionStatusResponse inquiryTransactionStatusResponse;
+        Long idPagoPa = request.getIdPagoPa();
+        String guid = UUID.randomUUID().toString();
+        log.info("START requestInquiryTransactionToBancomatPay " + idPagoPa);
+
+        inquiryTransactionStatusResponse = client.sendInquiryRequest(request, guid);
+        if (inquiryTransactionStatusResponse == null) {
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
+
+        log.info("END requestInquiryTransactionToBancomatPay " + idPagoPa);
+        return inquiryTransactionStatusResponse.getReturn().getEsitoPagamento();
+
+    }
+
+    private void validateBpayInquiryTransactionStatusRequest(BPayInquiryTransactionStatusRequest bPayInquiryTransactionStatusRequest) throws RestApiException {
+         if (Objects.isNull(bPayInquiryTransactionStatusRequest.getCorrelationId())
+                 && Objects.isNull(bPayInquiryTransactionStatusRequest.getIdPagoPa())){
+             throw new RestApiException(ExceptionsEnum.MISSING_IDPAGOPA_AND_CORRELATIONID);
+         }
+    }
+
 
     @Async
     public void executeRefundRequest(BPayRefundRequest request) throws RestApiException {

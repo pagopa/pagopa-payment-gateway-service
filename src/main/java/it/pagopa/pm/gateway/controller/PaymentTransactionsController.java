@@ -89,7 +89,7 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public Boolean requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         String guid = UUID.randomUUID().toString();
@@ -101,17 +101,15 @@ public class PaymentTransactionsController {
         }
         String inquiryResponse = inquiryTransactionToBancomatPay(request, guid);
         log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
-        boolean stornoResponse = false;
         switch (inquiryResponse) {
             case "EFF":
-                stornoResponse = executeRefundRequest(request, guid);
+                executeRefundRequest(request, guid);
                 break;
             case "ERR":
                 break;
             default:
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        return stornoResponse;
     }
 
 
@@ -132,7 +130,7 @@ public class PaymentTransactionsController {
 
 
     @Async
-    public boolean executeRefundRequest(BPayRefundRequest request, String guid) throws RestApiException {
+    public void executeRefundRequest(BPayRefundRequest request, String guid) throws RestApiException {
         StornoPagamentoResponse response;
         Long idPagoPa = request.getIdPagoPa();
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
@@ -142,14 +140,15 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             EsitoVO esitoVO = response.getReturn().getEsito();
-            log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.isEsito() + " - codice esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
-            log.info("END executeRefundRequest " + idPagoPa);
-            return esitoVO.isEsito();
-
+            log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
+            if (Boolean.FALSE.equals(esitoVO.isEsito())) {
+                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            }
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
+        log.info("END executeRefundRequest " + idPagoPa);
     }
 
     @Async

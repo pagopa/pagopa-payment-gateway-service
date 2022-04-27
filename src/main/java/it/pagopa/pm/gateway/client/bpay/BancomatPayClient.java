@@ -79,4 +79,25 @@ public class BancomatPayClient {
         return contestoVO;
     }
 
+    public InquiryTransactionStatusResponse sendInquiryRequest(BPayInquiryTransactionStatusRequest inquiryTransactionStatusRequest, String guid) {
+        log.info("START sendInquiryRequest");
+        InquiryTransactionStatus inquiryTransactionStatus = new InquiryTransactionStatus();
+        RequestInquiryTransactionStatusVO requestInquiryTransactionStatusVO = new RequestInquiryTransactionStatusVO();
+        requestInquiryTransactionStatusVO.setCorrelationId(inquiryTransactionStatusRequest.getCorrelationId());
+        requestInquiryTransactionStatusVO.setIdPagoPa(requestInquiryTransactionStatusVO.getIdPagoPa());
+        ContestoVO contestoVO = createContesto(guid, inquiryTransactionStatusRequest.getLanguage());
+        requestInquiryTransactionStatusVO.setContesto(contestoVO);
+        inquiryTransactionStatus.setArg0(requestInquiryTransactionStatusVO);
+        log.info("Inquiry transaction status request to be sent to BPay: " + inquiryTransactionStatus);
+        JAXBElement<InquiryTransactionStatus> objectFactoryInquiryTransactionStatus = objectFactory.createInquiryTransactionStatus(inquiryTransactionStatus);
+        JAXBElement<InquiryTransactionStatusResponse> inquiryTransactionStatusResponseJAXBElement;
+        inquiryTransactionStatusResponseJAXBElement = (JAXBElement<InquiryTransactionStatusResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInquiryTransactionStatus);
+        InquiryTransactionStatusResponse inquiryTransactionStatusResponse = inquiryTransactionStatusResponseJAXBElement.getValue();
+        log.info("END sendInquiryRequest");
+        return inquiryTransactionStatusResponse;
+
+    }
+
+
+
 }

@@ -6,9 +6,13 @@ public class ApiPaths {
 
     private static final String REQUEST_PAYMENTS = "/request-payments";
     private static final String REQUEST_REFUNDS = "/request-refunds";
+    private static final String INQUIRY_TRANSACTION_STATUS = "/inquiry-transaction-status";
+
     private static final String BPAY = "/bancomatpay";
     public static final String REQUEST_PAYMENTS_BPAY = REQUEST_PAYMENTS + BPAY;
     public static final String REQUEST_REFUNDS_BPAY = REQUEST_REFUNDS + BPAY;
+    public static final String INQUIRY_TRANSACTION_STATUS_BPAY = INQUIRY_TRANSACTION_STATUS + BPAY;
+
     public static final String HEALTHCHECK = "/healthcheck";
 
 }

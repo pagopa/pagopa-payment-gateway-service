@@ -89,21 +89,17 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+    public Boolean requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         log.info("START requestRefundToBancomatPay " + idPagoPa);
-        executeRefundRequest(request);
-        log.info("END requestRefundToBancomatPay " + idPagoPa);
+        return executeRefundRequest(request);
     }
 
 
-    @PostMapping(INQUIRY_TRANSACTION_STATUS_BPAY)
-    public String requestInquiryTransactionToBancomatPay(@RequestBody BPayInquiryTransactionStatusRequest request) throws Exception {
-        MDC.clear();
+    private String inquiryTransactionToBancomatPay(BPayRefundRequest request, String guid) throws Exception {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse;
         Long idPagoPa = request.getIdPagoPa();
-        String guid = UUID.randomUUID().toString();
         log.info("START requestInquiryTransactionToBancomatPay " + idPagoPa);
 
         inquiryTransactionStatusResponse = client.sendInquiryRequest(request, guid);
@@ -116,19 +112,13 @@ public class PaymentTransactionsController {
 
     }
 
-    private void validateBpayInquiryTransactionStatusRequest(BPayInquiryTransactionStatusRequest bPayInquiryTransactionStatusRequest) throws RestApiException {
-         if (Objects.isNull(bPayInquiryTransactionStatusRequest.getCorrelationId())
-                 && Objects.isNull(bPayInquiryTransactionStatusRequest.getIdPagoPa())){
-             throw new RestApiException(ExceptionsEnum.MISSING_IDPAGOPA_AND_CORRELATIONID);
-         }
-    }
-
 
     @Async
-    public void executeRefundRequest(BPayRefundRequest request) throws RestApiException {
+    public boolean executeRefundRequest(BPayRefundRequest request) throws RestApiException {
         StornoPagamentoResponse response;
         Long idPagoPa = request.getIdPagoPa();
         String guid = UUID.randomUUID().toString();
+
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
             response = client.sendRefundRequest(request, guid);
@@ -136,15 +126,15 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             EsitoVO esitoVO = response.getReturn().getEsito();
-            log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
-            if (Boolean.FALSE.equals(esitoVO.isEsito())) {
-                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
-            }
+            log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.isEsito() + " - codice esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
+            log.info("END executeRefundRequest " + idPagoPa);
+
+            return esitoVO.isEsito();
+
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        log.info("END executeRefundRequest " + idPagoPa);
     }
 
     @Async

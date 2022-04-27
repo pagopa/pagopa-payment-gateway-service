@@ -9,8 +9,7 @@ public enum ExceptionsEnum {
     TRANSACTION_ALREADY_PROCESSED("Transaction already processed", HttpStatus.UNAUTHORIZED),
     RESTAPI_CD_CLIENT_ERROR ("Exception during call to RestapiCD", HttpStatus.FAILED_DEPENDENCY),
     TRANSACTION_NOT_FOUND("Transaction not found", HttpStatus.NOT_FOUND),
-    TIMEOUT("Timeout", HttpStatus.GATEWAY_TIMEOUT),
-    MISSING_IDPAGOPA_AND_CORRELATIONID("Missing both idPagoPa and CorrelationId in Request", HttpStatus.BAD_REQUEST);
+    TIMEOUT("Timeout", HttpStatus.GATEWAY_TIMEOUT);
 
     @Getter
     private final String description;

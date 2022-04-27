@@ -89,11 +89,25 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public Boolean requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         log.info("START requestRefundToBancomatPay " + idPagoPa);
-        return executeRefundRequest(request);
+        BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
+        if (alreadySaved == null) {
+            throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
+        }
+        String inquiryResponse = requestInquiryToBancomatPay(alreadySaved.getCorrelationId(), idPagoPa, request.getLanguage());
+        log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
+        switch (inquiryResponse) {
+            case "EFF":
+                executeRefundRequest(request);
+                break;
+            case "ERR":
+                break;
+            default:
+                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
     }
 
 
@@ -118,7 +132,6 @@ public class PaymentTransactionsController {
         StornoPagamentoResponse response;
         Long idPagoPa = request.getIdPagoPa();
         String guid = UUID.randomUUID().toString();
-
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
             response = client.sendRefundRequest(request, guid);
@@ -135,6 +148,7 @@ public class PaymentTransactionsController {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
+        log.info("END executeRefundRequest " + idPagoPa);
     }
 
     @Async

@@ -92,18 +92,17 @@ public class PaymentTransactionsController {
     public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
-        String guid = UUID.randomUUID().toString();
 
         log.info("START requestRefundToBancomatPay " + idPagoPa);
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
         if (alreadySaved == null) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
         }
-        String inquiryResponse = inquiryTransactionToBancomatPay(request, guid);
+        String inquiryResponse = inquiryTransactionToBancomatPay(request);
         log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
         switch (inquiryResponse) {
             case "EFF":
-                executeRefundRequest(request, guid);
+                executeRefundRequest(request);
                 break;
             case "ERR":
                 break;
@@ -113,9 +112,11 @@ public class PaymentTransactionsController {
     }
 
 
-    private String inquiryTransactionToBancomatPay(BPayRefundRequest request, String guid) throws Exception {
+    private String inquiryTransactionToBancomatPay(BPayRefundRequest request) throws Exception {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse;
         Long idPagoPa = request.getIdPagoPa();
+        String guid = UUID.randomUUID().toString();
+
         log.info("START requestInquiryTransactionToBancomatPay " + idPagoPa);
 
         inquiryTransactionStatusResponse = client.sendInquiryRequest(request, guid);
@@ -130,9 +131,11 @@ public class PaymentTransactionsController {
 
 
     @Async
-    public void executeRefundRequest(BPayRefundRequest request, String guid) throws RestApiException {
+    public void executeRefundRequest(BPayRefundRequest request) throws RestApiException {
         StornoPagamentoResponse response;
         Long idPagoPa = request.getIdPagoPa();
+        String guid = UUID.randomUUID().toString();
+
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
             response = client.sendRefundRequest(request, guid);

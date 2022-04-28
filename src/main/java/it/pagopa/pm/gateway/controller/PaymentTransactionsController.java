@@ -1,28 +1,31 @@
 package it.pagopa.pm.gateway.controller;
 
-import feign.*;
+import feign.FeignException;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.client.restapicd.*;
+import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.enums.*;
+import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
-import it.pagopa.pm.gateway.exception.*;
-import it.pagopa.pm.gateway.repository.*;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
+import it.pagopa.pm.gateway.exception.RestApiException;
+import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.*;
-import org.springframework.beans.factory.annotation.*;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
-
 import java.lang.Exception;
-import java.net.*;
-import java.util.*;
+import java.net.SocketTimeoutException;
+import java.util.Objects;
+import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.*;
-import static it.pagopa.pm.gateway.constant.Headers.*;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
+import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
+import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
@@ -30,6 +33,8 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Slf4j
 public class PaymentTransactionsController {
 
+    private static final String INQUIRY_RESPONSE_EFF = "EFF";
+    private static final String INQUIRY_RESPONSE_ERR = "ERR";
     @Autowired
     private BancomatPayClient client;
 
@@ -95,16 +100,16 @@ public class PaymentTransactionsController {
 
         log.info("START requestRefundToBancomatPay " + idPagoPa);
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
-        if (alreadySaved == null) {
+        if (Objects.isNull(alreadySaved)) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
         }
         String inquiryResponse = inquiryTransactionToBancomatPay(request);
         log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
         switch (inquiryResponse) {
-            case "EFF":
+            case INQUIRY_RESPONSE_EFF:
                 executeRefundRequest(request);
                 break;
-            case "ERR":
+            case INQUIRY_RESPONSE_ERR:
                 break;
             default:
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);

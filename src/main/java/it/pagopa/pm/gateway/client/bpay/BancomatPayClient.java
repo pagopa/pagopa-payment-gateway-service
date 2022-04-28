@@ -57,6 +57,8 @@ public class BancomatPayClient {
         requestStornoPagamentoVO.setContesto(createContesto(guid, request.getLanguage()));
         requestStornoPagamentoVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
         requestStornoPagamentoVO.setCausale(request.getSubject());
+        Integer refundAttempt = request.getRefundAttempt();
+        requestStornoPagamentoVO.setTipoStorno(refundAttempt == null || refundAttempt == 0 ? "01" : null);
         StornoPagamento stornoPagamento = new StornoPagamento();
         stornoPagamento.setArg0(requestStornoPagamentoVO);
         log.info("Refund request to be sent to BPay: " + stornoPagamento);
@@ -78,5 +80,26 @@ public class BancomatPayClient {
         contestoVO.setUtenteAttivo(utenteVO);
         return contestoVO;
     }
+
+    public InquiryTransactionStatusResponse sendInquiryRequest(BPayRefundRequest bPayRefundRequest, String guid) {
+        log.info("START sendInquiryRequest");
+        InquiryTransactionStatus inquiryTransactionStatus = new InquiryTransactionStatus();
+        RequestInquiryTransactionStatusVO requestInquiryTransactionStatusVO = new RequestInquiryTransactionStatusVO();
+        requestInquiryTransactionStatusVO.setCorrelationId(null);
+        requestInquiryTransactionStatusVO.setIdPagoPa(bPayRefundRequest.getIdPagoPa().toString());
+        ContestoVO contestoVO = createContesto(guid, bPayRefundRequest.getLanguage());
+        requestInquiryTransactionStatusVO.setContesto(contestoVO);
+        inquiryTransactionStatus.setArg0(requestInquiryTransactionStatusVO);
+        log.info("Inquiry transaction status request to be sent to BPay: " + inquiryTransactionStatus);
+        JAXBElement<InquiryTransactionStatus> objectFactoryInquiryTransactionStatus = objectFactory.createInquiryTransactionStatus(inquiryTransactionStatus);
+        JAXBElement<InquiryTransactionStatusResponse> inquiryTransactionStatusResponseJAXBElement;
+        inquiryTransactionStatusResponseJAXBElement = (JAXBElement<InquiryTransactionStatusResponse>) webServiceTemplate.marshalSendAndReceive(objectFactoryInquiryTransactionStatus);
+        InquiryTransactionStatusResponse inquiryTransactionStatusResponse = inquiryTransactionStatusResponseJAXBElement.getValue();
+        log.info("END sendInquiryRequest");
+        return inquiryTransactionStatusResponse;
+
+    }
+
+
 
 }

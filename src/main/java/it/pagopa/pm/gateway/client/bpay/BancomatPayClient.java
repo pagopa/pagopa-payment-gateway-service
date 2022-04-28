@@ -57,7 +57,8 @@ public class BancomatPayClient {
         requestStornoPagamentoVO.setContesto(createContesto(guid, request.getLanguage()));
         requestStornoPagamentoVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
         requestStornoPagamentoVO.setCausale(request.getSubject());
-        requestStornoPagamentoVO.setTipoStorno(request.getRefundAttempt() == 0 ? "01" : null);
+        Integer refundAttempt = request.getRefundAttempt();
+        requestStornoPagamentoVO.setTipoStorno(refundAttempt == null || refundAttempt == 0 ? "01" : null);
         StornoPagamento stornoPagamento = new StornoPagamento();
         stornoPagamento.setArg0(requestStornoPagamentoVO);
         log.info("Refund request to be sent to BPay: " + stornoPagamento);

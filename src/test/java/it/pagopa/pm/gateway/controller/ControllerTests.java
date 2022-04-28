@@ -9,6 +9,7 @@ import it.pagopa.pm.gateway.client.bpay.generated.ObjectFactory;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.ApiPaths;
 import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.BPayRefundRequest;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
@@ -187,6 +188,70 @@ public class ControllerTests {
             throw (Exception) e.getCause();
         }
     }
+
+   @Test
+   public void givenBPayPaymentResponseEntityNotFound_shouldReturnTransactionNotFound() throws Exception {
+       thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_NOT_FOUND)));
+       given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(null);
+
+       try {
+           mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                   .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                   .contentType(MediaType.APPLICATION_JSON));
+       } catch (NestedServletException | JsonProcessingException e) {
+           throw (Exception) e.getCause();
+       }
+   }
+
+    @Test
+    public void givenBPayRefundRequestWithNoReturn_shouldReturnGenericError() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
+        given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(false));
+
+        try {
+            mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                    .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+    }
+
+
+    @Test
+    public void givenStornoPagamentoResponseWithNoReturn_shouldReturnGenericError() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
+        given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true));
+        given(client.sendRefundRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.stornoPagamentoResponse(false, true));
+
+        try {
+            mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                    .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+    }
+
+
+    @Test
+    public void givenStornoPagamentoResponseWithFalseEsito_shouldReturnGenericError() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
+        given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true));
+        given(client.sendRefundRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.stornoPagamentoResponse(true, false));
+
+        try {
+            mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                    .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+    }
+
 
 
 }

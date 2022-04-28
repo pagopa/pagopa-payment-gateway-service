@@ -97,6 +97,41 @@ public class ValidBeans {
              return  transactionUpdateRequest;
     }
 
+    public static BPayRefundRequest bPayRefundRequest(){
+        BPayRefundRequest bPayRefundRequest = new BPayRefundRequest();
+        bPayRefundRequest.setIdPagoPa(1L);
+        bPayRefundRequest.setSubject(null);
+        bPayRefundRequest.setLanguage("IT");
+        bPayRefundRequest.setRefundAttempt(0);
+
+        return bPayRefundRequest;
+
+    }
+
+    public static InquiryTransactionStatusResponse inquiryTransactionStatusResponse(boolean hasReturn){
+        InquiryTransactionStatusResponse inquiryTransactionStatusResponse = new InquiryTransactionStatusResponse();
+        ResponseInquiryTransactionStatusVO responseInquiryTransactionStatusVO = new ResponseInquiryTransactionStatusVO();
+        responseInquiryTransactionStatusVO.setEsitoPagamento("EFF");
+        if (hasReturn)
+        inquiryTransactionStatusResponse.setReturn(responseInquiryTransactionStatusVO);
+
+        return inquiryTransactionStatusResponse;
+
+    }
+
+    public static StornoPagamentoResponse stornoPagamentoResponse(boolean hasReturn, boolean esito){
+        StornoPagamentoResponse stornoPagamentoResponse = new StornoPagamentoResponse();
+        ResponseStornoPagamentoVO responseStornoPagamentoVO = new ResponseStornoPagamentoVO();
+        EsitoVO esitoVO = new EsitoVO();
+        esitoVO.setEsito(esito);
+        responseStornoPagamentoVO.setEsito(esitoVO);
+        if (hasReturn)
+        stornoPagamentoResponse.setReturn(responseStornoPagamentoVO);
+
+        return stornoPagamentoResponse;
+    }
+
+
 }
 
 

@@ -3,20 +3,20 @@ info:
   title: OpenAPI definition
   version: v0
 servers:
-- url: http://localhost:8080/
-  description: Generated server url
+  - url: http://localhost:8080/
+    description: Generated server url
 paths:
   /request-payments/bancomatpay:
     put:
       tags:
-      - payment-transactions-controller
+        - payment-transactions-controller
       operationId: updateTransaction
       parameters:
-      - name: X-Correlation-ID
-        in: header
-        required: true
-        schema:
-          type: string
+        - name: X-Correlation-ID
+          in: header
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -27,36 +27,48 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: '#/components/schemas/ACKMessage'
         "400":
           description: Bad Request
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "401":
           description: Unauthorized request correlationId already processes
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "404":
           description: Unknown correlationId
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "424":
           description: Error in transaction patch
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "500":
           description: Generic Error
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "504":
           description: Timeout
+          content:
+            application/json:
               schema:
-                $ref: '#/components/schemas/Error'                
+                $ref: '#/components/schemas/Error'
     post:
       tags:
-      - payment-transactions-controller
+        - payment-transactions-controller
       operationId: requestPaymentToBancomatPay
       requestBody:
         content:
@@ -73,50 +85,96 @@ paths:
                 $ref: '#/components/schemas/BPayPaymentResponseEntity'
         "400":
           description: Bad Request mandatory parameters missing
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "401":
           description: transactionId already processed
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "500":
           description: Generic Error
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         "504":
           description: Timeout
+          content:
+            application/json:
               schema:
-                $ref: '#/components/schemas/Error'        
+                $ref: '#/components/schemas/Error'
+  /request-refunds/bancomatpay:
+    post:
+      tags:
+        - payment-transactions-controller
+      operationId: refundTransaction
+      parameters:
+        - name: X-Correlation-ID
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BPayRefundRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Generic Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "504":
+          description: Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     AuthMessage:
       required:
-      - auth_outcome
+        - auth_outcome
       type: object
       properties:
         auth_outcome:
           type: string
           enum:
-          - OK
-          - KO
+            - OK
+            - KO
         auth_code:
           type: string
     ACKMessage:
       required:
-      - outcome
+        - outcome
       type: object
       properties:
         outcome:
           type: string
           enum:
-          - OK
-          - KO
+            - OK
+            - KO
     BPayPaymentRequest:
       required:
-      - amount
-      - encryptedTelephoneNumber
-      - idPagoPa
-      - idPsp
+        - amount
+        - encryptedTelephoneNumber
+        - idPagoPa
+        - idPsp
       type: object
       properties:
         idPsp:
@@ -130,6 +188,21 @@ components:
         subject:
           type: string
         encryptedTelephoneNumber:
+          type: string
+        language:
+          type: string
+    BPayRefundRequest:
+      required:
+        - idPagoPa
+      type: object
+      properties:
+        idPagoPa:
+          type: integer
+          format: int64
+        refundAttempt:
+          type: number
+          format: integer
+        subject:
           type: string
         language:
           type: string
@@ -155,13 +228,13 @@ components:
         isProcessed:
           type: boolean
     Error:
-        type: object
-        properties:
-          code:
-            type: integer
-            format: int64
-          message:
-            type: string
-        required:
-            - code
-            - message
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int64
+        message:
+          type: string
+      required:
+        - code
+        - message

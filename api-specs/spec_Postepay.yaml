@@ -294,8 +294,6 @@ components:
       - shopTransactionId
       - amount
       - currency
-      - buyerName
-      - buyerEmail
       - paymentChannel
       - authType
       - responseURLs

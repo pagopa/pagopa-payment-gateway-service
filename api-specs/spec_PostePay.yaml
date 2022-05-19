@@ -1,0 +1,167 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+  - url: http://localhost:8080/
+    description: Generated server url
+paths:
+  /request-payments/postepay:
+    post:
+      tags:
+        - payment-transactions-controller
+      operationId: requestPaymentToPostePay
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostePayAuthRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PostePayAuthResponseEntity'
+        "400":
+          description: Bad Request - missing mandatory parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: transactionId already processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Generic Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "504":
+          description: Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - payment-transactions-controller
+      operationId: authorizationOutcome
+      parameters:
+        - name: idPostePay
+          description: PostePay identification code
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthMessage'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ACKMessage'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized - idPostePay already processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Unknown idPostePay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Generic Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "504":
+          description: Request timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    AuthMessage:
+      required:
+        - auth_outcome
+      type: object
+      properties:
+        auth_outcome:
+          type: string
+          enum:
+            - OK
+            - KO
+        auth_code:
+          type: string
+    ACKMessage:
+      required:
+        - outcome
+      type: object
+      properties:
+        outcome:
+          type: string
+          enum:
+            - OK
+            - KO
+    PostePayAuthRequest:
+      required:
+        - grandTotal
+        - transactionId
+        - paymentChannel
+        - name
+        - email_notice
+      type: object
+      properties:
+        grandTotal:
+          type: number
+          format: double
+        transactionId:
+          type: integer
+          format: int64
+        paymentChannel:
+          type: string
+        name:
+          type: string
+        email_notice:
+          type: string
+    PostePayAuthResponseEntity:
+      type: object
+      required:
+        - redirectUrl
+      properties:
+        redirectUrl:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int64
+        message:
+          type: string
+      required:
+        - code
+        - message

@@ -10,7 +10,6 @@
     <groupId>it.pagopa.pm.gateway</groupId>
     <artifactId>pagopa-payment-transactions-gateway</artifactId>
     <version>${revision}</version>
-    <packaging>war</packaging>
     <name>pagopa-payment-transactions-gateway</name>
     <description>Payment transactions gateway for the pagoPA - Payment Manager</description>
     <properties>
@@ -262,6 +261,9 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+            <properties>
+                <packaging.type>war</packaging.type>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.springframework.boot</groupId>
@@ -283,6 +285,9 @@
         </profile>
         <profile>
             <id>local</id>
+            <properties>
+                <packaging.type>jar</packaging.type>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.springframework.boot</groupId>

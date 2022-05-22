@@ -20,31 +20,31 @@ import java.util.Objects;
 @EnableJpaRepositories(transactionManagerRef = "transactionManager")
 public class CoreDataSourceConfiguration {
 
-    // @Autowired
-    // private Environment env;
+    @Autowired
+    private Environment env;
 
-    // @Bean
-    // public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
-    //     LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-    //     em.setDataSource(productDataSource());
-    //     em.setPackagesToScan("it.pagopa.pm.gateway.entity");
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
+        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+        // em.setDataSource(productDataSource());
+        em.setPackagesToScan("it.pagopa.pm.gateway.entity");
 
-    //     HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-    //     em.setJpaVendorAdapter(vendorAdapter);
-    //     HashMap<String, Object> properties = new HashMap<>();
-    //     properties.put("hibernate.dialect", "org.hibernate.dialect.Oracle12cDialect");
-    //     em.setJpaPropertyMap(properties);
+        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        em.setJpaVendorAdapter(vendorAdapter);
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put("hibernate.dialect", "org.hibernate.dialect.Oracle12cDialect");
+        em.setJpaPropertyMap(properties);
 
-    //     return em;
-    // }
+        return em;
+    }
 
-    // @Bean
-    // public PlatformTransactionManager transactionManager() throws NamingException {
-    //     JpaTransactionManager transactionManager = new JpaTransactionManager();
-    //     transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+    @Bean
+    public PlatformTransactionManager transactionManager() throws NamingException {
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
 
-    //     return transactionManager;
-    // }
+        return transactionManager;
+    }
 
     // @Bean
     // public DataSource productDataSource() throws NamingException {

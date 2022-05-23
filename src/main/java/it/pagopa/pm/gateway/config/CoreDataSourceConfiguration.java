@@ -1,56 +1,56 @@
-package it.pagopa.pm.gateway.config;
+// package it.pagopa.pm.gateway.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-import org.springframework.data.jpa.repository.config.*;
-import org.springframework.jndi.JndiTemplate;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-import org.springframework.transaction.PlatformTransactionManager;
+// import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.context.annotation.Bean;
+// import org.springframework.context.annotation.Configuration;
+// import org.springframework.core.env.Environment;
+// import org.springframework.data.jpa.repository.config.*;
+// import org.springframework.jndi.JndiTemplate;
+// import org.springframework.orm.jpa.JpaTransactionManager;
+// import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+// import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+// import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.naming.NamingException;
-import javax.sql.DataSource;
-import java.util.HashMap;
-import java.util.Objects;
+// import javax.naming.NamingException;
+// import javax.sql.DataSource;
+// import java.util.HashMap;
+// import java.util.Objects;
 
-@Configuration
-@EnableJpaRepositories(transactionManagerRef = "transactionManager")
-public class CoreDataSourceConfiguration {
+// @Configuration
+// @EnableJpaRepositories(transactionManagerRef = "transactionManager")
+// public class CoreDataSourceConfiguration {
 
-    @Autowired
-    private Environment env;
+//     @Autowired
+//     private Environment env;
 
-    @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
-        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        // em.setDataSource(productDataSource());
-        em.setPackagesToScan("it.pagopa.pm.gateway.entity");
+//     @Bean
+//     public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
+//         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+//         // em.setDataSource(productDataSource());
+//         em.setPackagesToScan("it.pagopa.pm.gateway.entity");
 
-        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-        em.setJpaVendorAdapter(vendorAdapter);
-        HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        em.setJpaPropertyMap(properties);
+//         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+//         em.setJpaVendorAdapter(vendorAdapter);
+//         HashMap<String, Object> properties = new HashMap<>();
+//         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+//         em.setJpaPropertyMap(properties);
 
-        return em;
-    }
+//         return em;
+//     }
 
-    @Bean
-    public PlatformTransactionManager transactionManager() throws NamingException {
-        JpaTransactionManager transactionManager = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+//     @Bean
+//     public PlatformTransactionManager transactionManager() throws NamingException {
+//         JpaTransactionManager transactionManager = new JpaTransactionManager();
+//         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
 
-        return transactionManager;
-    }
+//         return transactionManager;
+//     }
 
-    // @Bean
-    // public DataSource productDataSource() throws NamingException {
-    //     return (DataSource) new JndiTemplate().lookup(Objects.requireNonNull(
-    //             env.getProperty("pagopa.datasource.jndi.name")));
-    // }
+//     // @Bean
+//     // public DataSource productDataSource() throws NamingException {
+//     //     return (DataSource) new JndiTemplate().lookup(Objects.requireNonNull(
+//     //             env.getProperty("pagopa.datasource.jndi.name")));
+//     // }
 
     
-}
+// }

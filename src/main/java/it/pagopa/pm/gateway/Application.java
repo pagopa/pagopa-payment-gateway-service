@@ -12,13 +12,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.*;
 
 @ComponentScan(basePackages = "it.pagopa.pm.gateway")
-@EnableAutoConfiguration(exclude = DataSourceAutoConfiguration.class)
+@EnableAutoConfiguration
 @EntityScan({"it.pagopa.pm.gateway.entity"})
 @EnableJpaRepositories({"it.pagopa.pm.gateway.repository"})
 @Configuration
 public class Application extends SpringBootServletInitializer {
 
-	private static final Class<CoreDataSourceConfiguration> coreDataSourceConfiguration = CoreDataSourceConfiguration.class;
+	// private static final Class<CoreDataSourceConfiguration> coreDataSourceConfiguration = CoreDataSourceConfiguration.class;
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -26,7 +26,7 @@ public class Application extends SpringBootServletInitializer {
 
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		return application.sources(Application.class, coreDataSourceConfiguration);
+		return application.sources(Application.class);
 	}
 
 }

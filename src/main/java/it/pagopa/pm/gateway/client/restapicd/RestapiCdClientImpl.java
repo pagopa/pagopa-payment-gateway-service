@@ -4,6 +4,7 @@ import feign.*;
 import feign.jackson.*;
 import feign.okhttp.*;
 import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import lombok.extern.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.*;
@@ -35,6 +36,12 @@ public class RestapiCdClientImpl {
         log.info("Calling PATCH to update transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
         restapiCdClient.updateTransaction(id, headerMap, new TransactionUpdateRequestData(request));
+    }
+
+    public void callClosePayment(Long id, boolean outcome) {
+        log.info("Calling POST to close payment for transaction " + id);
+        Map<String, Object> headerMap = buildMdcHeader();
+        restapiCdClient.closePayment(id, headerMap, outcome);
     }
 
 }

@@ -1,18 +1,29 @@
 package it.pagopa.pm.gateway.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
+import it.pagopa.pm.gateway.client.postepay.PostePayClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.PaymentType;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
+import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
+import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.openapitools.client.ApiException;
+import org.openapitools.client.ApiResponse;
+import org.openapitools.client.api.PaymentManagerControllerApi;
+import org.openapitools.client.model.*;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +33,8 @@ import java.net.SocketTimeoutException;
 import java.util.Objects;
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
-import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
-import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
+import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
@@ -33,16 +42,34 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Slf4j
 public class PaymentTransactionsController {
 
+
+    @Value("${postePay.client.shop.id}")
+    public String SHOP_ID;
+    @Value("${postePay.client.auth.type}")
+    public String AUTH_TYPE;
+
+
     private static final String INQUIRY_RESPONSE_EFF = "EFF";
     private static final String INQUIRY_RESPONSE_ERR = "ERR";
     @Autowired
-    private BancomatPayClient client;
+    private BancomatPayClient bancomatPayClient;
+
+    @Autowired
+    private PostePayClient postePayClient;
 
     @Autowired
     private BPayPaymentResponseRepository bPayPaymentResponseRepository;
 
     @Autowired
+    private PaymentRequestRepository paymentRequestRepository;
+
+    @Autowired
     private RestapiCdClientImpl restapiCdClient;
+
+    @Autowired
+    private PaymentManagerControllerApi paymentManagerControllerApi;
+
+    private ObjectMapper mapper = new ObjectMapper();
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
@@ -124,7 +151,7 @@ public class PaymentTransactionsController {
 
         log.info("START requestInquiryTransactionToBancomatPay " + idPagoPa);
 
-        inquiryTransactionStatusResponse = client.sendInquiryRequest(request, guid);
+        inquiryTransactionStatusResponse = bancomatPayClient.sendInquiryRequest(request, guid);
         if (inquiryTransactionStatusResponse == null || inquiryTransactionStatusResponse.getReturn() == null) {
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
@@ -143,7 +170,7 @@ public class PaymentTransactionsController {
 
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
-            response = client.sendRefundRequest(request, guid);
+            response = bancomatPayClient.sendRefundRequest(request, guid);
             if (response == null || response.getReturn().getEsito() == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
@@ -166,7 +193,7 @@ public class PaymentTransactionsController {
         String guid = UUID.randomUUID().toString();
         log.info("START executePaymentRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
-            response = client.sendPaymentRequest(request, guid);
+            response = bancomatPayClient.sendPaymentRequest(request, guid);
             if (response == null || response.getReturn() == null || response.getReturn().getEsito() == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
@@ -204,5 +231,125 @@ public class PaymentTransactionsController {
         bPayPaymentResponseEntity.setMdcInfo(mdcInfo);
         return bPayPaymentResponseEntity;
     }
+
+    @Transactional
+    @PostMapping(REQUEST_PAYMENT_POSTEPAY)
+    public String requestPaymentPostepay(@RequestBody PostePayAuthRequest postePayAuthRequest, @RequestHeader(value = CLIENT_ID) String clientId) throws RestApiException {
+
+        Long idTransaction = postePayAuthRequest.getTransactionId();
+        PaymentRequestEntity alreadySaved = paymentRequestRepository.findByIdTransaction(idTransaction);
+
+        if (alreadySaved != null) {
+            throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
+        }
+
+        log.info("START requestPaymentPostepay " + idTransaction);
+        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
+        paymentRequestEntity.setType(PaymentType.POSTEPAY.name());
+        paymentRequestEntity.setIdTransaction(idTransaction);
+
+        String json = null;
+        try {
+            json = mapper.writeValueAsString(postePayAuthRequest);
+            log.debug("Resulting postePayAuthRequest JSON string = " + json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        paymentRequestEntity.setRequestJson(json);
+        paymentRequestRepository.save(paymentRequestEntity);
+
+        try {
+            executePostePayPayment(postePayAuthRequest, clientId);
+        } catch (Exception e){
+
+
+        }
+
+
+        log.info("END requestPaymentPostepay " + idTransaction);
+
+        return "redirectUrl";
+
+    }
+
+    @Async
+    private void executePostePayPayment(PostePayAuthRequest postePayAuthRequest, String clientId) throws RestApiException {
+        Long idTransaction = postePayAuthRequest.getTransactionId();
+        log.info("START executePostePayPayment for transaction " + idTransaction);
+
+        CreatePaymentRequest createPaymentRequest = mapPostePayAuthRequestToCreatePaymentRequest(postePayAuthRequest, clientId);
+
+        try {
+            ApiResponse<InlineResponse200> apiResponse =  paymentManagerControllerApi.apiV1PaymentCreatePostWithHttpInfo(createPaymentRequest);
+
+            if (apiResponse == null|| apiResponse.getData()==null) {
+                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            }
+            InlineResponse200 inlineResponse200 = apiResponse.getData();
+
+            log.info("Response from PostePay createPayment - idTransaction: " + idTransaction + " - paymentID: "
+                    + inlineResponse200.getPaymentID() + " - userRedirectUrl: " + inlineResponse200.getUserRedirectURL());
+        } catch (Exception e) {
+            log.error("Exception calling PostePay with idTransaction: " + idTransaction, e);
+            if (e.getCause() instanceof SocketTimeoutException) {
+                throw new RestApiException(ExceptionsEnum.TIMEOUT);
+            }
+            //print stack trace to log ApiException thrown by  apiV1PaymentCreatePostWithHttpInfo
+            e.printStackTrace();
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
+        PaymentRequestEntity paymentRequestEntity = paymentRequestRepository.findByIdTransaction(idTransaction);
+        String json = null;
+        try {
+            json = mapper.writeValueAsString(postePayAuthRequest);
+            log.debug("Resulting postePayAuthResponse JSON string = " + json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        paymentRequestEntity.setResponseJson(json);
+        paymentRequestRepository.save(paymentRequestEntity);
+
+        log.info("END executePostePayPayment for transaction" + idTransaction);
+
+
+        //CHIAMATA ALLA WEBVIEW
+    }
+
+    private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){
+        CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+        createPaymentRequest.setAmount(postePayAuthRequest.getGrandTotal().toString());
+        createPaymentRequest.setPaymentChannel(PaymentChannel.fromValue(postePayAuthRequest.getPaymentChannel()));
+        createPaymentRequest.setAuthType(AuthorizationType.fromValue(AUTH_TYPE));
+        createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
+        createPaymentRequest.setCurrency("EURO");
+        //createPaymentRequest.setDescription();
+        createPaymentRequest.setShopId(SHOP_ID);
+
+        ResponseURLs responseURLs = new ResponseURLs();
+        setResponseUrl(responseURLs, clientId);
+        createPaymentRequest.setResponseURLs(responseURLs);
+        //createPaymentRequest.setShopTransactionId();
+
+        return createPaymentRequest;
+
+    }
+
+    private void setResponseUrl(ResponseURLs responseURLs, String clientId){
+        PaymentChannel paymentChannel = PaymentChannel.fromValue(clientId);
+
+        switch (paymentChannel){
+            case APP: responseURLs.setResponseUrlOk("");
+                responseURLs.setResponseUrlKo("");
+                responseURLs.setServerNotificationUrl("url della put");
+                break;
+            case WEB: responseURLs.setResponseUrlOk("channel_responseURL");
+                responseURLs.setResponseUrlKo("channel_responseURL");
+                responseURLs.setServerNotificationUrl("url della put");
+                break;
+            default: break;
+        }
+
+    }
+
 
 }

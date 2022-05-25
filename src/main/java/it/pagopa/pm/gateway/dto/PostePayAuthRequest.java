@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 public class PostePayAuthRequest {
 
     @NotNull(message = "'grandTotal' mandatory")
-    Double grandTotal;
+    int grandTotal;
 
     @NotNull(message = "'transactionId' mandatory")
     Long transactionId;
@@ -17,10 +17,8 @@ public class PostePayAuthRequest {
     @NotEmpty(message = "'paymentChannel' mandatory")
     String paymentChannel;
 
-    @NotEmpty(message = "'name' mandatory")
     String name;
 
-    @NotEmpty(message = "'emailNotice' mandatory")
     String emailNotice;
 
 }

@@ -48,6 +48,9 @@ public class PaymentTransactionsController {
     @Value("${postePay.client.auth.type}")
     public String AUTH_TYPE;
 
+    @Value("${postePay.payment.response.urlredirect}")
+    public String PAYMENT_RESPONSE_URLREDIRECT;
+
 
     private static final String INQUIRY_RESPONSE_EFF = "EFF";
     private static final String INQUIRY_RESPONSE_ERR = "ERR";
@@ -234,7 +237,7 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENT_POSTEPAY)
-    public String requestPaymentPostepay(@RequestBody PostePayAuthRequest postePayAuthRequest, @RequestHeader(value = CLIENT_ID) String clientId, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws RestApiException {
+    public PostePayAuthResponse requestPaymentPostepay(@RequestBody PostePayAuthRequest postePayAuthRequest, @RequestHeader(value = CLIENT_ID) String clientId, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws RestApiException {
         setMdcFields(mdcFields);
 
         Long idTransaction = postePayAuthRequest.getTransactionId();
@@ -269,10 +272,13 @@ public class PaymentTransactionsController {
 
         }
 
-
         log.info("END requestPaymentPostepay " + idTransaction);
 
-        return "redirectUrl";
+        PostePayAuthResponse response = new  PostePayAuthResponse();
+        response.setChannel(response.getChannel());
+        response.setUrlRedirect(PAYMENT_RESPONSE_URLREDIRECT);
+
+        return response;
 
     }
 
@@ -331,7 +337,7 @@ public class PaymentTransactionsController {
 
     private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
-        createPaymentRequest.setAmount(postePayAuthRequest.getGrandTotal().toString());
+        createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
         createPaymentRequest.setPaymentChannel(PaymentChannel.fromValue(postePayAuthRequest.getPaymentChannel()));
         createPaymentRequest.setAuthType(AuthorizationType.fromValue(AUTH_TYPE));
         createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());

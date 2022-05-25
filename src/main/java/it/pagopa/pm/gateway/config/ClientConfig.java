@@ -33,12 +33,12 @@ public class ClientConfig {
     @Value("${bancomatPay.client.timeout.ms:5000}")
     public String BPAY_CLIENT_TIMEOUT_MS;
 
-    @Value("${bancomatPay.client.timeout.ms:5000}")
+    @Value("${postePay.client.max.total:100}")
     public String MAX_TOTAL_POSTEPAY;
 
     public int DEFAULT_MAX_TOTAL_POSTEPAY = 100;
 
-    @Value("${postepayPay.client.timeout.ms:5000}")
+    @Value("${postePay.client.max.per.route:100}")
     public String MAX_PER_ROUTE_POSTEPAY;
 
     public int DEFAULT_MAX_PER_ROUTE_POSTEPAY = 100;
@@ -46,8 +46,7 @@ public class ClientConfig {
     @Value("${bancomatPay.client.timeout.ms:5000}")
     public String REQ_TIMEOUT_PROP_POSTEPAY;
 
-    @Value("${bancomatPay.client.timeout.ms:5000}")
-    public int POSTEPAY_TIMEOUT_DEFAULT;
+    public int POSTEPAY_TIMEOUT_DEFAULT = 5000;
 
 
     @Bean
@@ -97,7 +96,6 @@ public class ClientConfig {
                         .build());
         return new RestTemplate(httpComponentsClientHttpRequestFactory);
  }
-
 
     @Bean
     public RestTemplate microsoftAzureRestTemplate(){

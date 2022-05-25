@@ -33,18 +33,6 @@ public class PostePayClient {
     public String MICROSOFT_AZURE_LOGIN_SCOPE;
 
 
-
-
-    @Value("${postePay.client.server.notification.url}")
-    public String SERVER_NOTIFICATION_URL;
-    @Value("${postePay.client.shop.id}")
-    public String SHOP_ID;
-    @Value("${postePay.client.auth.type}")
-    public String AUTH_TYPE;
-    @Value("${postePay.client.url}")
-    public String POSTE_PAY_ROOT_URL;
-
-
     @Autowired
     private RestTemplate createPaymentRestTemplate;
 

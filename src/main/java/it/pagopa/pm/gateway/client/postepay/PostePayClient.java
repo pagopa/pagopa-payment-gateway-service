@@ -52,25 +52,6 @@ public class PostePayClient {
     private RestTemplate microsoftAzureRestTemplate;
 
 
-    public CreatePaymentResponse createPayment(PostePayAuthRequest postePayAuthRequest, String clientId) {
-
-        CreatePaymentRequest createPaymentRequest = mapPostePayAuthRequestToCreatePaymentRequest(postePayAuthRequest, clientId);
-        CreatePaymentResponse createPaymentResponse;
-
-        try {
-            HttpEntity<CreatePaymentRequest> entity = new HttpEntity<>(createPaymentRequest, null);
-            createPaymentResponse =
-                    createPaymentRestTemplate.postForObject(POSTE_PAY_ROOT_URL + "/api/v1/payment/create", entity, CreatePaymentResponse.class);
-        } catch (Exception e) {
-            log.error("Exception calling POSTEPAY service", e);
-            throw e;
-        }
-
-        return createPaymentResponse;
-
-    }
-
-
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(){
         MicrosoftAzureLoginRequest microsoftAzureLoginRequest = new MicrosoftAzureLoginRequest();
         updateMicrosoftAzureLoginRequest(microsoftAzureLoginRequest);
@@ -88,26 +69,6 @@ public class PostePayClient {
         return microsoftAzureLoginResponse;
 
     }
-
-    private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){
-        CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
-        createPaymentRequest.setAmount(postePayAuthRequest.getGrandTotal().toString());
-        createPaymentRequest.setPaymentChannel(PaymentChannel.fromValue(postePayAuthRequest.getPaymentChannel()));
-        createPaymentRequest.setAuthType(AuthorizationType.fromValue(AUTH_TYPE));
-        createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
-        createPaymentRequest.setCurrency("EURO");
-        //createPaymentRequest.setDescription();
-        createPaymentRequest.setShopId(SHOP_ID);
-
-        ResponseURLs responseURLs = new ResponseURLs();
-        setResponseUrl(responseURLs, clientId);
-        createPaymentRequest.setResponseURLs(responseURLs);
-        //createPaymentRequest.setShopTransactionId();
-
-        return createPaymentRequest;
-
-    }
-
 
     private void setResponseUrl(ResponseURLs responseURLs, String clientId){
         PaymentChannel paymentChannel = PaymentChannel.fromValue(clientId);

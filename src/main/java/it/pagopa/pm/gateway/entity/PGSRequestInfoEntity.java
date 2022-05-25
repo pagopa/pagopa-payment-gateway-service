@@ -7,13 +7,13 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "PP_PAYMENT_REQUEST")
+@Table(name = "PP_PAYMENT_REQUEST_INFO")
 public class PaymentRequestEntity {
 
     @Id
     @Column(name = "ID", nullable = false)
-    @SequenceGenerator(name = "SEQ_PAYMENT_REQUEST", sequenceName = "SEQ_PAYMENT_REQUEST", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PAYMENT_REQUEST")
+    @SequenceGenerator(name = "SEQ_PGS_REQUEST_INFO", sequenceName = "SEQ_PGS_REQUEST_INFO", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PGS_REQUEST_INFO")
     private Long id;
 
     @Column(name="ID_TRANSACTION", nullable = false)

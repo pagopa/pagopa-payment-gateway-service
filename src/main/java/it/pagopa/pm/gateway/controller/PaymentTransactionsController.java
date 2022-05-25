@@ -10,14 +10,14 @@ import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentType;
+import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
-import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
+import it.pagopa.pm.gateway.entity.PGSRequestInfoEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.client.ApiException;
 import org.openapitools.client.ApiResponse;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.openapitools.client.model.*;
@@ -234,19 +234,23 @@ public class PaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENT_POSTEPAY)
-    public String requestPaymentPostepay(@RequestBody PostePayAuthRequest postePayAuthRequest, @RequestHeader(value = CLIENT_ID) String clientId) throws RestApiException {
+    public String requestPaymentPostepay(@RequestBody PostePayAuthRequest postePayAuthRequest, @RequestHeader(value = CLIENT_ID) String clientId, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws RestApiException {
+        setMdcFields(mdcFields);
 
         Long idTransaction = postePayAuthRequest.getTransactionId();
-        PaymentRequestEntity alreadySaved = paymentRequestRepository.findByIdTransaction(idTransaction);
+        PGSRequestInfoEntity alreadySaved = paymentRequestRepository.findByIdTransaction(idTransaction);
 
         if (alreadySaved != null) {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
         }
 
         log.info("START requestPaymentPostepay " + idTransaction);
-        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
-        paymentRequestEntity.setType(PaymentType.POSTEPAY.name());
+        PGSRequestInfoEntity paymentRequestEntity = new PGSRequestInfoEntity();
+        paymentRequestEntity.setGuid(UUID.randomUUID().toString());
+        paymentRequestEntity.setChannel(postePayAuthRequest.getPaymentChannel());
+        paymentRequestEntity.setEndpoint(REQUEST_PAYMENT_POSTEPAY);
         paymentRequestEntity.setIdTransaction(idTransaction);
+        paymentRequestEntity.setMdcInfo(mdcFields);
 
         String json = null;
         try {
@@ -255,7 +259,7 @@ public class PaymentTransactionsController {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        paymentRequestEntity.setRequestJson(json);
+        paymentRequestEntity.setRequest(json);
         paymentRequestRepository.save(paymentRequestEntity);
 
         try {
@@ -272,6 +276,14 @@ public class PaymentTransactionsController {
 
     }
 
+    @GetMapping(REQUEST_PAYMENT_POSTEPAY_REQUEST_ID)
+    @ResponseBody
+    public PostePayPollingResponse getPaymentPostepayResponse(@PathVariable String requestId) {
+    return null;
+
+
+    }
+
     @Async
     private void executePostePayPayment(PostePayAuthRequest postePayAuthRequest, String clientId) throws RestApiException {
         Long idTransaction = postePayAuthRequest.getTransactionId();
@@ -280,12 +292,16 @@ public class PaymentTransactionsController {
         CreatePaymentRequest createPaymentRequest = mapPostePayAuthRequestToCreatePaymentRequest(postePayAuthRequest, clientId);
 
         try {
-            ApiResponse<InlineResponse200> apiResponse =  paymentManagerControllerApi.apiV1PaymentCreatePostWithHttpInfo(createPaymentRequest);
+            MicrosoftAzureLoginResponse microsoftAzureLoginResponse = postePayClient.requestMicrosoftAzureLogin();
 
-            if (apiResponse == null|| apiResponse.getData()==null) {
+            String bearerTokenAuthorization = "Bearer " + microsoftAzureLoginResponse.getAccess_token();
+
+            InlineResponse200 inlineResponse200 = paymentManagerControllerApi.
+                    apiV1PaymentCreatePost(bearerTokenAuthorization, createPaymentRequest);
+
+            if (inlineResponse200 == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
-            InlineResponse200 inlineResponse200 = apiResponse.getData();
 
             log.info("Response from PostePay createPayment - idTransaction: " + idTransaction + " - paymentID: "
                     + inlineResponse200.getPaymentID() + " - userRedirectUrl: " + inlineResponse200.getUserRedirectURL());
@@ -298,7 +314,7 @@ public class PaymentTransactionsController {
             e.printStackTrace();
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        PaymentRequestEntity paymentRequestEntity = paymentRequestRepository.findByIdTransaction(idTransaction);
+        PGSRequestInfoEntity paymentRequestEntity = paymentRequestRepository.findByIdTransaction(idTransaction);
         String json = null;
         try {
             json = mapper.writeValueAsString(postePayAuthRequest);
@@ -306,13 +322,11 @@ public class PaymentTransactionsController {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        paymentRequestEntity.setResponseJson(json);
+       // paymentRequestEntity.setResponseJson(json);
         paymentRequestRepository.save(paymentRequestEntity);
 
         log.info("END executePostePayPayment for transaction" + idTransaction);
 
-
-        //CHIAMATA ALLA WEBVIEW
     }
 
     private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){
@@ -321,7 +335,7 @@ public class PaymentTransactionsController {
         createPaymentRequest.setPaymentChannel(PaymentChannel.fromValue(postePayAuthRequest.getPaymentChannel()));
         createPaymentRequest.setAuthType(AuthorizationType.fromValue(AUTH_TYPE));
         createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
-        createPaymentRequest.setCurrency("EURO");
+        createPaymentRequest.setCurrency("ISO 978");
         //createPaymentRequest.setDescription();
         createPaymentRequest.setShopId(SHOP_ID);
 
@@ -350,6 +364,8 @@ public class PaymentTransactionsController {
         }
 
     }
+
+
 
 
 }

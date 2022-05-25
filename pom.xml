@@ -315,7 +315,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/api-specs/spec_PostePay.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/api-specs/spec_PostePay_bearerToken.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <configOptions>
                                 <sourceFolder>src/gen/java/main</sourceFolder>

@@ -7,30 +7,49 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "PP_PAYMENT_REQUEST")
+@Table(name = "PP_PGS_REQUEST_INFO")
 public class PaymentRequestEntity {
 
     @Id
     @Column(name = "ID", nullable = false)
-    @SequenceGenerator(name = "SEQ_PAYMENT_REQUEST", sequenceName = "SEQ_PAYMENT_REQUEST", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PAYMENT_REQUEST")
+    @SequenceGenerator(name = "SEQ_PGS_REQUEST_INFO", sequenceName = "SEQ_PGS_REQUEST_INFO", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PGS_REQUEST_INFO")
     private Long id;
 
-    @Column(name="ID_TRANSACTION", nullable = false)
+    @Column(name = "GUID", nullable = false)
+    private String guid;
+
+    @Column(name = "RESOURCE_PATH", nullable = false)
+    private String resourcePath;
+
+    @Column(name = "CORRELATION_ID")
+    private String correlationId;
+
+    @Column(name = "AUTH_URL", nullable = false)
+    private String authorizationUrl;
+
+    @Column(name = "ENDPOINT", nullable = false)
+    private String requestEndpoint;
+
+    @Column(name = "CLIENT_ID", nullable = false)
+    private String clientId;
+
+    @Lob
+    @Column(name = "REQUEST")
+    private String jsonRequest;
+
+    @Column(name = "AUTH_OUTCOME")
+    private Boolean authorizationOutcome;
+
+    @Column(name = "ID_TRANSACTION", nullable = false)
     private Long idTransaction;
 
-    @Column(name="TYPE", nullable = false)
-    private String type;
+    @Column(name = "IS_PROCESSED")
+    private Boolean isProcessed = false;
 
-    @Column(name="OUTCOME")
-    private String outcome;
+    @Column(name = "AUTH_CODE")
+    private String authorizationCode;
 
-    @Lob
-    @Column(name="REQUEST_JSON")
-    private String requestJson;
-
-    @Lob
-    @Column(name="RESPONSE_JSON")
-    private String responseJson;
-
+    @Column(name = "MDC_INFO")
+    private String mdcInfo;
 }

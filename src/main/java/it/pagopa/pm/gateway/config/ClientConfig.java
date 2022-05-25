@@ -43,7 +43,7 @@ public class ClientConfig {
 
     public int DEFAULT_MAX_PER_ROUTE_POSTEPAY = 100;
 
-    @Value("${bancomatPay.client.timeout.ms:5000}")
+    @Value("${postePay.client.timeout.ms:5000}")
     public String REQ_TIMEOUT_PROP_POSTEPAY;
 
     public int POSTEPAY_TIMEOUT_DEFAULT = 5000;

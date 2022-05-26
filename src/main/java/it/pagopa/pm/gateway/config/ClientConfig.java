@@ -94,25 +94,6 @@ public class ClientConfig {
         return webServiceTemplate;
     }
 
-   /* @Bean
-    public RestTemplate postePayRestTemplate(){
-        HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
-                new HttpComponentsClientHttpRequestFactory();
-        httpComponentsClientHttpRequestFactory.setHttpClient(
-                HttpClientBuilder.create()
-                .setProxy(createProxy(this.getClass().getName()))
-                .setConnectionManager(createConnectionManager(
-                                MAX_TOTAL_POSTEPAY,
-                                DEFAULT_MAX_TOTAL_POSTEPAY,
-                                MAX_PER_ROUTE_POSTEPAY,
-                                DEFAULT_MAX_PER_ROUTE_POSTEPAY))
-                .setDefaultRequestConfig(createRequestConfig(
-                                REQ_TIMEOUT_PROP_POSTEPAY,
-                                POSTEPAY_TIMEOUT_DEFAULT))
-                        .build());
-        return new RestTemplate(httpComponentsClientHttpRequestFactory);
- }*/
-
     @Bean
     public RestTemplate microsoftAzureRestTemplatePostePay(){
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =

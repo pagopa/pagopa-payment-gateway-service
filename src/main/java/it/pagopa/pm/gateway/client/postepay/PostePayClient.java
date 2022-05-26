@@ -33,7 +33,6 @@ public class PostePayClient {
     @Value("${azureAuth.client.postepay.scope}")
     private String MICROSOFT_AZURE_LOGIN_SCOPE;
 
-
     @Autowired
     private RestTemplate microsoftAzureRestTemplatePostePay;
 

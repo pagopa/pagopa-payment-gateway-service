@@ -313,30 +313,28 @@ public class PaymentTransactionsController {
 
     @Async
     private void executePostePayPayment(PostePayAuthRequest postePayAuthRequest, String clientId, PaymentRequestEntity paymentRequestEntity)
-            throws RestApiException {
+            throws RestApiException, JsonProcessingException {
         Long idTransaction = postePayAuthRequest.getTransactionId();
         log.info("START executePostePayPayment for transaction " + idTransaction);
 
         CreatePaymentRequest createPaymentRequest = mapPostePayAuthRequestToCreatePaymentRequest(postePayAuthRequest, clientId);
-        InlineResponse200 inlineResponse200 = null;
+        InlineResponse200 inlineResponse200;
         try {
             MicrosoftAzureLoginResponse microsoftAzureLoginResponse = postePayClient.requestMicrosoftAzureLogin();
             String bearerTokenAuthorization = "Bearer " + microsoftAzureLoginResponse.getAccess_token();
-            try {
-                inlineResponse200 = paymentManagerControllerApi.apiV1PaymentCreatePost(bearerTokenAuthorization, createPaymentRequest);
-            } catch (ApiException e) {
-                Error error = mapper.readValue(e.getResponseBody(), Error.class);
-                log.error("Error from PostePay createPayment: " + error);
-                paymentRequestEntity.setAuthorizationOutcome(false);
-                paymentRequestEntity.setErrorCode(Integer.toString(e.getCode()));
-                paymentRequestRepository.save(paymentRequestEntity);
-                return;
-            }
+            inlineResponse200 = paymentManagerControllerApi.apiV1PaymentCreatePost(bearerTokenAuthorization, createPaymentRequest);
             if (inlineResponse200 == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             log.info("Response from PostePay createPayment - idTransaction: " + idTransaction + " - paymentID: "
                     + inlineResponse200.getPaymentID() + " - userRedirectUrl: " + inlineResponse200.getUserRedirectURL());
+        } catch (ApiException e) {
+            Error error = mapper.readValue(e.getResponseBody(), Error.class);
+            log.error("Error from PostePay createPayment: " + error);
+            paymentRequestEntity.setAuthorizationOutcome(false);
+            paymentRequestEntity.setErrorCode(Integer.toString(e.getCode()));
+            paymentRequestRepository.save(paymentRequestEntity);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } catch (Exception e) {
             log.error("Exception while calling Postepay - setting AuthorizationOutcome to false - idTransaction " + idTransaction , e);
             paymentRequestEntity.setAuthorizationOutcome(false);

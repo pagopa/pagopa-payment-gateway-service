@@ -9,6 +9,7 @@ import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
+import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
 import okio.Timeout;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.SocketTimeoutException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
@@ -49,15 +51,14 @@ public class PostePayPaymentTransactionsController {
                 correlationId, EndpointEnum.POSTEPAY.getValue());
         if (Objects.isNull(postePayPaymentRequest)) {
             return new ACKError(OutcomeEnum.KO, ExceptionsEnum.TRANSACTION_NOT_FOUND.getDescription());
-        } else {
-            setMdcFields(postePayPaymentRequest.getMdcInfo());
-            if (postePayPaymentRequest.getIsProcessed()) {
-                return new ACKError(OutcomeEnum.KO, ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED.getDescription());
-            }
+        }
+        setMdcFields(postePayPaymentRequest.getMdcInfo());
+        if (postePayPaymentRequest.getIsProcessed()) {
+            return new ACKError(OutcomeEnum.KO, ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED.getDescription());
         }
         try {
-            String closePayment = restapiCdClient.callClosePayment(postePayPaymentRequest.getIdTransaction(),
-                    authMessage.getAuthOutcome() == OutcomeEnum.OK);
+            boolean isAuthOk = authMessage.getAuthOutcome() == OutcomeEnum.OK;
+            String closePayment = restapiCdClient.callClosePayment(postePayPaymentRequest.getIdTransaction(), isAuthOk);
             postePayPaymentRequest.setIsProcessed(true);
             paymentRequestRepository.save(postePayPaymentRequest);
             if (closePayment.equals(OutcomeEnum.KO.toString())) {
@@ -68,6 +69,9 @@ public class PostePayPaymentTransactionsController {
             return new ACKError(OutcomeEnum.KO, ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR.getDescription());
         } catch (Exception e) {
             log.error("Exception closing payment", e);
+            if (e.getCause() instanceof SocketTimeoutException) {
+                return new ACKError(OutcomeEnum.KO, ExceptionsEnum.TIMEOUT.getDescription());
+            }
             return new ACKError(OutcomeEnum.KO, ExceptionsEnum.GENERIC_ERROR.getDescription());
         } finally {
             log.info("END Update transaction request for correlation-id: " + correlationId);

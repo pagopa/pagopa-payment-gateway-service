@@ -317,6 +317,9 @@
                         <configuration>
                             <inputSpec>${project.basedir}/api-specs/spec_PostePay_bearerToken.yaml</inputSpec>
                             <generatorName>java</generatorName>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiTests>false</generateApiTests>
+                            <output>target/generated/openapi</output>
                             <configOptions>
                                 <sourceFolder>src/gen/java/main</sourceFolder>
                             </configOptions>

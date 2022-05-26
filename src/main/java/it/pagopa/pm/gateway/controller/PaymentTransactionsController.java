@@ -8,7 +8,6 @@ import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.client.postepay.PostePayClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
@@ -19,7 +18,13 @@ import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.openapitools.client.api.PaymentManagerControllerApi;
-import org.openapitools.client.model.*;
+import org.openapitools.client.model.InlineResponse200;
+import org.openapitools.client.model.CreatePaymentRequest;
+import org.openapitools.client.model.AuthorizationType;
+import org.openapitools.client.model.ResponseURLs;
+import org.openapitools.client.model.PaymentChannel;
+import org.openapitools.client.model.Error;
+import org.openapitools.client.ApiException;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +40,8 @@ import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.*;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
@@ -74,7 +81,7 @@ public class PaymentTransactionsController {
     @Autowired
     private PaymentManagerControllerApi paymentManagerControllerApi;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
@@ -89,12 +96,12 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
             }
         }
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OutcomeEnum.OK) ? TX_AUTHORIZED_BANCOMAT_PAY.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
+        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BANCOMAT_PAY.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
             bPayPaymentResponseRepository.save(alreadySaved);
-            return new ACKMessage(OutcomeEnum.OK);
+            return new ACKMessage(OK);
         } catch (FeignException fe) {
             log.error("Exception calling RestapiCD to update transaction", fe);
             throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());
@@ -295,9 +302,13 @@ public class PaymentTransactionsController {
     @GetMapping(REQUEST_PAYMENT_POSTEPAY_REQUEST_ID)
     @ResponseBody
     public PostePayPollingResponse getPaymentPostepayResponse(@PathVariable String requestId) {
-    return null;
-
-
+        PaymentRequestEntity request = paymentRequestRepository.findByGuid(requestId);
+        return new PostePayPollingResponse(
+                request.getClientId(),
+                request.getAuthorizationUrl(),
+                request.getAuthorizationOutcome() ? OK : KO,
+                request.getErrorCode()
+        );
     }
 
     @Async
@@ -307,40 +318,40 @@ public class PaymentTransactionsController {
         log.info("START executePostePayPayment for transaction " + idTransaction);
 
         CreatePaymentRequest createPaymentRequest = mapPostePayAuthRequestToCreatePaymentRequest(postePayAuthRequest, clientId);
-        InlineResponse200 inlineResponse200;
+        InlineResponse200 inlineResponse200 = null;
         try {
             MicrosoftAzureLoginResponse microsoftAzureLoginResponse = postePayClient.requestMicrosoftAzureLogin();
-
             String bearerTokenAuthorization = "Bearer " + microsoftAzureLoginResponse.getAccess_token();
-
-            inlineResponse200 = paymentManagerControllerApi.apiV1PaymentCreatePost(bearerTokenAuthorization, createPaymentRequest);
-
+            try {
+                inlineResponse200 = paymentManagerControllerApi.apiV1PaymentCreatePost(bearerTokenAuthorization, createPaymentRequest);
+            } catch (ApiException e) {
+                Error error = mapper.readValue(e.getResponseBody(), Error.class);
+                log.error("Error from PostePay createPayment: " + error);
+                paymentRequestEntity.setAuthorizationOutcome(false);
+                paymentRequestEntity.setErrorCode(Integer.toString(e.getCode()));
+                paymentRequestRepository.save(paymentRequestEntity);
+                return;
+            }
             if (inlineResponse200 == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
-
             log.info("Response from PostePay createPayment - idTransaction: " + idTransaction + " - paymentID: "
                     + inlineResponse200.getPaymentID() + " - userRedirectUrl: " + inlineResponse200.getUserRedirectURL());
-        }   catch (Exception e) {
+        } catch (Exception e) {
             log.error("Exception while calling Postepay - setting AuthorizationOutcome to false - idTransaction " + idTransaction , e);
             paymentRequestEntity.setAuthorizationOutcome(false);
             paymentRequestRepository.save(paymentRequestEntity);
-
             if (e.getCause() instanceof SocketTimeoutException) {
                 log.error("SocketTimeoutException during Postepay calling");
                 throw new RestApiException(ExceptionsEnum.TIMEOUT);
             }
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-
         paymentRequestEntity.setCorrelationId(inlineResponse200.getPaymentID());
         paymentRequestEntity.setAuthorizationUrl(inlineResponse200.getUserRedirectURL());
         paymentRequestEntity.setAuthorizationOutcome(true);
-
         paymentRequestRepository.save(paymentRequestEntity);
-
         log.info("END executePostePayPayment for transaction" + idTransaction);
-
     }
 
     private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){

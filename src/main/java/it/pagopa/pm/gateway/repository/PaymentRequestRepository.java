@@ -9,4 +9,6 @@ public interface PaymentRequestRepository extends JpaRepository<PaymentRequestEn
 
     PaymentRequestEntity findByIdTransaction(Long idTransaction);
 
+    PaymentRequestEntity findByGuid(String guid);
+
 }

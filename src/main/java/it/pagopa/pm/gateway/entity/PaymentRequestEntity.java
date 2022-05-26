@@ -52,4 +52,8 @@ public class PaymentRequestEntity {
 
     @Column(name = "MDC_INFO")
     private String mdcInfo;
+
+    @Column(name = "ERROR_CODE")
+    private String errorCode;
+
 }

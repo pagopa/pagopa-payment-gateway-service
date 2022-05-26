@@ -1,15 +1,15 @@
 package it.pagopa.pm.gateway.client.postepay;
 
-import it.pagopa.pm.gateway.dto.PostePayAuthRequest;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginRequest;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.UrlEncoded;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.client.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.web.client.RestTemplate;
+import org.openapitools.client.model.ResponseURLs;
+import org.openapitools.client.model.PaymentChannel;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -7,7 +7,7 @@ paths:
   /api/v1/payment/create:
     post:
       tags:
-      - Payment Manager Controller
+        - Payment Manager Controller
       summary: Inzializzazione della transazione di pagamento
       description: ""
       parameters:
@@ -29,8 +29,8 @@ paths:
               schema:
                 description: ""
                 required:
-                - paymentID
-                - userRedirectURL
+                  - paymentID
+                  - userRedirectURL
                 type: object
                 properties:
                   paymentID:
@@ -41,44 +41,16 @@ paths:
                     description: URL verso cui redirigere l'utente per portare a compimento
                       la transazione
                     type: string
-        "4XX":
-          description: classe errori 400
+        default:
+          description: Errore
           content:
             application/json:
               schema:
-                description: Errore richiesta
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
-        "5XX":
-          description: classe errori 500
-          content:
-            application/json:
-              schema:
-                description: Errore interno
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
+                $ref: '#/components/schemas/Error'
   /api/v1/payment/details:
     post:
       tags:
-      - Payment Manager Controller
+        - Payment Manager Controller
       summary: Recupero dello stato della transazione
       description: ""
       requestBody:
@@ -94,19 +66,19 @@ paths:
               schema:
                 description: ""
                 required:
-                - shopId
-                - shopTransactionId
-                - paymentID
-                - result
-                - authNumber
-                - amount
-                - currency
-                - buyerName
-                - buyerEmail
-                - paymentChannel
-                - authType
-                - status
-                - refundedAmount
+                  - shopId
+                  - shopTransactionId
+                  - paymentID
+                  - result
+                  - authNumber
+                  - amount
+                  - currency
+                  - buyerName
+                  - buyerEmail
+                  - paymentChannel
+                  - authType
+                  - status
+                  - refundedAmount
                 type: object
                 properties:
                   shopId:
@@ -142,59 +114,31 @@ paths:
                     type: string
                   paymentChannel:
                     allOf:
-                    - $ref: '#/components/schemas/PaymentChannel'
-                    - description: "canale di pagamento, puo essere valorizzato con\
+                      - $ref: '#/components/schemas/PaymentChannel'
+                      - description: "canale di pagamento, puo essere valorizzato con\
                         \ APP/WEB"
                   authType:
                     allOf:
-                    - $ref: '#/components/schemas/AuthorizationType'
-                    - description: "tipo di autorizzazione, puo essere valorizzato\
+                      - $ref: '#/components/schemas/AuthorizationType'
+                      - description: "tipo di autorizzazione, puo essere valorizzato\
                         \ con IMMEDIATA/DIFFERITA"
                   status:
                     allOf:
-                    - $ref: '#/components/schemas/Esito'
-                    - description: Esito della transazione
+                      - $ref: '#/components/schemas/Esito'
+                      - description: Esito della transazione
                   refundedAmount:
                     description: importo stornato
                     type: string
-        "4XX":
-          description: classe errori 400
+        default:
+          description: Errore
           content:
             application/json:
               schema:
-                description: Errore richiesta
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
-        "5XX":
-          description: classe errori 500
-          content:
-            application/json:
-              schema:
-                description: Errore interno
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
+                $ref: '#/components/schemas/Error'
   /api/v1/payment/refund:
     post:
       tags:
-      - Payment Manager Controller
+        - Payment Manager Controller
       summary: Storno
       description: ""
       requestBody:
@@ -210,9 +154,9 @@ paths:
               schema:
                 description: ""
                 required:
-                - paymentID
-                - shopTransactionId
-                - transactionResult
+                  - paymentID
+                  - shopTransactionId
+                  - transactionResult
                 type: object
                 properties:
                   paymentID:
@@ -224,46 +168,18 @@ paths:
                     type: string
                   transactionResult:
                     allOf:
-                    - $ref: '#/components/schemas/EsitoStorno'
-                    - description: esito operazione
-        "4XX":
-          description: classe errori 400
+                      - $ref: '#/components/schemas/EsitoStorno'
+                      - description: esito operazione
+        default:
+          description: Errore
           content:
             application/json:
               schema:
-                description: Errore richiesta
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
-        "5XX":
-          description: classe errori 500
-          content:
-            application/json:
-              schema:
-                description: Errore interno
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
+                $ref: '#/components/schemas/Error'
   /api/v1/payment/serverNotify:
     post:
       tags:
-      - Payment Manager Controller
+        - Payment Manager Controller
       summary: Messaggio di conferma eseguito presso serverNotificationUrl
       description: ""
       requestBody:
@@ -278,46 +194,31 @@ paths:
             application/json:
               schema:
                 type: object
-        "4XX":
-          description: classe errori 400
+        default:
+          description: Errore
           content:
             application/json:
               schema:
-                description: Errore richiesta
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
-        "5XX":
-          description: classe errori 500
-          content:
-            application/json:
-              schema:
-                description: Errore interno
-                type: object
-                properties:
-                  errorCode:
-                    description: Codice di errore
-                    type: string
-                  description:
-                    description: Descrizione tecnica dell'errore
-                    type: string
-                  message:
-                    description: Messaggio utente
-                    type: string
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
+    Error:
+      description: ""
+      type: object
+      properties:
+        errorCode:
+          description: Codice di errore
+          type: string
+        description:
+          description: Descrizione tecnica dell'errore
+          type: string
+        message:
+          description: Messaggio utente
+          type: string
     AuthorizationType:
       enum:
-      - IMMEDIATA
-      - DIFFERITA
+        - IMMEDIATA
+        - DIFFERITA
       type: string
     CancelPaymentRequest:
       description: ""
@@ -339,15 +240,15 @@ components:
     CreatePaymentRequest:
       description: ""
       required:
-      - shopId
-      - shopTransactionId
-      - amount
-      - currency
-      - buyerName
-      - buyerEmail
-      - paymentChannel
-      - authType
-      - responseURLs
+        - shopId
+        - shopTransactionId
+        - amount
+        - currency
+        - buyerName
+        - buyerEmail
+        - paymentChannel
+        - authType
+        - responseURLs
       type: object
       properties:
         shopId:
@@ -373,21 +274,21 @@ components:
           type: string
         paymentChannel:
           allOf:
-          - $ref: '#/components/schemas/PaymentChannel'
-          - description: "canale di pagamento, puo essere valorizzato con APP/WEB"
+            - $ref: '#/components/schemas/PaymentChannel'
+            - description: "canale di pagamento, puo essere valorizzato con APP/WEB"
         authType:
           allOf:
-          - $ref: '#/components/schemas/AuthorizationType'
-          - description: "tipo di autorizzazione, puo essere valorizzato con IMMEDIATA/DIFFERITA"
+            - $ref: '#/components/schemas/AuthorizationType'
+            - description: "tipo di autorizzazione, puo essere valorizzato con IMMEDIATA/DIFFERITA"
         responseURLs:
           allOf:
-          - $ref: '#/components/schemas/ResponseURLs'
-          - description: URL di ritorno
+            - $ref: '#/components/schemas/ResponseURLs'
+            - description: URL di ritorno
     CreatePaymentResponse:
       description: ""
       required:
-      - paymentID
-      - userRedirectURL
+        - paymentID
+        - userRedirectURL
       type: object
       properties:
         paymentID:
@@ -401,9 +302,9 @@ components:
     DetailsPaymentRequest:
       description: ""
       required:
-      - shopId
-      - shopTransactionId
-      - paymentID
+        - shopId
+        - shopTransactionId
+        - paymentID
       type: object
       properties:
         shopId:
@@ -419,19 +320,19 @@ components:
     DetailsPaymentResponse:
       description: ""
       required:
-      - shopId
-      - shopTransactionId
-      - paymentID
-      - result
-      - authNumber
-      - amount
-      - currency
-      - buyerName
-      - buyerEmail
-      - paymentChannel
-      - authType
-      - status
-      - refundedAmount
+        - shopId
+        - shopTransactionId
+        - paymentID
+        - result
+        - authNumber
+        - amount
+        - currency
+        - buyerName
+        - buyerEmail
+        - paymentChannel
+        - authType
+        - status
+        - refundedAmount
       type: object
       properties:
         shopId:
@@ -467,46 +368,46 @@ components:
           type: string
         paymentChannel:
           allOf:
-          - $ref: '#/components/schemas/PaymentChannel'
-          - description: "canale di pagamento, puo essere valorizzato con APP/WEB"
+            - $ref: '#/components/schemas/PaymentChannel'
+            - description: "canale di pagamento, puo essere valorizzato con APP/WEB"
         authType:
           allOf:
-          - $ref: '#/components/schemas/AuthorizationType'
-          - description: "tipo di autorizzazione, puo essere valorizzato con IMMEDIATA/DIFFERITA"
+            - $ref: '#/components/schemas/AuthorizationType'
+            - description: "tipo di autorizzazione, puo essere valorizzato con IMMEDIATA/DIFFERITA"
         status:
           allOf:
-          - $ref: '#/components/schemas/Esito'
-          - description: Esito della transazione
+            - $ref: '#/components/schemas/Esito'
+            - description: Esito della transazione
         refundedAmount:
           description: importo stornato
           type: string
     Esito:
       enum:
-      - APPROVED
-      - DECLINED
-      - PENDING
-      - REFUNDED
+        - APPROVED
+        - DECLINED
+        - PENDING
+        - REFUNDED
       type: string
     EsitoStorno:
       enum:
-      - OK
-      - KO
+        - OK
+        - KO
       type: string
     NotifyRequest:
       description: ""
       required:
-      - shopId
-      - shopTransactionId
-      - paymentID
-      - result
-      - authNumber
-      - amount
-      - currency
-      - buyerName
-      - buyerEmail
-      - paymentChannel
-      - authType
-      - status
+        - shopId
+        - shopTransactionId
+        - paymentID
+        - result
+        - authNumber
+        - amount
+        - currency
+        - buyerName
+        - buyerEmail
+        - paymentChannel
+        - authType
+        - status
       type: object
       properties:
         shopId:
@@ -542,20 +443,20 @@ components:
           type: string
         paymentChannel:
           allOf:
-          - $ref: '#/components/schemas/PaymentChannel'
-          - description: "canale di pagamento, puo essere valorizzato con APP/WEB"
+            - $ref: '#/components/schemas/PaymentChannel'
+            - description: "canale di pagamento, puo essere valorizzato con APP/WEB"
         authType:
           allOf:
-          - $ref: '#/components/schemas/AuthorizationType'
-          - description: "tipo di autorizzazione, puo essere valorizzato con IMMEDIATA/DIFFERITA"
+            - $ref: '#/components/schemas/AuthorizationType'
+            - description: "tipo di autorizzazione, puo essere valorizzato con IMMEDIATA/DIFFERITA"
         status:
           allOf:
-          - $ref: '#/components/schemas/Esito'
-          - description: Esito della transazione
+            - $ref: '#/components/schemas/Esito'
+            - description: Esito della transazione
     PaymentChannel:
       enum:
-      - WEB
-      - APP
+        - WEB
+        - APP
       type: string
     PaymentStatusRequest:
       description: ""
@@ -567,12 +468,12 @@ components:
     RefundPaymentRequest:
       description: ""
       required:
-      - shopId
-      - shopTransactionId
-      - amount
-      - currency
-      - paymentID
-      - authNumber
+        - shopId
+        - shopTransactionId
+        - amount
+        - currency
+        - paymentID
+        - authNumber
       type: object
       properties:
         shopId:
@@ -600,9 +501,9 @@ components:
     RefundPaymentResponse:
       description: ""
       required:
-      - paymentID
-      - shopTransactionId
-      - transactionResult
+        - paymentID
+        - shopTransactionId
+        - transactionResult
       type: object
       properties:
         paymentID:
@@ -614,14 +515,14 @@ components:
           type: string
         transactionResult:
           allOf:
-          - $ref: '#/components/schemas/EsitoStorno'
-          - description: esito operazione
+            - $ref: '#/components/schemas/EsitoStorno'
+            - description: esito operazione
     ResponseURLs:
       description: ""
       required:
-      - responseUrlOk
-      - responseUrlKo
-      - serverNotificationUrl
+        - responseUrlOk
+        - responseUrlKo
+        - serverNotificationUrl
       type: object
       properties:
         responseUrlOk:

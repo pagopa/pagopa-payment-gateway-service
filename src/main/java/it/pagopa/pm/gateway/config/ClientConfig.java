@@ -114,7 +114,7 @@ public class ClientConfig {
  }*/
 
     @Bean
-    public RestTemplate microsoftAzureRestTemplate(){
+    public RestTemplate microsoftAzureRestTemplatePostePay(){
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
                 new HttpComponentsClientHttpRequestFactory();
         httpComponentsClientHttpRequestFactory.setHttpClient(

@@ -21,20 +21,21 @@ public class PostePayClient {
 
 
     @Value("${azureAuth.client.postepay.url}")
-    public String MICROSOFT_AZURE_LOGIN_URL_POSTEPAY;
+    private String MICROSOFT_AZURE_LOGIN_URL;
 
-    @Value("${postePay.client.microsoft.azure.login.client.id:1d1828e6-cf67-4ced-a256-7f076cf2750c}")
-    public String MICROSOFT_AZURE_LOGIN_CLIENT_ID;
-    @Value("${postePay.client.microsoft.azure.login.client.secret:9nL8Q~hpIUqPGq.607OUZSoCj8mKc1ILjr~ncaiJ}")
-    public String MICROSOFT_AZURE_LOGIN_CLIENT_SECRET;
-    @Value("${postePay.client.microsoft.azure.login.grant.type:client_credentials}")
-    public String MICROSOFT_AZURE_LOGIN_GRANT_TYPE;
-    @Value("${postePay.client.microsoft.azure.login.scope:https://paymentmanagerppsvil.onmicrosoft.com/paymentserver/.default}")
-    public String MICROSOFT_AZURE_LOGIN_SCOPE;
+    @Value("${azureAuth.client.postepay.client_id}")
+    private String MICROSOFT_AZURE_LOGIN_CLIENT_ID;
+    @Value("${azureAuth.client.postepay.client_secret}")
+    private String MICROSOFT_AZURE_LOGIN_CLIENT_SECRET;
+
+    private final static String MICROSOFT_AZURE_LOGIN_GRANT_TYPE = "client_credentials";
+
+    @Value("${azureAuth.client.postepay.scope}")
+    private String MICROSOFT_AZURE_LOGIN_SCOPE;
 
 
     @Autowired
-    private RestTemplate microsoftAzureRestTemplate;
+    private RestTemplate microsoftAzureRestTemplatePostePay;
 
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(){
@@ -45,7 +46,7 @@ public class PostePayClient {
 
         try {
             HttpEntity<MicrosoftAzureLoginRequest> entity = new HttpEntity<>(microsoftAzureLoginRequest, null);
-            microsoftAzureLoginResponse = microsoftAzureRestTemplate.postForObject(MICROSOFT_AZURE_LOGIN_URL_POSTEPAY, entity, MicrosoftAzureLoginResponse.class);
+            microsoftAzureLoginResponse = microsoftAzureRestTemplatePostePay.postForObject(MICROSOFT_AZURE_LOGIN_URL, entity, MicrosoftAzureLoginResponse.class);
         } catch (Exception e) {
             log.error("Exception calling POSTEPAY Microsoft Azure login service", e);
             throw e;

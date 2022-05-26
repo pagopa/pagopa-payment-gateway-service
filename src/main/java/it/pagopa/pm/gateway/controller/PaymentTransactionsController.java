@@ -31,8 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.lang.Exception;
 import java.net.SocketTimeoutException;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.*;
@@ -44,15 +43,15 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 public class PaymentTransactionsController {
 
 
-    @Value("${postePay.client.shop.id}")
-    public String SHOP_ID;
-    @Value("${postePay.client.auth.type}")
-    public String AUTH_TYPE;
 
-    @Value("${postePay.payment.response.urlredirect}")
-    public String PAYMENT_RESPONSE_URLREDIRECT;
+    @Value("${postePay.pgs.response.urlredirect}")
+    private String PAYMENT_RESPONSE_URLREDIRECT;
 
+    /*@Value("${postePay.clientId.APP.config}")
+    private String CLIENT_ID_APP_CONFIG;
 
+    List<String> appConfigs = getConfigValue(CLIENT_ID_APP_CONFIG);
+*/
     private static final String INQUIRY_RESPONSE_EFF = "EFF";
     private static final String INQUIRY_RESPONSE_ERR = "ERR";
     private static final String EURO_ISO_CODE = "ISO 978";
@@ -345,17 +344,22 @@ public class PaymentTransactionsController {
     }
 
     private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){
+
+        String configs = System.getProperty("postePay.clientId."+clientId+".config");
+
+        List<String> configsList = getConfigValues(configs);
+
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
         createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
-        createPaymentRequest.setPaymentChannel(fromClientUrlToPaymentChannel(clientId));
-        createPaymentRequest.setAuthType(AuthorizationType.fromValue(AUTH_TYPE));
+        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsList.get(1)));
+        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsList.get(2)));
         createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
         createPaymentRequest.setCurrency(EURO_ISO_CODE);
         createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
-        createPaymentRequest.setShopId(SHOP_ID);
+        createPaymentRequest.setShopId(configsList.get(0));
 
         ResponseURLs responseURLs = new ResponseURLs();
-        setResponseUrl(responseURLs, clientId);
+        setResponseUrl(responseURLs, clientId, configsList.get(3));
         createPaymentRequest.setResponseURLs(responseURLs);
 
         createPaymentRequest.setShopTransactionId(postePayAuthRequest.getTransactionId().toString());
@@ -364,16 +368,15 @@ public class PaymentTransactionsController {
 
     }
 
-    private void setResponseUrl(ResponseURLs responseURLs, String clientId){
-        PaymentChannel paymentChannel = fromClientUrlToPaymentChannel(clientId);
+    private void setResponseUrl(ResponseURLs responseURLs, String clientId, String responseUrl){
 
-        switch (paymentChannel){
-            case APP: responseURLs.setResponseUrlOk("");
+        switch (clientId){
+            case "APP": responseURLs.setResponseUrlOk("");
                 responseURLs.setResponseUrlKo("");
                 responseURLs.setServerNotificationUrl("url della put");
                 break;
-            case WEB: responseURLs.setResponseUrlOk("channel_responseURL");
-                responseURLs.setResponseUrlKo("channel_responseURL");
+            case "WEB": responseURLs.setResponseUrlOk(responseUrl);
+                responseURLs.setResponseUrlKo(responseUrl);
                 responseURLs.setServerNotificationUrl("url della put");
                 break;
             default: break;
@@ -381,9 +384,15 @@ public class PaymentTransactionsController {
 
     }
 
-    //METODO DA CLIENTID A PAYMENTCHANNEL
-    private PaymentChannel fromClientUrlToPaymentChannel(String clientId){
-         return PaymentChannel.WEB;
+    private List<String> getConfigValues(String config){
+        StringTokenizer tokenizer = new StringTokenizer(config, "|", false);
+        List<String> configs = new ArrayList<>();
+
+        while (tokenizer.hasMoreTokens()){
+            configs.add(tokenizer.nextToken());
+        }
+        return configs;
+
     }
 
 

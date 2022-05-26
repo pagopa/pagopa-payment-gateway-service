@@ -306,12 +306,16 @@ public class PaymentTransactionsController {
 
     @GetMapping(REQUEST_PAYMENT_POSTEPAY_REQUEST_ID)
     @ResponseBody
-    public PostePayPollingResponse getPaymentPostepayResponse(@PathVariable String requestId) {
+    public PostePayPollingResponse getPaymentPostepayResponse(@PathVariable String requestId, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws RestApiException {
+        setMdcFields(mdcFields);
         PaymentRequestEntity request = paymentRequestRepository.findByGuid(requestId);
+        if (request == null || !REQUEST_PAYMENT_POSTEPAY.equals(request.getRequestEndpoint())) {
+            throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
+        }
         return new PostePayPollingResponse(
                 request.getClientId(),
                 request.getAuthorizationUrl(),
-                request.getAuthorizationOutcome() ? OK : KO,
+                Boolean.TRUE.equals(request.getAuthorizationOutcome()) ? OK : KO,
                 request.getErrorCode()
         );
     }
@@ -323,7 +327,7 @@ public class PaymentTransactionsController {
         log.info("START executePostePayPayment for transaction " + idTransaction);
 
         CreatePaymentRequest createPaymentRequest = mapPostePayAuthRequestToCreatePaymentRequest(postePayAuthRequest, clientId);
-        InlineResponse200 inlineResponse200 = null;
+        InlineResponse200 inlineResponse200;
         try {
             MicrosoftAzureLoginResponse microsoftAzureLoginResponse = postePayClient.requestMicrosoftAzureLogin();
             String bearerTokenAuthorization = "Bearer " + microsoftAzureLoginResponse.getAccess_token();

@@ -20,8 +20,8 @@ public class PostePayClient {
     private final String microsoftAzureLoginMode = "x-www-form-urlencoded";
 
 
-    @Value("${postePay.client.microsoft.azure.login.url:https://login.microsoftonline.com/520b4604-8be7-4169-9320-4e50c72f728d/oauth2/v2.0/token}")
-    public String MICROSOFT_AZURE_LOGIN_URL;
+    @Value("${azureAuth.client.postepay.url}")
+    public String MICROSOFT_AZURE_LOGIN_URL_POSTEPAY;
 
     @Value("${postePay.client.microsoft.azure.login.client.id:1d1828e6-cf67-4ced-a256-7f076cf2750c}")
     public String MICROSOFT_AZURE_LOGIN_CLIENT_ID;
@@ -45,7 +45,7 @@ public class PostePayClient {
 
         try {
             HttpEntity<MicrosoftAzureLoginRequest> entity = new HttpEntity<>(microsoftAzureLoginRequest, null);
-            microsoftAzureLoginResponse = microsoftAzureRestTemplate.postForObject(MICROSOFT_AZURE_LOGIN_URL, entity, MicrosoftAzureLoginResponse.class);
+            microsoftAzureLoginResponse = microsoftAzureRestTemplate.postForObject(MICROSOFT_AZURE_LOGIN_URL_POSTEPAY, entity, MicrosoftAzureLoginResponse.class);
         } catch (Exception e) {
             log.error("Exception calling POSTEPAY Microsoft Azure login service", e);
             throw e;

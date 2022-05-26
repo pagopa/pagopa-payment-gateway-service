@@ -30,25 +30,25 @@ import java.time.Duration;
 public class ClientConfig {
 
     @Value("${bancomatPay.client.url}")
-    public String BPAY_CLIENT_URL;
+    private String BPAY_CLIENT_URL;
 
     @Value("${bancomatPay.client.timeout.ms:5000}")
-    public String BPAY_CLIENT_TIMEOUT_MS;
+    private String BPAY_CLIENT_TIMEOUT_MS;
 
     @Value("${postePay.client.max.total:100}")
-    public String MAX_TOTAL_POSTEPAY;
+    private String MAX_TOTAL_POSTEPAY;
 
-    public int DEFAULT_MAX_TOTAL_POSTEPAY = 100;
+    private final int DEFAULT_MAX_TOTAL_POSTEPAY = 100;
 
     @Value("${postePay.client.max.per.route:100}")
-    public String MAX_PER_ROUTE_POSTEPAY;
+    private String MAX_PER_ROUTE_POSTEPAY;
 
-    public int DEFAULT_MAX_PER_ROUTE_POSTEPAY = 100;
+    private final int DEFAULT_MAX_PER_ROUTE_POSTEPAY = 100;
 
     @Value("${postePay.client.timeout.ms:5000}")
-    public String REQ_TIMEOUT_PROP_POSTEPAY;
+    private String REQ_TIMEOUT_PROP_POSTEPAY;
 
-    public int POSTEPAY_TIMEOUT_DEFAULT = 5000;
+    private final int POSTEPAY_TIMEOUT_DEFAULT = 5000;
 
 
 
@@ -100,7 +100,7 @@ public class ClientConfig {
                 new HttpComponentsClientHttpRequestFactory();
         httpComponentsClientHttpRequestFactory.setHttpClient(
                 HttpClientBuilder.create()
-                        .setProxy(createProxy(this.getClass().getName()))
+                    //    .setProxy(createProxy(this.getClass().getName()))
                         .setConnectionManager(createConnectionManager(
                                 MAX_TOTAL_POSTEPAY,
                                 DEFAULT_MAX_TOTAL_POSTEPAY,

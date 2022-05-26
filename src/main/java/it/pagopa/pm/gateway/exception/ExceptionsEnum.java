@@ -9,7 +9,8 @@ public enum ExceptionsEnum {
     TRANSACTION_ALREADY_PROCESSED("Transaction already processed", HttpStatus.UNAUTHORIZED),
     RESTAPI_CD_CLIENT_ERROR ("Exception during call to RestapiCD", HttpStatus.FAILED_DEPENDENCY),
     TRANSACTION_NOT_FOUND("Transaction not found", HttpStatus.NOT_FOUND),
-    TIMEOUT("Timeout", HttpStatus.GATEWAY_TIMEOUT);
+    TIMEOUT("Timeout", HttpStatus.GATEWAY_TIMEOUT),
+    MISSING_FIELDS("Missing mandatory fields", HttpStatus.BAD_REQUEST);
 
     @Getter
     private final String description;

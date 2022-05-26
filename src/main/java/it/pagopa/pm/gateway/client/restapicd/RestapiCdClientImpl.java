@@ -38,10 +38,10 @@ public class RestapiCdClientImpl {
         restapiCdClient.updateTransaction(id, headerMap, new TransactionUpdateRequestData(request));
     }
 
-    public void callClosePayment(Long id, boolean outcome) {
+    public String callClosePayment(Long id, boolean outcome) {
         log.info("Calling POST to close payment for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
-        restapiCdClient.closePayment(id, headerMap, outcome);
+        return restapiCdClient.closePayment(id, headerMap, outcome);
     }
 
 }

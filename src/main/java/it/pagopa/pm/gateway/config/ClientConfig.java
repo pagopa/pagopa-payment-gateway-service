@@ -1,6 +1,7 @@
 package it.pagopa.pm.gateway.config;
 
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
+import it.pagopa.pm.gateway.client.postepay.PostePayClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -8,6 +9,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,6 +51,8 @@ public class ClientConfig {
     public int POSTEPAY_TIMEOUT_DEFAULT = 5000;
 
 
+
+
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
@@ -59,6 +63,18 @@ public class ClientConfig {
     @Bean
     public BancomatPayClient bancomatPayClient(Jaxb2Marshaller marshaller) {
         return new BancomatPayClient();
+    }
+
+
+    @Bean
+    public PostePayClient postePayClient() {
+        return new PostePayClient();
+    }
+
+    @Bean
+    public PaymentManagerControllerApi paymentManagerControllerApi() {
+            return new PaymentManagerControllerApi();
+
     }
 
     @Bean
@@ -78,7 +94,7 @@ public class ClientConfig {
         return webServiceTemplate;
     }
 
-    @Bean
+   /* @Bean
     public RestTemplate postePayRestTemplate(){
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
                 new HttpComponentsClientHttpRequestFactory();
@@ -95,11 +111,25 @@ public class ClientConfig {
                                 POSTEPAY_TIMEOUT_DEFAULT))
                         .build());
         return new RestTemplate(httpComponentsClientHttpRequestFactory);
- }
+ }*/
 
     @Bean
     public RestTemplate microsoftAzureRestTemplate(){
-        return new RestTemplate();
+        HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
+                new HttpComponentsClientHttpRequestFactory();
+        httpComponentsClientHttpRequestFactory.setHttpClient(
+                HttpClientBuilder.create()
+                        .setProxy(createProxy(this.getClass().getName()))
+                        .setConnectionManager(createConnectionManager(
+                                MAX_TOTAL_POSTEPAY,
+                                DEFAULT_MAX_TOTAL_POSTEPAY,
+                                MAX_PER_ROUTE_POSTEPAY,
+                                DEFAULT_MAX_PER_ROUTE_POSTEPAY))
+                        .setDefaultRequestConfig(createRequestConfig(
+                                REQ_TIMEOUT_PROP_POSTEPAY,
+                                POSTEPAY_TIMEOUT_DEFAULT))
+                        .build());
+        return new RestTemplate(httpComponentsClientHttpRequestFactory);
     }
 
 

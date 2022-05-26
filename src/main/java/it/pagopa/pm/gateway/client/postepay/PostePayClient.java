@@ -34,9 +34,6 @@ public class PostePayClient {
 
 
     @Autowired
-    private RestTemplate createPaymentRestTemplate;
-
-    @Autowired
     private RestTemplate microsoftAzureRestTemplate;
 
 

@@ -28,6 +28,7 @@ import org.openapitools.client.ApiException;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -80,6 +81,10 @@ public class PaymentTransactionsController {
 
     @Autowired
     private PaymentManagerControllerApi paymentManagerControllerApi;
+
+    @Autowired
+    private Environment env;
+
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -354,7 +359,7 @@ public class PaymentTransactionsController {
 
     private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){
 
-        String configs = System.getProperty("postePay.clientId."+clientId+".config");
+        String configs = env.getProperty("postePay.clientId."+clientId+".config");
 
         List<String> configsList = getConfigValues(configs);
 

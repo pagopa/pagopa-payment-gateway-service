@@ -1,24 +1,18 @@
 package it.pagopa.pm.gateway.client.postepay;
 
-import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginRequest;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
-import it.pagopa.pm.gateway.dto.microsoft.azure.login.UrlEncoded;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import org.openapitools.client.model.ResponseURLs;
-import org.openapitools.client.model.PaymentChannel;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class PostePayClient {
-
-    private final String microsoftAzureLoginMode = "x-www-form-urlencoded";
-
 
     @Value("${azureAuth.client.postepay.url}")
     private String MICROSOFT_AZURE_LOGIN_URL;
@@ -37,14 +31,10 @@ public class PostePayClient {
     private RestTemplate microsoftAzureRestTemplatePostePay;
 
 
-    public MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(){
-        MicrosoftAzureLoginRequest microsoftAzureLoginRequest = new MicrosoftAzureLoginRequest();
-        updateMicrosoftAzureLoginRequest(microsoftAzureLoginRequest);
-
+    public MicrosoftAzureLoginResponse requestMicrosoftAzureLogin() {
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse;
-
         try {
-            HttpEntity<MicrosoftAzureLoginRequest> entity = new HttpEntity<>(microsoftAzureLoginRequest, null);
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(createMicrosoftAzureLoginRequest(), createHttpHeadersAzureLoginRequest());
             microsoftAzureLoginResponse = microsoftAzureRestTemplatePostePay.postForObject(MICROSOFT_AZURE_LOGIN_URL, entity, MicrosoftAzureLoginResponse.class);
         } catch (Exception e) {
             log.error("Exception calling POSTEPAY Microsoft Azure login service", e);
@@ -55,24 +45,21 @@ public class PostePayClient {
 
     }
 
-    private void updateMicrosoftAzureLoginRequest(MicrosoftAzureLoginRequest microsoftAzureLoginRequest){
-        microsoftAzureLoginRequest.setMode(microsoftAzureLoginMode);
+    private HttpHeaders createHttpHeadersAzureLoginRequest() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        return headers;
+    }
 
-        List<UrlEncoded> urlEncodedList = new ArrayList<>();
-        UrlEncoded clientIdUrlEncoded = new UrlEncoded("client_id", MICROSOFT_AZURE_LOGIN_CLIENT_ID, "text");
-        urlEncodedList.add(clientIdUrlEncoded);
+    private MultiValueMap<String, String> createMicrosoftAzureLoginRequest() {
 
-        UrlEncoded clientSecretdUrlEncoded = new UrlEncoded("client_secret", MICROSOFT_AZURE_LOGIN_CLIENT_SECRET, "text");
-        urlEncodedList.add(clientSecretdUrlEncoded);
+        MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+        requestBody.add("client_id", MICROSOFT_AZURE_LOGIN_CLIENT_ID);
+        requestBody.add("client_secret", MICROSOFT_AZURE_LOGIN_CLIENT_SECRET);
+        requestBody.add("grant_type", MICROSOFT_AZURE_LOGIN_GRANT_TYPE);
+        requestBody.add("scope", MICROSOFT_AZURE_LOGIN_SCOPE);
 
-        UrlEncoded grantTypeUrlEncoded = new UrlEncoded("grant_type", MICROSOFT_AZURE_LOGIN_GRANT_TYPE, "text");
-        urlEncodedList.add(grantTypeUrlEncoded);
-
-        UrlEncoded scopeUrlEncoded = new UrlEncoded("scope", MICROSOFT_AZURE_LOGIN_SCOPE, "text");
-        urlEncodedList.add(scopeUrlEncoded);
-
-        microsoftAzureLoginRequest.setUrlencoded(urlEncodedList);
-
+        return requestBody;
     }
 
 }

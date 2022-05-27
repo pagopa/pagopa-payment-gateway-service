@@ -57,7 +57,5 @@ target
 /nbdist/
 /.nb-gradle/
 
-### MacOS file ###
-.DS_Store
 
 *.tempKey

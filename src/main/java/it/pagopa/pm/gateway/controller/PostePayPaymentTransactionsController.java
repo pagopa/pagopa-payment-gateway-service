@@ -214,34 +214,23 @@ public class PostePayPaymentTransactionsController {
         } catch (ApiException e) {
             Error error = OBJECT_MAPPER.readValue(e.getResponseBody(), Error.class);
             log.error("Error from PostePay createPayment: " + error);
-            updateAndSavePaymentRequestEntity(paymentRequestEntity, false, null, Integer.toString(e.getCode()), null);
-
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } catch (Exception e) {
             log.error("Exception while calling Postepay - setting AuthorizationOutcome to false - idTransaction " + idTransaction, e);
-            updateAndSavePaymentRequestEntity(paymentRequestEntity, false, null, null, null);
-
             if (e.getCause() instanceof SocketTimeoutException) {
                 log.error("SocketTimeoutException during Postepay calling");
                 throw new RestApiException(ExceptionsEnum.TIMEOUT);
             }
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-
-        updateAndSavePaymentRequestEntity(paymentRequestEntity, true, inlineResponse200.getPaymentID(),
-                null, inlineResponse200.getUserRedirectURL());
-
+        savePaymentRequestEntity(paymentRequestEntity, inlineResponse200.getPaymentID(), inlineResponse200.getUserRedirectURL());
         log.info("END executePostePayPayment for transaction" + idTransaction);
     }
 
-    private void updateAndSavePaymentRequestEntity(PaymentRequestEntity paymentRequestEntity, boolean authorizationOutcome,
-                                                   String correlationId, String errorCode, String authorizationUrl) {
-        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
+    private void savePaymentRequestEntity(PaymentRequestEntity paymentRequestEntity, String correlationId, String authorizationUrl) {
         paymentRequestEntity.setCorrelationId(correlationId);
-        paymentRequestEntity.setErrorCode(errorCode);
         paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
         paymentRequestRepository.save(paymentRequestEntity);
-
     }
 
     private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId) {

@@ -7,6 +7,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.openapitools.client.ApiClient;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,15 +33,20 @@ public class ClientConfig {
     @Value("${bancomatPay.client.timeout.ms:5000}")
     private int BPAY_CLIENT_TIMEOUT_MS;
 
-    @Value("${postePay.client.max.total:100}")
-    private int MAX_TOTAL_POSTEPAY;
+    @Value("${azureAuth.client.maxTotal:100}")
+    private int AZURE_CLIENT_MAX_TOTAL;
 
-    @Value("${postePay.client.max.per.route:100}")
-    private int MAX_PER_ROUTE_POSTEPAY;
+    @Value("${azureAuth.client.maxPerRoute:100}")
+    private int AZURE_CLIENT_MAX_PER_ROUTE;
 
-    @Value("${postePay.client.timeout.ms:5000}")
-    private int REQ_TIMEOUT_PROP_POSTEPAY;
+    @Value("${azureAuth.client.timeout.ms:5000}")
+    private int AZURE_CLIENT_TIMEOUT;
 
+    @Value("${postepay.client.url}")
+    private String POSTEPAY_CLIENT_URL;
+
+    @Value("${postepay.client.timeout.ms:5000}")
+    private int POSTEPAY_CLIENT_TIMEOUT;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -61,7 +67,7 @@ public class ClientConfig {
 
     @Bean
     public PaymentManagerControllerApi paymentManagerControllerApi() {
-            return new PaymentManagerControllerApi();
+        return new PaymentManagerControllerApi(new ApiClient().setBasePath(POSTEPAY_CLIENT_URL).setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
     }
 
     @Bean
@@ -82,16 +88,16 @@ public class ClientConfig {
     }
 
     @Bean
-    public RestTemplate microsoftAzureRestTemplatePostePay(){
+    public RestTemplate microsoftAzureRestTemplatePostePay() {
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
                 new HttpComponentsClientHttpRequestFactory();
         httpComponentsClientHttpRequestFactory.setHttpClient(
                 HttpClientBuilder.create()
                         .setConnectionManager(createConnectionManager(
-                                MAX_TOTAL_POSTEPAY,
-                                MAX_PER_ROUTE_POSTEPAY))
+                                AZURE_CLIENT_MAX_TOTAL,
+                                AZURE_CLIENT_MAX_PER_ROUTE))
                         .setDefaultRequestConfig(createRequestConfig(
-                                REQ_TIMEOUT_PROP_POSTEPAY))
+                                AZURE_CLIENT_TIMEOUT))
                         .build());
         return new RestTemplate(httpComponentsClientHttpRequestFactory);
     }

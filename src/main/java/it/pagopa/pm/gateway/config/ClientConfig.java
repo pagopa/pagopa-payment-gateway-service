@@ -1,7 +1,7 @@
 package it.pagopa.pm.gateway.config;
 
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
-import it.pagopa.pm.gateway.client.postepay.PostePayClient;
+import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
@@ -61,12 +61,12 @@ public class ClientConfig {
     }
 
     @Bean
-    public PostePayClient postePayClient() {
-        return new PostePayClient();
+    public AzureLoginClient azureLoginClient() {
+        return new AzureLoginClient();
     }
 
     @Bean
-    public PaymentManagerControllerApi paymentManagerControllerApi() {
+    public PaymentManagerControllerApi postePayControllerApi() {
         return new PaymentManagerControllerApi(new ApiClient().setBasePath(POSTEPAY_CLIENT_URL).setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
     }
 
@@ -88,7 +88,7 @@ public class ClientConfig {
     }
 
     @Bean
-    public RestTemplate microsoftAzureRestTemplatePostePay() {
+    public RestTemplate microsoftAzureRestTemplate() {
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
                 new HttpComponentsClientHttpRequestFactory();
         httpComponentsClientHttpRequestFactory.setHttpClient(

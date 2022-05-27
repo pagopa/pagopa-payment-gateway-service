@@ -3,7 +3,7 @@ package it.pagopa.pm.gateway.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
-import it.pagopa.pm.gateway.client.postepay.PostePayClient;
+import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
@@ -60,11 +60,11 @@ public class PostePayPaymentTransactionsController {
     @Value("${postepay.pgs.response.urlredirect}")
     private String PAYMENT_RESPONSE_URLREDIRECT;
 
-    @Value("${postepay.notificationURL=}")
+    @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
 
     @Autowired
-    private PostePayClient postePayClient;
+    private AzureLoginClient azureLoginClient;
 
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
@@ -73,7 +73,7 @@ public class PostePayPaymentTransactionsController {
     private PaymentRequestRepository paymentRequestRepository;
 
     @Autowired
-    private PaymentManagerControllerApi paymentManagerControllerApi;
+    private PaymentManagerControllerApi postePayControllerApi;
 
     @Autowired
     private Environment env;
@@ -203,9 +203,9 @@ public class PostePayPaymentTransactionsController {
         InlineResponse200 inlineResponse200;
 
         try {
-            MicrosoftAzureLoginResponse microsoftAzureLoginResponse = postePayClient.requestMicrosoftAzureLogin();
+            MicrosoftAzureLoginResponse microsoftAzureLoginResponse = azureLoginClient.requestMicrosoftAzureLoginPostepay();
             String bearerTokenAuthorization = "Bearer " + microsoftAzureLoginResponse.getAccess_token();
-            inlineResponse200 = paymentManagerControllerApi.apiV1PaymentCreatePost(bearerTokenAuthorization, createPaymentRequest);
+            inlineResponse200 = postePayControllerApi.apiV1PaymentCreatePost(bearerTokenAuthorization, createPaymentRequest);
             if (inlineResponse200 == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }

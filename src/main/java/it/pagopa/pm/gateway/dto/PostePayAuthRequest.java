@@ -7,12 +7,9 @@ import javax.validation.constraints.NotNull;
 
 @Data
 public class PostePayAuthRequest {
-
-    @NotNull
     @JsonProperty(required = true)
     private int grandTotal;
 
-    @NotNull
     @JsonProperty(required = true)
     private Long idTransaction;
 

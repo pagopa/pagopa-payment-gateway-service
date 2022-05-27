@@ -55,11 +55,6 @@ public class PaymentTransactionsController {
     @Value("${postePay.pgs.response.urlredirect}")
     private String PAYMENT_RESPONSE_URLREDIRECT;
 
-    /*@Value("${postePay.clientId.APP.config}")
-    private String CLIENT_ID_APP_CONFIG;
-
-    List<String> appConfigs = getConfigValue(CLIENT_ID_APP_CONFIG);
-*/
     private static final String INQUIRY_RESPONSE_EFF = "EFF";
     private static final String INQUIRY_RESPONSE_ERR = "ERR";
     private static final String EURO_ISO_CODE = "ISO 978";
@@ -255,18 +250,14 @@ public class PaymentTransactionsController {
         setMdcFields(mdcFields);
 
         if (ObjectUtils.anyNull(postePayAuthRequest.getGrandTotal(), postePayAuthRequest.getTransactionId())) {
-            PostePayAuthResponse response =  new  PostePayAuthResponse();
-            response.setChannel(response.getChannel());
-            response.setError("Bad Request - mandatory parameters missing");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-
+           return  createPostePayAuthResponse(clientId,"Bad Request - mandatory parameters missing", true, HttpStatus.BAD_REQUEST);
+      }
 
         Long idTransaction = postePayAuthRequest.getTransactionId();
         PaymentRequestEntity alreadySaved = paymentRequestRepository.findByIdTransaction(idTransaction);
 
         if (alreadySaved != null) {
-            throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
+            return  createPostePayAuthResponse(clientId,"Transaction already processed", true, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         log.info("START requestPaymentPostepay " + idTransaction);
@@ -276,31 +267,26 @@ public class PaymentTransactionsController {
         paymentRequestEntity.setIdTransaction(idTransaction);
         paymentRequestEntity.setMdcInfo(mdcFields);
 
-        String json = null;
+        String json;
         try {
             json = mapper.writeValueAsString(postePayAuthRequest);
             log.debug("Resulting postePayAuthRequest JSON string = " + json);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+           //togliere printStackTrace e aggiungere log.error ("message", e)
+           log.error("Error while creating json from PostePayAuthRequest object", e);
+           return  createPostePayAuthResponse(clientId,"Error while creating json from PostePayAuthRequest object", true, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         paymentRequestEntity.setJsonRequest(json);
 
         try {
             executePostePayPayment(postePayAuthRequest, clientId, paymentRequestEntity);
         } catch (Exception e){
-            PostePayAuthResponse response =  new  PostePayAuthResponse();
-            response.setChannel(response.getChannel());
-            response.setError("Error during payment authorization request to Postepay");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return createPostePayAuthResponse(clientId,"Error while executing payment for idTransaction " + idTransaction, true, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         log.info("END requestPaymentPostepay " + idTransaction);
 
-        PostePayAuthResponse response = new  PostePayAuthResponse();
-        response.setChannel(response.getChannel());
-        response.setUrlRedirect(PAYMENT_RESPONSE_URLREDIRECT);
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return createPostePayAuthResponse(clientId,null, false, HttpStatus.OK);
 
     }
 
@@ -328,6 +314,7 @@ public class PaymentTransactionsController {
 
         CreatePaymentRequest createPaymentRequest = mapPostePayAuthRequestToCreatePaymentRequest(postePayAuthRequest, clientId);
         InlineResponse200 inlineResponse200;
+
         try {
             MicrosoftAzureLoginResponse microsoftAzureLoginResponse = postePayClient.requestMicrosoftAzureLogin();
             String bearerTokenAuthorization = "Bearer " + microsoftAzureLoginResponse.getAccess_token();
@@ -340,78 +327,105 @@ public class PaymentTransactionsController {
         } catch (ApiException e) {
             Error error = mapper.readValue(e.getResponseBody(), Error.class);
             log.error("Error from PostePay createPayment: " + error);
-            paymentRequestEntity.setAuthorizationOutcome(false);
-            paymentRequestEntity.setErrorCode(Integer.toString(e.getCode()));
-            paymentRequestRepository.save(paymentRequestEntity);
+            updateAndSavePaymentRequestEntity(paymentRequestEntity, false, null, Integer.toString(e.getCode()), null);
+
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } catch (Exception e) {
             log.error("Exception while calling Postepay - setting AuthorizationOutcome to false - idTransaction " + idTransaction , e);
-            paymentRequestEntity.setAuthorizationOutcome(false);
-            paymentRequestRepository.save(paymentRequestEntity);
+            updateAndSavePaymentRequestEntity(paymentRequestEntity, false, null, null, null);
+
             if (e.getCause() instanceof SocketTimeoutException) {
                 log.error("SocketTimeoutException during Postepay calling");
                 throw new RestApiException(ExceptionsEnum.TIMEOUT);
             }
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        paymentRequestEntity.setCorrelationId(inlineResponse200.getPaymentID());
-        paymentRequestEntity.setAuthorizationUrl(inlineResponse200.getUserRedirectURL());
-        paymentRequestEntity.setAuthorizationOutcome(true);
-        paymentRequestRepository.save(paymentRequestEntity);
+
+        updateAndSavePaymentRequestEntity(paymentRequestEntity, true, inlineResponse200.getPaymentID(),
+                null, inlineResponse200.getUserRedirectURL());
+
         log.info("END executePostePayPayment for transaction" + idTransaction);
     }
 
-    private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId){
+       private void updateAndSavePaymentRequestEntity(PaymentRequestEntity paymentRequestEntity, boolean authorizationOutcome,
+                                                      String correlationId, String errorCode,  String authorizationUrl){
+        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
+        paymentRequestEntity.setCorrelationId(correlationId);
+        paymentRequestEntity.setErrorCode(errorCode);
+        paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
+        paymentRequestRepository.save(paymentRequestEntity);
 
-        String configs = env.getProperty("postePay.clientId."+clientId+".config");
+       }
 
-        List<String> configsList = getConfigValues(configs);
+        private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest (PostePayAuthRequest
+        postePayAuthRequest, String clientId){
 
-        CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
-        createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
-        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsList.get(1)));
-        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsList.get(2)));
-        createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
-        createPaymentRequest.setCurrency(EURO_ISO_CODE);
-        createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
-        createPaymentRequest.setShopId(configsList.get(0));
+            String configs = env.getProperty("postePay.clientId." + clientId + ".config");
 
-        ResponseURLs responseURLs = new ResponseURLs();
-        setResponseUrl(responseURLs, clientId, configsList.get(3));
-        createPaymentRequest.setResponseURLs(responseURLs);
+            List<String> configsList = getConfigValues(configs);
 
-        createPaymentRequest.setShopTransactionId(postePayAuthRequest.getTransactionId().toString());
+            CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+            createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
+            createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsList.get(1)));
+            createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsList.get(2)));
+            createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
+            createPaymentRequest.setCurrency(EURO_ISO_CODE);
+            createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
+            createPaymentRequest.setShopId(configsList.get(0));
 
-        return createPaymentRequest;
+            ResponseURLs responseURLs = new ResponseURLs();
+            setResponseUrl(responseURLs, clientId, configsList.get(3));
+            createPaymentRequest.setResponseURLs(responseURLs);
 
-    }
+            createPaymentRequest.setShopTransactionId(postePayAuthRequest.getTransactionId().toString());
 
-    private void setResponseUrl(ResponseURLs responseURLs, String clientId, String responseUrl){
+            return createPaymentRequest;
 
-        switch (clientId){
-            case "APP": responseURLs.setResponseUrlOk("");
-                responseURLs.setResponseUrlKo("");
-                responseURLs.setServerNotificationUrl("url della put");
-                break;
-            case "WEB": responseURLs.setResponseUrlOk(responseUrl);
-                responseURLs.setResponseUrlKo(responseUrl);
-                responseURLs.setServerNotificationUrl("url della put");
-                break;
-            default: break;
         }
 
-    }
+        private void setResponseUrl (ResponseURLs responseURLs, String clientId, String responseUrl){
 
-    private List<String> getConfigValues(String config){
-        StringTokenizer tokenizer = new StringTokenizer(config, "|", false);
-        List<String> configs = new ArrayList<>();
+            switch (clientId) {
+                case "APP":
+                    responseURLs.setResponseUrlOk("");
+                    responseURLs.setResponseUrlKo("");
+                    responseURLs.setServerNotificationUrl("url della put");
+                    break;
+                case "WEB":
+                    responseURLs.setResponseUrlOk(responseUrl);
+                    responseURLs.setResponseUrlKo(responseUrl);
+                    responseURLs.setServerNotificationUrl("url della put");
+                    break;
+                default:
+                    break;
+            }
 
-        while (tokenizer.hasMoreTokens()){
-            configs.add(tokenizer.nextToken());
         }
-        return configs;
+
+        private List<String> getConfigValues (String config){
+            StringTokenizer tokenizer = new StringTokenizer(config, "|", false);
+            List<String> configs = new ArrayList<>();
+
+            while (tokenizer.hasMoreTokens()) {
+                configs.add(tokenizer.nextToken());
+            }
+            return configs;
+
+        }
+
+        private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse (String channel, String error,
+        boolean isError, HttpStatus status){
+
+            PostePayAuthResponse postePayAuthResponse = new PostePayAuthResponse();
+            postePayAuthResponse.setChannel(channel);
+            if (isError) {
+                postePayAuthResponse.setError(error);
+            } else {
+                postePayAuthResponse.setUrlRedirect(PAYMENT_RESPONSE_URLREDIRECT);
+            }
+            return ResponseEntity.status(status).body(postePayAuthResponse);
+
+        }
+
 
     }
-
-
-}

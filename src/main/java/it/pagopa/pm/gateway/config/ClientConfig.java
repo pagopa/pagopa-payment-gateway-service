@@ -32,20 +32,20 @@ public class ClientConfig {
     @Value("${bancomatPay.client.url}")
     private String BPAY_CLIENT_URL;
 
-    @Value("${bancomatPay.client.timeout.ms:5000}")
+    @Value("${bancomatPay.client.timeout.ms}")
     private String BPAY_CLIENT_TIMEOUT_MS;
 
-    @Value("${postePay.client.max.total:100}")
+    @Value("${postePay.client.max.total}")
     private String MAX_TOTAL_POSTEPAY;
 
     private final int DEFAULT_MAX_TOTAL_POSTEPAY = 100;
 
-    @Value("${postePay.client.max.per.route:100}")
+    @Value("${postePay.client.max.per.route}")
     private String MAX_PER_ROUTE_POSTEPAY;
 
     private final int DEFAULT_MAX_PER_ROUTE_POSTEPAY = 100;
 
-    @Value("${postePay.client.timeout.ms:5000}")
+    @Value("${postePay.client.timeout.ms}")
     private String REQ_TIMEOUT_PROP_POSTEPAY;
 
     private final int POSTEPAY_TIMEOUT_DEFAULT = 5000;
@@ -139,6 +139,7 @@ public class ClientConfig {
                 .build();
     }
 
+    //MAYBE WE DON'T NEED THIS
     private HttpHost createProxy(String className) {
         String proxyHost = System.getProperty("https.proxyHost");
         String proxyPort = System.getProperty("https.proxyPort");

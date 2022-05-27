@@ -4,7 +4,6 @@ import feign.*;
 import feign.jackson.*;
 import feign.okhttp.*;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import lombok.extern.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.*;

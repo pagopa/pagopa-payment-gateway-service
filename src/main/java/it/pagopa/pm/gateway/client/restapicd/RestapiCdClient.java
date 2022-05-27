@@ -13,5 +13,4 @@ public interface RestapiCdClient {
 
     @RequestLine("POST /pp-restapi-CD/v1/payments/close-payment/{idTransaction}?outcome={outcome}")
     String closePayment(@Param Long idTransaction, @Param boolean outcome, @HeaderMap Map<String, Object> headerMap);
-
 }

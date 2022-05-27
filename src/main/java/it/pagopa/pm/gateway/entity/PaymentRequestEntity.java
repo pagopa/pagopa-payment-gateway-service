@@ -34,7 +34,6 @@ public class PaymentRequestEntity {
     @Column(name = "CLIENT_ID", nullable = false)
     private String clientId;
 
-    @Lob
     @Column(name = "REQUEST")
     private String jsonRequest;
 

@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -7,16 +8,15 @@ import javax.validation.constraints.NotNull;
 @Data
 public class PostePayAuthRequest {
 
-    @NotNull(message = "'grandTotal' mandatory")
-    int grandTotal;
+    @NotNull
+    @JsonProperty(required = true)
+    private int grandTotal;
 
-    @NotNull(message = "'transactionId' mandatory")
-    Long transactionId;
+    @NotNull
+    @JsonProperty(required = true)
+    private Long idTransaction;
 
-    String name;
-
-    String emailNotice;
-
-    String description;
-
+    private String name;
+    private String emailNotice;
+    private String description;
 }

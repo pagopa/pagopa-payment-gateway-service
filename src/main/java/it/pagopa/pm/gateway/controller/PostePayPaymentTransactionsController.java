@@ -111,11 +111,7 @@ public class PostePayPaymentTransactionsController {
             postePayPaymentRequest.setAuthorizationCode(authMessage.getAuthCode());
             postePayPaymentRequest.setAuthorizationOutcome(isAuthOk);
             paymentRequestRepository.save(postePayPaymentRequest);
-
-            if (closePayment.equals(OutcomeEnum.KO.toString())) {
-                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
-            }
-
+            log.info("Response from closePayment for correlation-id: " + correlationId + " " + closePayment);
         } catch (FeignException fe) {
             log.error("Exception calling RestapiCD to close payment", fe);
             throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());

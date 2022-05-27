@@ -17,6 +17,7 @@ import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.ApiException;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.openapitools.client.model.InlineResponse200;
@@ -34,6 +35,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import java.lang.Exception;
 import java.net.SocketTimeoutException;
@@ -45,6 +47,7 @@ import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
+import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 
 @RestController
 @Slf4j
@@ -360,24 +363,23 @@ public class PaymentTransactionsController {
 
     }
 
-    private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest
-                                                                                      postePayAuthRequest, String clientId) {
+    private CreatePaymentRequest mapPostePayAuthRequestToCreatePaymentRequest(PostePayAuthRequest postePayAuthRequest, String clientId) {
 
-        String configs = env.getProperty("postePay.clientId." + clientId + ".config");
+        String configs = env.getProperty(String.format("postePay.clientId.%s.config", clientId));
 
-        List<String> configsList = getConfigValues(configs);
+        Map<String, String> configsMap = getConfigValues(configs);
 
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
         createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
-        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsList.get(1)));
-        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsList.get(2)));
+        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
+        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsMap.get(AUTH_TYPE_CONFIG)));
         createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
         createPaymentRequest.setCurrency(EURO_ISO_CODE);
         createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
-        createPaymentRequest.setShopId(configsList.get(0));
+        createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
 
         ResponseURLs responseURLs = new ResponseURLs();
-        setResponseUrl(responseURLs, clientId, configsList.get(3));
+        setResponseUrl(responseURLs, clientId, configsMap.get(RESPONSE_URL_CONFIG));
         createPaymentRequest.setResponseURLs(responseURLs);
 
         createPaymentRequest.setShopTransactionId(postePayAuthRequest.getIdTransaction().toString());
@@ -390,13 +392,15 @@ public class PaymentTransactionsController {
 
         switch (clientId) {
             case "APP":
-                responseURLs.setResponseUrlOk("");
-                responseURLs.setResponseUrlKo("");
+                responseURLs.setResponseUrlOk(StringUtils.EMPTY);
+                responseURLs.setResponseUrlKo(StringUtils.EMPTY);
+                //TODO
                 responseURLs.setServerNotificationUrl("url della put");
                 break;
             case "WEB":
                 responseURLs.setResponseUrlOk(responseUrl);
                 responseURLs.setResponseUrlKo(responseUrl);
+                //TODO
                 responseURLs.setServerNotificationUrl("url della put");
                 break;
             default:
@@ -405,19 +409,20 @@ public class PaymentTransactionsController {
 
     }
 
-    private List<String> getConfigValues(String config) {
-        StringTokenizer tokenizer = new StringTokenizer(config, "|", false);
-        List<String> configs = new ArrayList<>();
 
-        while (tokenizer.hasMoreTokens()) {
-            configs.add(tokenizer.nextToken());
-        }
-        return configs;
+    private Map<String, String> getConfigValues(String config) {
+        List<String> listConfig = Arrays.asList(config.split("\\|"));
 
+        Map<String, String> configsMap = new HashMap<>();
+        configsMap.put(SHOP_ID_CONFIG, listConfig.get(0));
+        configsMap.put(PAYMENT_CHANNEL_CONFIG, listConfig.get(1));
+        configsMap.put(AUTH_TYPE_CONFIG, listConfig.get(2));
+        configsMap.put(RESPONSE_URL_CONFIG, listConfig.get(3));
+
+        return configsMap;
     }
 
-    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String error,
-                                                                            boolean isError, HttpStatus status) {
+    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String error, boolean isError, HttpStatus status) {
 
         PostePayAuthResponse postePayAuthResponse = new PostePayAuthResponse();
         postePayAuthResponse.setChannel(channel);

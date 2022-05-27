@@ -55,24 +55,6 @@ public class PostePayClient {
 
     }
 
-    private void setResponseUrl(ResponseURLs responseURLs, String clientId){
-        PaymentChannel paymentChannel = PaymentChannel.fromValue(clientId);
-
-        switch (paymentChannel){
-            case APP: responseURLs.setResponseUrlOk("");
-                responseURLs.setResponseUrlKo("");
-                responseURLs.setServerNotificationUrl("url della put");
-                break;
-            case WEB: responseURLs.setResponseUrlOk("channel_responseURL");
-                responseURLs.setResponseUrlKo("channel_responseURL");
-                responseURLs.setServerNotificationUrl("url della put");
-                break;
-            default: break;
-        }
-
-    }
-
-
     private void updateMicrosoftAzureLoginRequest(MicrosoftAzureLoginRequest microsoftAzureLoginRequest){
         microsoftAzureLoginRequest.setMode(microsoftAzureLoginMode);
 
@@ -91,9 +73,6 @@ public class PostePayClient {
 
         microsoftAzureLoginRequest.setUrlencoded(urlEncodedList);
 
-
     }
-
-
 
 }

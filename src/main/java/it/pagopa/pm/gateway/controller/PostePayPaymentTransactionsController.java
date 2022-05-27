@@ -14,10 +14,15 @@ import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
-import okio.Timeout;
-import org.apache.commons.collections.ListUtils;
+import org.openapitools.client.ApiException;
+import org.openapitools.client.api.PaymentManagerControllerApi;
+import org.openapitools.client.model.InlineResponse200;
+import org.openapitools.client.model.CreatePaymentRequest;
+import org.openapitools.client.model.AuthorizationType;
+import org.openapitools.client.model.ResponseURLs;
+import org.openapitools.client.model.PaymentChannel;
+import org.openapitools.client.model.Error;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +36,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.net.SocketTimeoutException;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_POSTEPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENT_POSTEPAY_REQUEST_ID;
@@ -47,7 +51,7 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Slf4j
 public class PostePayPaymentTransactionsController {
 
-    private static final String EURO_ISO_CODE = "ISO 978";
+    private static final String EURO_ISO_CODE = "978";
     private static final String BAD_REQUEST_MSG = "Bad Request - mandatory parameters missing";
     private static final String BAD_REQUEST_MSG_CLIENT_ID = "Bad Request - client id is not valid";
     private static final String TRANSACTION_ALREADY_PROCESSED_MSG = "Transaction already processed";

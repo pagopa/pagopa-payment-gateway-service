@@ -84,42 +84,52 @@ public class PostePayPaymentTransactionsController {
 
     @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
     public ACKMessage closePayment(@RequestBody AuthMessage authMessage,
-                                   @RequestHeader(X_CORRELATION_ID) String correlationId) {
+                                   @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();
+        log.info("START Update postepay transaction request for correlation-id: " + correlationId + ": " + authMessage);
+
         if (Objects.isNull(authMessage) || authMessage.getAuthOutcome() == null || StringUtils.isBlank(correlationId)) {
-            return new ACKError(OutcomeEnum.KO, ExceptionsEnum.MISSING_FIELDS.getDescription());
+            throw new RestApiException(ExceptionsEnum.MISSING_FIELDS);
         }
-        log.info("START Close payment request for correlation-id: " + correlationId + ": " + authMessage);
+
         PaymentRequestEntity postePayPaymentRequest = paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(
                 correlationId, EndpointEnum.POSTEPAY.getValue());
-        if (Objects.isNull(postePayPaymentRequest)) {
-            return new ACKError(OutcomeEnum.KO, ExceptionsEnum.TRANSACTION_NOT_FOUND.getDescription());
+
+        if (postePayPaymentRequest == null) {
+            throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
+        } else {
+            setMdcFields(postePayPaymentRequest.getMdcInfo());
+            if (Boolean.TRUE.equals(postePayPaymentRequest.getIsProcessed())) {
+                throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
+            }
         }
-        setMdcFields(postePayPaymentRequest.getMdcInfo());
-        if (postePayPaymentRequest.getIsProcessed()) {
-            return new ACKError(OutcomeEnum.KO, ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED.getDescription());
-        }
+
         try {
             boolean isAuthOk = authMessage.getAuthOutcome() == OutcomeEnum.OK;
             String closePayment = restapiCdClient.callClosePayment(postePayPaymentRequest.getIdTransaction(), isAuthOk);
             postePayPaymentRequest.setIsProcessed(true);
+            postePayPaymentRequest.setAuthorizationCode(authMessage.getAuthCode());
+            postePayPaymentRequest.setAuthorizationOutcome(isAuthOk);
             paymentRequestRepository.save(postePayPaymentRequest);
+
             if (closePayment.equals(OutcomeEnum.KO.toString())) {
-                return new ACKError(OutcomeEnum.KO, ExceptionsEnum.GENERIC_ERROR.getDescription());
+                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
+
         } catch (FeignException fe) {
             log.error("Exception calling RestapiCD to close payment", fe);
-            return new ACKError(OutcomeEnum.KO, ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR.getDescription());
+            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());
         } catch (Exception e) {
             log.error("Exception closing payment", e);
             if (e.getCause() instanceof SocketTimeoutException) {
-                return new ACKError(OutcomeEnum.KO, ExceptionsEnum.TIMEOUT.getDescription());
+                throw new RestApiException(ExceptionsEnum.TIMEOUT);
             }
-            return new ACKError(OutcomeEnum.KO, ExceptionsEnum.GENERIC_ERROR.getDescription());
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } finally {
-            log.info("END Update transaction request for correlation-id: " + correlationId);
+            log.info("END Update postepay transaction request for correlation-id: " + correlationId);
         }
-        return new ACKMessage(OutcomeEnum.OK);
+
+        return new ACKMessage(OK);
     }
 
     @Transactional

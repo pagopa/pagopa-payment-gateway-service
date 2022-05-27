@@ -295,7 +295,7 @@ public class PostePayPaymentTransactionsController {
         configsMap.put(SHOP_ID_CONFIG, listConfig.get(0));
         configsMap.put(PAYMENT_CHANNEL_CONFIG, listConfig.get(1));
         configsMap.put(AUTH_TYPE_CONFIG, listConfig.get(2));
-        configsMap.put(RESPONSE_URL_CONFIG, listConfig.get(3));
+        configsMap.put(RESPONSE_URL_CONFIG, listConfig.size() > 3 ? listConfig.get(3) : "");
 
         return configsMap;
     }

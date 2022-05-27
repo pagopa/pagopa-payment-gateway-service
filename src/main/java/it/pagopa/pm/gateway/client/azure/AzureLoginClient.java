@@ -32,15 +32,15 @@ public class AzureLoginClient {
     private RestTemplate microsoftAzureRestTemplate;
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
-        MultiValueMap<String, String> body = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID,MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET,MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
-        return requestMicrosoftAzureLogin(body, url);
+        MultiValueMap<String, String> body = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
+        return requestMicrosoftAzureLogin(body, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
     }
 
-    private MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(MultiValueMap<String, String> body, Strin url) {
+    private MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(MultiValueMap<String, String> body, String url) {
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse;
         try {
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, createHttpHeadersAzureLoginRequest());
-            microsoftAzureLoginResponse = microsoftAzureRestTemplatePostePay.postForObject(url, entity, MicrosoftAzureLoginResponse.class);
+            microsoftAzureLoginResponse = microsoftAzureRestTemplate.postForObject(url, entity, MicrosoftAzureLoginResponse.class);
         } catch (Exception e) {
             log.error("Exception calling Microsoft Azure login service", e);
             throw e;

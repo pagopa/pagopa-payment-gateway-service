@@ -29,7 +29,7 @@ public class ErrorHandler {
                 errorResponse.setMessage("The X-Correlation-ID is not valid");
                 break;
             case NOT_FOUND:
-                errorResponse.setMessage("The X-Correlation-ID is unknown");
+                errorResponse.setMessage(e.getMessage());
                 break;
             case INTERNAL_SERVER_ERROR:
                 errorResponse.setMessage(Arrays.toString(e.getStackTrace()));

@@ -4,7 +4,6 @@ import feign.*;
 import feign.jackson.*;
 import feign.okhttp.*;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import lombok.extern.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.*;
@@ -38,10 +37,18 @@ public class RestapiCdClientImpl {
         restapiCdClient.updateTransaction(id, headerMap, new TransactionUpdateRequestData(request));
     }
 
-    public String callClosePayment(Long idTransaction, boolean outcome) {
+    public String callClosePayment(Long idTransaction, boolean outcome, String authCode) {
         log.info("Calling POST to close payment for transaction " + idTransaction);
         Map<String, Object> headerMap = buildMdcHeader();
-        return restapiCdClient.closePayment(idTransaction, outcome, headerMap);
+        Map<String, Object> parameters = buildQueryParameters(outcome, authCode);
+        return restapiCdClient.closePayment(idTransaction, parameters, headerMap);
+    }
+
+    private Map<String, Object> buildQueryParameters(boolean outcome, String authCode) {
+        Map<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("outcome", outcome);
+        parameters.put("authCode", authCode);
+        return parameters;
     }
 
 }

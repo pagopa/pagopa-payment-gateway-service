@@ -58,7 +58,8 @@ public class PostePayPaymentTransactionsController {
         }
         try {
             boolean isAuthOk = authMessage.getAuthOutcome() == OutcomeEnum.OK;
-            String closePayment = restapiCdClient.callClosePayment(postePayPaymentRequest.getIdTransaction(), isAuthOk);
+            String closePayment = restapiCdClient.callClosePayment(postePayPaymentRequest.getIdTransaction(), isAuthOk,
+                    authMessage.getAuthCode());
             postePayPaymentRequest.setIsProcessed(true);
             paymentRequestRepository.save(postePayPaymentRequest);
             if (closePayment.equals(OutcomeEnum.KO.toString())) {

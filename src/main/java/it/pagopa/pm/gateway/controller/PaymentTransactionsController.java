@@ -5,7 +5,6 @@ import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
@@ -26,6 +25,7 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
@@ -36,7 +36,7 @@ public class PaymentTransactionsController {
     private static final String INQUIRY_RESPONSE_EFF = "EFF";
     private static final String INQUIRY_RESPONSE_ERR = "ERR";
     @Autowired
-    private BancomatPayClient client;
+    private BancomatPayClient bancomatPayClient;
 
     @Autowired
     private BPayPaymentResponseRepository bPayPaymentResponseRepository;
@@ -57,12 +57,12 @@ public class PaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
             }
         }
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OutcomeEnum.OK) ? TX_AUTHORIZED_BANCOMAT_PAY.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
+        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BANCOMAT_PAY.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
             bPayPaymentResponseRepository.save(alreadySaved);
-            return new ACKMessage(OutcomeEnum.OK);
+            return new ACKMessage(OK);
         } catch (FeignException fe) {
             log.error("Exception calling RestapiCD to update transaction", fe);
             throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());
@@ -124,7 +124,7 @@ public class PaymentTransactionsController {
 
         log.info("START requestInquiryTransactionToBancomatPay " + idPagoPa);
 
-        inquiryTransactionStatusResponse = client.sendInquiryRequest(request, guid);
+        inquiryTransactionStatusResponse = bancomatPayClient.sendInquiryRequest(request, guid);
         if (inquiryTransactionStatusResponse == null || inquiryTransactionStatusResponse.getReturn() == null) {
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
@@ -143,7 +143,7 @@ public class PaymentTransactionsController {
 
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
-            response = client.sendRefundRequest(request, guid);
+            response = bancomatPayClient.sendRefundRequest(request, guid);
             if (response == null || response.getReturn().getEsito() == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
@@ -166,7 +166,7 @@ public class PaymentTransactionsController {
         String guid = UUID.randomUUID().toString();
         log.info("START executePaymentRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
-            response = client.sendPaymentRequest(request, guid);
+            response = bancomatPayClient.sendPaymentRequest(request, guid);
             if (response == null || response.getReturn() == null || response.getReturn().getEsito() == null) {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }

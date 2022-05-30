@@ -4,7 +4,7 @@ import lombok.Getter;
 
 public enum EndpointEnum {
 
-    POSTEPAY("request-payments/postepay");
+    POSTEPAY("/request-payments/postepay");
 
     @Getter
     private final String value;

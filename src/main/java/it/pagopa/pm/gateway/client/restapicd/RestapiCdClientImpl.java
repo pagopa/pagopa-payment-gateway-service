@@ -20,6 +20,8 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 @Component
 public class RestapiCdClientImpl {
 
+    private static final String OUTCOME_PARAM = "outcome";
+    private static final String AUTH_CODE_PARAM = "authCode";
     @Value("${HOSTNAME_PM}")
     public String hostnamePm;
 
@@ -45,8 +47,8 @@ public class RestapiCdClientImpl {
 
     private Map<String, Object> buildQueryParameters(boolean outcome, String authCode) {
         Map<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("outcome", outcome);
-        parameters.put("authCode", authCode);
+        parameters.put(OUTCOME_PARAM, outcome);
+        parameters.put(AUTH_CODE_PARAM, authCode);
         return parameters;
     }
 

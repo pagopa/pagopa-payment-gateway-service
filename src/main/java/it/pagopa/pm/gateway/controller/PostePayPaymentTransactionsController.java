@@ -107,7 +107,8 @@ public class PostePayPaymentTransactionsController {
 
         try {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
-            String closePaymentResult = restapiCdClient.callClosePayment(postePayPaymentRequest.getIdTransaction(), isAuthOutcomeOk);
+            String closePaymentResult = restapiCdClient.callClosePayment(postePayPaymentRequest.getIdTransaction(),
+                    isAuthOutcomeOk, authMessage.getAuthCode());
             postePayPaymentRequest.setIsProcessed(true);
             postePayPaymentRequest.setAuthorizationCode(authMessage.getAuthCode());
             postePayPaymentRequest.setAuthorizationOutcome(isAuthOutcomeOk);

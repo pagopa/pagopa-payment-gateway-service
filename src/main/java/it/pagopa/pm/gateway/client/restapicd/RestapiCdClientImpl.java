@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;

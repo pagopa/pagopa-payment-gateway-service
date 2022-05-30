@@ -26,7 +26,7 @@ import java.net.SocketTimeoutException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENT_POSTEPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_POSTEPAY;
 import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
@@ -39,7 +39,7 @@ public class PostePayPaymentTransactionsController {
     @Autowired
     private PaymentRequestRepository paymentRequestRepository;
 
-    @PutMapping(REQUEST_PAYMENT_POSTEPAY)
+    @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
     public ACKMessage closePayment(@RequestBody AuthMessage authMessage,
                                    @RequestHeader(X_CORRELATION_ID) String correlationId) {
         MDC.clear();

@@ -2,6 +2,7 @@ package it.pagopa.pm.gateway.client.azure;
 
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -28,12 +29,20 @@ public class AzureLoginClient {
     @Value("${azureAuth.client.postepay.scope}")
     private String MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE;
 
+    @Value("${azureAuth.client.postepay.enabled:true}")
+    private Boolean MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED;
+
     @Autowired
     private RestTemplate microsoftAzureRestTemplate;
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
-        MultiValueMap<String, String> body = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
-        return requestMicrosoftAzureLogin(body, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
+        if (BooleanUtils.isTrue(MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED)) {
+            MultiValueMap<String, String> body = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
+            return requestMicrosoftAzureLogin(body, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
+        } else {
+            // this is to avoid call to AZURE login if not needed, for local environment
+            return new MicrosoftAzureLoginResponse();
+        }
     }
 
     private MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(MultiValueMap<String, String> body, String url) {

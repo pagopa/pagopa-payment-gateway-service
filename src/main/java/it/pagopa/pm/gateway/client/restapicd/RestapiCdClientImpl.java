@@ -1,15 +1,17 @@
 package it.pagopa.pm.gateway.client.restapicd;
 
-import feign.*;
-import feign.jackson.*;
-import feign.okhttp.*;
-import it.pagopa.pm.gateway.dto.*;
-import lombok.extern.slf4j.*;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.stereotype.*;
+import feign.Feign;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
+import feign.okhttp.OkHttpClient;
+import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
+import it.pagopa.pm.gateway.dto.TransactionUpdateRequestData;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-import javax.annotation.*;
-import java.util.*;
+import javax.annotation.PostConstruct;
+import java.util.Map;
 
 import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 
@@ -22,11 +24,7 @@ public class RestapiCdClientImpl {
 
     @PostConstruct
     public void init() {
-        restapiCdClient = Feign.builder()
-                .client(new OkHttpClient())
-                .encoder(new JacksonEncoder())
-                .decoder(new JacksonDecoder())
-                .target(RestapiCdClient.class, hostnamePm);
+        restapiCdClient = Feign.builder().client(new OkHttpClient()).encoder(new JacksonEncoder()).decoder(new JacksonDecoder()).target(RestapiCdClient.class, hostnamePm);
     }
 
     private RestapiCdClient restapiCdClient;
@@ -38,7 +36,7 @@ public class RestapiCdClientImpl {
     }
 
     public String callClosePayment(Long idTransaction, boolean outcome) {
-        log.info("Calling POST to close payment for transaction " + idTransaction);
+        log.info("Calling closePayment for transaction " + idTransaction);
         Map<String, Object> headerMap = buildMdcHeader();
         return restapiCdClient.closePayment(idTransaction, outcome, headerMap);
     }

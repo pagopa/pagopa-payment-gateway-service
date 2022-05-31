@@ -63,7 +63,7 @@ public class PostePayPaymentTransactionsController {
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
 
     @Value("${postepay.pgs.response.urlredirect}")
-    private String PGS_URL_REDIRECT;
+    private String PGS_RESPONSE_URL_REDIRECT;
 
     @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
@@ -149,18 +149,18 @@ public class PostePayPaymentTransactionsController {
 
         if (ObjectUtils.anyNull(postePayAuthRequest, postePayAuthRequest.getIdTransaction(), postePayAuthRequest.getGrandTotal())) {
             log.error("Error: mandatory request parameters are missing");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG, true, HttpStatus.BAD_REQUEST, null);
+            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null);
         }
 
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.error("Client id " + clientId + " is not valid");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, true, HttpStatus.BAD_REQUEST, null);
+            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
         }
 
         Long idTransaction = postePayAuthRequest.getIdTransaction();
         if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction))) {
             log.error("Transaction " + idTransaction + " has already been processed previously");
-            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, true, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
 
         log.info(String.format("Requesting authorization from %s for transaction %s", clientId, idTransaction));
@@ -173,17 +173,17 @@ public class PostePayPaymentTransactionsController {
             log.info("PostePay request object generated");
         } catch (JsonProcessingException e) {
             log.error(SERIALIZATION_ERROR_MSG, e);
-            return createPostePayAuthResponse(clientId, SERIALIZATION_ERROR_MSG, true, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createPostePayAuthResponse(clientId, SERIALIZATION_ERROR_MSG, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
 
         try {
             executePostePayAuthorizationCall(postePayAuthRequest, clientId, paymentRequestEntity);
         } catch (Exception e) {
-            return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, true, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
 
         log.info("END - POST request-payments/postepay for idTransaction: " + idTransaction);
-        return createPostePayAuthResponse(clientId, null, false, HttpStatus.OK, paymentRequestEntity.getGuid());
+        return createPostePayAuthResponse(clientId, StringUtils.EMPTY, HttpStatus.OK, paymentRequestEntity.getGuid());
     }
 
     private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, Long idTransaction) {
@@ -301,15 +301,14 @@ public class PostePayPaymentTransactionsController {
         return configsMap;
     }
 
-    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String error, boolean isError,
-                                                                            HttpStatus status, String requestId) {
+    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String errorMessage, HttpStatus status, String requestId) {
         PostePayAuthResponse postePayAuthResponse = new PostePayAuthResponse();
         postePayAuthResponse.setChannel(channel);
-        if (isError) {
-            postePayAuthResponse.setError(error);
-        } else {
-            String urlRedirect = StringUtils.join(PGS_URL_REDIRECT, requestId);
+        if (StringUtils.isEmpty(errorMessage)) {
+            String urlRedirect = StringUtils.join(PGS_RESPONSE_URL_REDIRECT, requestId);
             postePayAuthResponse.setUrlRedirect(urlRedirect);
+        } else {
+            postePayAuthResponse.setError(errorMessage);
         }
         return ResponseEntity.status(status).body(postePayAuthResponse);
     }

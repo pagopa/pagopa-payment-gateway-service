@@ -16,10 +16,6 @@ import org.springframework.web.client.RestTemplate;
 public class AzureLoginClient {
 
     private final static String MICROSOFT_AZURE_LOGIN_GRANT_TYPE = "client_credentials";
-    private static final String CLIENT_ID_PARAMETER = "client_id";
-    private static final String CLIENT_SECRET_PARAMETER = "client_secret";
-    private static final String GRANT_TYPE_PARAMETER = "grant_type";
-    private static final String SCOPE_PARAMETER = "scope";
 
     @Value("${azureAuth.client.postepay.url}")
     private String MICROSOFT_AZURE_LOGIN_POSTEPAY_URL;
@@ -69,11 +65,13 @@ public class AzureLoginClient {
     }
 
     private MultiValueMap<String, String> createMicrosoftAzureLoginRequest(String clientId, String clientSecret, String scope) {
+
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
-        requestBody.add(CLIENT_ID_PARAMETER, clientId);
-        requestBody.add(CLIENT_SECRET_PARAMETER, clientSecret);
-        requestBody.add(GRANT_TYPE_PARAMETER, MICROSOFT_AZURE_LOGIN_GRANT_TYPE);
-        requestBody.add(SCOPE_PARAMETER, scope);
+        requestBody.add("client_id", clientId);
+        requestBody.add("client_secret", clientSecret);
+        requestBody.add("grant_type", MICROSOFT_AZURE_LOGIN_GRANT_TYPE);
+        requestBody.add("scope", scope);
+
         return requestBody;
     }
 }

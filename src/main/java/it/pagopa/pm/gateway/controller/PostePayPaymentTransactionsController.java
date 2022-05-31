@@ -207,8 +207,7 @@ public class PostePayPaymentTransactionsController {
             log.error("No PostePay request entity object has been found for GUID " + requestId);
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
         }
-        OutcomeEnum authorizationOutcome = Objects.isNull(request.getAuthorizationOutcome()) ? null :
-                Boolean.TRUE.equals(request.getAuthorizationOutcome()) ? OK : KO;
+        OutcomeEnum authorizationOutcome = Objects.isNull(request.getAuthorizationOutcome()) ? null : request.getAuthorizationOutcome() ? OK : KO;
         log.info("END - get PostePay authorization response for GUID: " + requestId + " - authorization is " + authorizationOutcome);
         return new PostePayPollingResponse(request.getClientId(), request.getAuthorizationUrl(), authorizationOutcome, request.getErrorCode());
     }

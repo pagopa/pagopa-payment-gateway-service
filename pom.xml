@@ -315,7 +315,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/api-specs/spec_PostePay_bearerToken.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/swagger/spec_PostePay.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <generateModelTests>false</generateModelTests>
                             <generateApiTests>false</generateApiTests>

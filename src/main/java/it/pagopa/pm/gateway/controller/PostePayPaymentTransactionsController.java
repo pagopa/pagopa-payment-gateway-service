@@ -58,7 +58,7 @@ public class PostePayPaymentTransactionsController {
     private static final String BAD_REQUEST_MSG_CLIENT_ID = "Bad Request - client id is not valid";
     private static final String TRANSACTION_ALREADY_PROCESSED_MSG = "Transaction already processed";
     private static final String SERIALIZATION_ERROR_MSG = "Error while creating json from PostePayAuthRequest object";
-    private static final String GENERIC_ERROR_MSG = "Error while executing payment for idTransaction ";
+    private static final String GENERIC_ERROR_MSG = "Error while requesting authorization for idTransaction: ";
     private static final String POSTEPAY_CLIENT_ID_PROPERTY = "postepay.clientId.%s.config";
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
 

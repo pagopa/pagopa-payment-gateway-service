@@ -179,6 +179,7 @@ public class PostePayPaymentTransactionsController {
         try {
             executePostePayAuthorizationCall(postePayAuthRequest, clientId, paymentRequestEntity);
         } catch (Exception e) {
+            log.error(GENERIC_ERROR_MSG, e);
             return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
 

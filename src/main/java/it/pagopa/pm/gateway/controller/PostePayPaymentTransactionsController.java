@@ -149,18 +149,18 @@ public class PostePayPaymentTransactionsController {
 
         if (ObjectUtils.anyNull(postePayAuthRequest, postePayAuthRequest.getIdTransaction(), postePayAuthRequest.getGrandTotal())) {
             log.error("Error: mandatory request parameters are missing");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG, true, HttpStatus.BAD_REQUEST);
+            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG, true, HttpStatus.BAD_REQUEST, null);
         }
 
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.error("Client id " + clientId + " is not valid");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, true, HttpStatus.BAD_REQUEST);
+            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, true, HttpStatus.BAD_REQUEST, null);
         }
 
         Long idTransaction = postePayAuthRequest.getIdTransaction();
         if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction))) {
             log.error("Transaction " + idTransaction + " has already been processed previously");
-            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, true, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, true, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
 
         log.info(String.format("Requesting authorization from %s for transaction %s", clientId, idTransaction));
@@ -173,17 +173,17 @@ public class PostePayPaymentTransactionsController {
             log.info("PostePay request object generated");
         } catch (JsonProcessingException e) {
             log.error(SERIALIZATION_ERROR_MSG, e);
-            return createPostePayAuthResponse(clientId, SERIALIZATION_ERROR_MSG, true, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createPostePayAuthResponse(clientId, SERIALIZATION_ERROR_MSG, true, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
 
         try {
             executePostePayAuthorizationCall(postePayAuthRequest, clientId, paymentRequestEntity);
         } catch (Exception e) {
-            return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, true, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, true, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
 
         log.info("END - POST request-payments/postepay for idTransaction: " + idTransaction);
-        return createPostePayAuthResponse(clientId, null, false, HttpStatus.OK);
+        return createPostePayAuthResponse(clientId, null, false, HttpStatus.OK, paymentRequestEntity.getGuid());
     }
 
     private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, Long idTransaction) {
@@ -207,7 +207,8 @@ public class PostePayPaymentTransactionsController {
             log.error("No PostePay request entity object has been found for GUID " + requestId);
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
         }
-        OutcomeEnum authorizationOutcome = Boolean.TRUE.equals(request.getAuthorizationOutcome()) ? OK : KO;
+        OutcomeEnum authorizationOutcome =  Objects.isNull(request.getAuthorizationOutcome())? null:
+                Boolean.TRUE.equals(request.getAuthorizationOutcome()) ? OK : KO;
         log.info("END - get PostePay authorization response for GUID: " + requestId + " - authorization is " + authorizationOutcome);
         return new PostePayPollingResponse(request.getClientId(), request.getAuthorizationUrl(), authorizationOutcome, request.getErrorCode());
     }
@@ -218,18 +219,21 @@ public class PostePayPaymentTransactionsController {
         log.info("START - execute PostePay payment authorization request for transaction " + idTransaction);
 
         CreatePaymentRequest createPaymentRequest = createAuthorizationRequest(postePayAuthRequest, clientId);
-        InlineResponse200 inlineResponse200 = new InlineResponse200();
-        String correlationId = inlineResponse200.getPaymentID();
-        String authorizationUrl = inlineResponse200.getUserRedirectURL();
+        String correlationId;
+        String authorizationUrl;
         try {
             MicrosoftAzureLoginResponse microsoftAzureLoginResponse = azureLoginClient.requestMicrosoftAzureLoginPostepay();
             String bearerToken = BEARER_TOKEN_PREFIX + microsoftAzureLoginResponse.getAccess_token();
             log.debug("bearer token acquired: " + bearerToken);
-            inlineResponse200 = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
+            InlineResponse200 inlineResponse200 = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
+
             if (Objects.isNull(inlineResponse200)) {
                 log.error("/createPayment response from PostePay is null");
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
+            correlationId = inlineResponse200.getPaymentID();
+            authorizationUrl = inlineResponse200.getUserRedirectURL();
+
             log.info("Response from PostePay /createPayment - idTransaction: " + idTransaction + " - paymentID: " + correlationId + " - userRedirectUrl: " + authorizationUrl);
         } catch (ApiException e) {
             log.error("An API Exception occurred while calling PostePay /createPayment");
@@ -298,13 +302,14 @@ public class PostePayPaymentTransactionsController {
         return configsMap;
     }
 
-    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String error, boolean isError, HttpStatus status) {
+    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String error, boolean isError,
+                                                                            HttpStatus status, String requestId) {
         PostePayAuthResponse postePayAuthResponse = new PostePayAuthResponse();
         postePayAuthResponse.setChannel(channel);
         if (isError) {
             postePayAuthResponse.setError(error);
         } else {
-            postePayAuthResponse.setUrlRedirect(PAYMENT_RESPONSE_URL_REDIRECT);
+            postePayAuthResponse.setUrlRedirect(PAYMENT_RESPONSE_URL_REDIRECT.concat(requestId));
         }
         return ResponseEntity.status(status).body(postePayAuthResponse);
     }

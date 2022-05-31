@@ -63,7 +63,7 @@ public class PostePayPaymentTransactionsController {
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
 
     @Value("${postepay.pgs.response.urlredirect}")
-    private String PAYMENT_RESPONSE_URL_REDIRECT;
+    private String PGS_URL_REDIRECT;
 
     @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
@@ -207,7 +207,7 @@ public class PostePayPaymentTransactionsController {
             log.error("No PostePay request entity object has been found for GUID " + requestId);
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
         }
-        OutcomeEnum authorizationOutcome =  Objects.isNull(request.getAuthorizationOutcome())? null:
+        OutcomeEnum authorizationOutcome = Objects.isNull(request.getAuthorizationOutcome()) ? null :
                 Boolean.TRUE.equals(request.getAuthorizationOutcome()) ? OK : KO;
         log.info("END - get PostePay authorization response for GUID: " + requestId + " - authorization is " + authorizationOutcome);
         return new PostePayPollingResponse(request.getClientId(), request.getAuthorizationUrl(), authorizationOutcome, request.getErrorCode());
@@ -226,15 +226,15 @@ public class PostePayPaymentTransactionsController {
             String bearerToken = BEARER_TOKEN_PREFIX + microsoftAzureLoginResponse.getAccess_token();
             log.debug("bearer token acquired: " + bearerToken);
             InlineResponse200 inlineResponse200 = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
-
             if (Objects.isNull(inlineResponse200)) {
                 log.error("/createPayment response from PostePay is null");
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             correlationId = inlineResponse200.getPaymentID();
             authorizationUrl = inlineResponse200.getUserRedirectURL();
-
-            log.info("Response from PostePay /createPayment - idTransaction: " + idTransaction + " - paymentID: " + correlationId + " - userRedirectUrl: " + authorizationUrl);
+            String logMessage = String.format("Response from PostePay /createPayment for idTransaction %s: " +
+                    "correlationId = %s - authorizationUrl = %s", idTransaction, correlationId, authorizationUrl);
+            log.info(logMessage);
         } catch (ApiException e) {
             log.error("An API Exception occurred while calling PostePay /createPayment");
             log.error("Error: " + OBJECT_MAPPER.readValue(e.getResponseBody(), Error.class));
@@ -269,7 +269,6 @@ public class PostePayPaymentTransactionsController {
 
         ResponseURLs responseURLs = createResponseUrls(clientId, configsMap.get(NOTIFICATION_URL_CONFIG));
         createPaymentRequest.setResponseURLs(responseURLs);
-        log.info("Authorization request object created");
         return createPaymentRequest;
     }
 
@@ -309,7 +308,8 @@ public class PostePayPaymentTransactionsController {
         if (isError) {
             postePayAuthResponse.setError(error);
         } else {
-            postePayAuthResponse.setUrlRedirect(PAYMENT_RESPONSE_URL_REDIRECT.concat(requestId));
+            String urlRedirect = StringUtils.join(PGS_URL_REDIRECT, requestId);
+            postePayAuthResponse.setUrlRedirect(urlRedirect);
         }
         return ResponseEntity.status(status).body(postePayAuthResponse);
     }

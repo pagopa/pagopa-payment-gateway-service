@@ -2,8 +2,10 @@ package it.pagopa.pm.gateway.beans;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.entity.*;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 
 public class ValidBeans {
 
@@ -76,6 +78,24 @@ public class ValidBeans {
         return entity;
     }
 
+    public static PaymentRequestEntity pPayPaymentRequestEntityToFind() {
+        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
+        paymentRequestEntity.setIdTransaction(1L);
+        paymentRequestEntity.setCorrelationId("id");
+        paymentRequestEntity.setGuid("guid");
+        paymentRequestEntity.setErrorCode("0");
+        paymentRequestEntity.setAuthorizationCode("200");
+        paymentRequestEntity.setAuthorizationOutcome(true);
+        paymentRequestEntity.setRequestEndpoint(EndpointEnum.POSTEPAY.getValue());
+        return paymentRequestEntity;
+    }
+
+    public static PaymentRequestEntity pPayPaymentRequestEntityToSave() {
+        PaymentRequestEntity paymentRequestEntity = pPayPaymentRequestEntityToFind();
+        paymentRequestEntity.setIsProcessed(true);
+        return paymentRequestEntity;
+    }
+
     public static AuthMessage authMessage(){
         AuthMessage authMessage = new AuthMessage();
         authMessage.setAuthCode("authCode");
@@ -88,6 +108,20 @@ public class ValidBeans {
         ackMessage.setOutcome(OutcomeEnum.OK);
         return ackMessage;
 
+    }
+
+    public static ACKError ackGenericErrorResponse() {
+        ACKError ackError = new ACKError();
+        ackError.setOutcome(OutcomeEnum.KO);
+        ackError.setError(ExceptionsEnum.GENERIC_ERROR.getDescription());
+        return ackError;
+    }
+
+    public static ACKError ackRestapiCdClientErrorResponse() {
+        ACKError ackError = new ACKError();
+        ackError.setOutcome(OutcomeEnum.KO);
+        ackError.setError(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR.getDescription());
+        return ackError;
     }
 
     public static TransactionUpdateRequest transactionUpdateRequest(){

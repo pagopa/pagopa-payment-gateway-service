@@ -56,6 +56,7 @@ public class PostePayPaymentTransactionsController {
     private static final String BAD_REQUEST_MSG_CLIENT_ID = "Bad Request - client id is not valid";
     private static final String TRANSACTION_ALREADY_PROCESSED_MSG = "Transaction already processed";
     private static final String SERIALIZATION_ERROR_MSG = "Error while creating json from PostePayAuthRequest object";
+    private static final String EXECUTING_PAYMENT_FOR_ID_TRANSACTION_ERROR_MSG = "Error while executing payment for idTransaction ";
 
     @Value("${postepay.pgs.response.urlredirect}")
     private String PAYMENT_RESPONSE_URLREDIRECT;
@@ -167,7 +168,7 @@ public class PostePayPaymentTransactionsController {
         try {
             executePostePayPayment(postePayAuthRequest, clientId, paymentRequestEntity);
         } catch (Exception e) {
-            return createPostePayAuthResponse(clientId, "Error while executing payment for idTransaction " + idTransaction, true, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createPostePayAuthResponse(clientId, EXECUTING_PAYMENT_FOR_ID_TRANSACTION_ERROR_MSG + idTransaction, true, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         log.info("END requestPaymentsPostepay " + idTransaction);

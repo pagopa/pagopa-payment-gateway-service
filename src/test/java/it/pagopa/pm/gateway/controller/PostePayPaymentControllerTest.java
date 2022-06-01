@@ -144,7 +144,7 @@ public class PostePayPaymentControllerTest {
     }
 
     @Test
-    public void givenRequestWithAlreadyProcejssedTransaction_shouldReturnAlreadyProcessedTransactionResponse() throws Exception {
+    public void thrownJsonProcessingException_shouldReturnSerializationErrorResponse() throws Exception {
 
         ObjectMapper om = Mockito.spy(new ObjectMapper());
         Mockito.when(om.writeValueAsString(PostePayAuthRequest.class)).thenThrow(new JsonProcessingException("") {});

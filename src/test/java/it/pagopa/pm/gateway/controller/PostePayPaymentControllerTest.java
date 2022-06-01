@@ -141,6 +141,7 @@ public class PostePayPaymentControllerTest {
 
     }
 
+/*
     @Test
     public void thrownJsonProcessingException_shouldReturnSerializationErrorResponse() throws Exception {
 
@@ -157,6 +158,7 @@ public class PostePayPaymentControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true, SERIALIZATION_ERROR_MSG))));
 
     }
+*/
 
     @Test
     public void givenPostePayClientResponseNull_shouldReturnExecutingPaymentErrorMsgResponse() throws Exception {
@@ -208,7 +210,6 @@ public class PostePayPaymentControllerTest {
                         EXECUTING_PAYMENT_FOR_ID_TRANSACTION_ERROR_MSG + postePayAuthRequest.getIdTransaction()))));
         verify(postePayControllerApi).apiV1PaymentCreatePost("Bearer " + microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
     }
-
 
     @Test
     public void thrownUncheckedException_shouldReturnExecutingPaymentErrorMsgResponse() throws Exception {

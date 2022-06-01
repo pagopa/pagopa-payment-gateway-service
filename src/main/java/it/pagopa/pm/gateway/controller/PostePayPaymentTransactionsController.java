@@ -210,8 +210,9 @@ public class PostePayPaymentTransactionsController {
         }
         OutcomeEnum authorizationOutcome = Objects.isNull(request.getAuthorizationOutcome()) ? null : request.getAuthorizationOutcome() ? OK : KO;
         log.info("END - get PostePay authorization response for GUID: " + requestId + " - authorization is " + authorizationOutcome);
-        return new PostePayPollingResponse(request.getClientId(), request.getAuthorizationUrl(), authorizationOutcome, request.getErrorCode());
-    }
+
+        return createPollingResponseError(request, authorizationOutcome);
+       }
 
     @Async
     private void executePostePayAuthorizationCall(PostePayAuthRequest postePayAuthRequest, String clientId, PaymentRequestEntity paymentRequestEntity) throws RestApiException, JsonProcessingException {
@@ -312,4 +313,28 @@ public class PostePayPaymentTransactionsController {
         }
         return ResponseEntity.status(status).body(postePayAuthResponse);
     }
+
+        private PostePayPollingResponse createPollingResponseError(PaymentRequestEntity paymentRequestEntity, OutcomeEnum outcomeEnum){
+               String correlationIdNull = StringUtils.EMPTY;
+               String authorizationOutcomeNull = StringUtils.EMPTY;
+
+               boolean isOK = true;
+
+            if (Objects.isNull(outcomeEnum) || outcomeEnum.equals(OutcomeEnum.KO)) {
+                String status = Objects.isNull(outcomeEnum)?"null" : "KO";
+                authorizationOutcomeNull ="authorizationOutcome is " + status;
+                if (Objects.isNull(paymentRequestEntity.getCorrelationId())){
+                    correlationIdNull= " correlationId is null";
+                }
+                isOK = false;
+               }
+
+            String error = authorizationOutcomeNull.concat(correlationIdNull);
+
+            return new PostePayPollingResponse(paymentRequestEntity.getClientId(), isOK?paymentRequestEntity.getAuthorizationUrl():null,
+                            outcomeEnum, error);
+
+        }
+
+
 }

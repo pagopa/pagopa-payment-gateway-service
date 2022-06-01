@@ -3,10 +3,13 @@ package it.pagopa.pm.gateway.config;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.HttpHost;
 import org.openapitools.client.ApiClient;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +30,8 @@ import java.time.Duration;
 @EnableAsync
 public class ClientConfig {
 
+    private static final String HTTPS_PROXY_HOST_PROPERTY = "https.proxyHost";
+    private static final String HTTPS_PROXY_PORT_PROPERTY = "https.proxyPort";
     @Value("${bancomatPay.client.url}")
     private String BPAY_CLIENT_URL;
 
@@ -93,6 +98,7 @@ public class ClientConfig {
                 new HttpComponentsClientHttpRequestFactory();
         httpComponentsClientHttpRequestFactory.setHttpClient(
                 HttpClientBuilder.create()
+                        .setProxy(createProxy(this.getClass().getName()))
                         .setConnectionManager(createConnectionManager(
                                 AZURE_CLIENT_MAX_TOTAL,
                                 AZURE_CLIENT_MAX_PER_ROUTE))
@@ -117,4 +123,16 @@ public class ClientConfig {
                 .build();
     }
 
+    public static HttpHost createProxy(String className) {
+        String proxyHost = System.getProperty(HTTPS_PROXY_HOST_PROPERTY);
+        String proxyPort = System.getProperty(HTTPS_PROXY_PORT_PROPERTY);
+        HttpHost proxy = null;
+        if (StringUtils.isNoneBlank(proxyHost, proxyPort) && NumberUtils.isParsable(proxyPort)) {
+            log.info(String.format("%s uses proxy: %s:%s", className, proxyHost, proxyPort));
+            proxy = new HttpHost(proxyHost, Integer.parseInt(proxyPort));
+        } else {
+            log.info(String.format("%s client does not use proxy", className));
+        }
+        return proxy;
+    }
 }

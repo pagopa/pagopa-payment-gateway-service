@@ -41,10 +41,11 @@ public class AzureLoginClient {
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
         if (BooleanUtils.isTrue(MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED)) {
-            MultiValueMap<String, String> body = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
-            return requestMicrosoftAzureLogin(body, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
+            MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
+            return requestMicrosoftAzureLogin(loginRequest, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
         } else {
             // this is to avoid call to AZURE login if not needed, for local environment
+            log.warn("Azure authentication phase bypassed");
             return new MicrosoftAzureLoginResponse();
         }
     }
@@ -58,7 +59,7 @@ public class AzureLoginClient {
             log.error("Exception calling Microsoft Azure login service", e);
             throw e;
         }
-
+        log.info("Azure authentication token acquired");
         return microsoftAzureLoginResponse;
     }
 

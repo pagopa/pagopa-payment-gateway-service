@@ -20,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 
 import org.openapitools.client.model.ResponseURLs;
 
+import java.util.Objects;
+
 public class ValidBeans {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -148,15 +150,16 @@ public class ValidBeans {
         return stornoPagamentoResponse;
     }
 
-    public static CreatePaymentRequest createPaymentRequest() {
+    public static CreatePaymentRequest createPaymentRequest(PaymentChannel paymentChannel, String redirectUrl) {
         ResponseURLs responseURLs = new ResponseURLs();
-        responseURLs.setResponseUrlKo(StringUtils.EMPTY);
-        responseURLs.setResponseUrlOk(StringUtils.EMPTY);
+        String responseUrl = paymentChannel.equals(PaymentChannel.APP)?StringUtils.EMPTY:redirectUrl;
+        responseURLs.setResponseUrlKo(responseUrl);
+        responseURLs.setResponseUrlOk(responseUrl);
         responseURLs.setServerNotificationUrl("${postepay.notificationURL}");
 
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
         createPaymentRequest.setShopTransactionId("1");
-        createPaymentRequest.setPaymentChannel(PaymentChannel.APP);
+        createPaymentRequest.setPaymentChannel(paymentChannel);
         createPaymentRequest.setResponseURLs(responseURLs);
         createPaymentRequest.setAmount("1000");
         createPaymentRequest.setCurrency("978");
@@ -185,7 +188,7 @@ public class ValidBeans {
 
     public static MicrosoftAzureLoginResponse microsoftAzureLoginResponse() {
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse = new MicrosoftAzureLoginResponse();
-        microsoftAzureLoginResponse.setAccess_token("eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ");
+        microsoftAzureLoginResponse.setAccess_token("access_token");
         microsoftAzureLoginResponse.setExpires_in(100);
         microsoftAzureLoginResponse.setToken_type("TOKEN_TYPE");
         microsoftAzureLoginResponse.setExt_expires_in(100);
@@ -200,7 +203,7 @@ public class ValidBeans {
         if (isError) {
             postePayAuthResponse.setError(errorMessage);
         } else {
-            postePayAuthResponse.setUrlRedirect("${postepay.pgs.response.urlredirect}");
+            postePayAuthResponse.setUrlRedirect("${postepay.pgs.response.urlredirect}8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         }
 
         return postePayAuthResponse;
@@ -220,26 +223,28 @@ public class ValidBeans {
     }
 
 
-    public static PaymentRequestEntity paymentRequestEntity(PostePayAuthRequest postePayAuthRequest) {
+    public static PaymentRequestEntity paymentRequestEntity(PostePayAuthRequest postePayAuthRequest, Boolean authorizationOutcome, String clientId) {
         String authRequestJson = null;
 
-        try {
-            authRequestJson =OBJECT_MAPPER.writeValueAsString(postePayAuthRequest);
-        } catch (JsonProcessingException jspe) {
-            jspe.printStackTrace();
-        }
 
+        if (Objects.nonNull(postePayAuthRequest)) {
+            try {
+                authRequestJson = OBJECT_MAPPER.writeValueAsString(postePayAuthRequest);
+            } catch (JsonProcessingException jspe) {
+                jspe.printStackTrace();
+            }
+        }
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setJsonRequest(authRequestJson);
         paymentRequestEntity.setAuthorizationUrl("www.userRedirectUrl.com");
-        paymentRequestEntity.setAuthorizationOutcome(null);
+        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
         paymentRequestEntity.setIsProcessed(false);
         paymentRequestEntity.setCorrelationId("1234");
         paymentRequestEntity.setAuthorizationCode(null);
         paymentRequestEntity.setIdTransaction(1L);
         paymentRequestEntity.setGuid("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         paymentRequestEntity.setId(null);
-        paymentRequestEntity.setClientId(null);
+        paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setMdcInfo(null);
         paymentRequestEntity.setErrorCode(null);
         paymentRequestEntity.setResourcePath(null);
@@ -248,6 +253,10 @@ public class ValidBeans {
 
 
     }
+
+    public static PostePayPollingResponse postePayPollingResponse(){
+        return new PostePayPollingResponse("APP", "www.userRedirectUrl.com", OutcomeEnum.OK,"" );
+       }
 
 }
 

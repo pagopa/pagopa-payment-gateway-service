@@ -38,7 +38,7 @@ import java.net.SocketTimeoutException;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_POSTEPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENT_POSTEPAY_REQUEST_ID;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID;
 import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 import static it.pagopa.pm.gateway.constant.ClientConfigs.NOTIFICATION_URL_CONFIG;
 import static it.pagopa.pm.gateway.constant.Headers.*;
@@ -197,7 +197,7 @@ public class PostePayPaymentTransactionsController {
         return paymentRequestEntity;
     }
 
-    @GetMapping(REQUEST_PAYMENT_POSTEPAY_REQUEST_ID)
+    @GetMapping(REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID)
     @ResponseBody
     public PostePayPollingResponse getPostepayAuthorizationResponse(@PathVariable String requestId,
                                                                     @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws RestApiException {

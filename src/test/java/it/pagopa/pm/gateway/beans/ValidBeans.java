@@ -6,21 +6,19 @@ import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
-import it.pagopa.pm.gateway.entity.*;
+import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
+import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.PaymentChannel;
 import org.openapitools.client.model.InlineResponse200;
-
-import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
-
+import org.openapitools.client.model.PaymentChannel;
+import org.openapitools.client.model.ResponseURLs;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-
-import org.openapitools.client.model.ResponseURLs;
-
 import java.util.Objects;
+
+import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
 
@@ -150,9 +148,9 @@ public class ValidBeans {
         return stornoPagamentoResponse;
     }
 
-    public static CreatePaymentRequest createPaymentRequest(PaymentChannel paymentChannel, String redirectUrl) {
+    public static CreatePaymentRequest createPaymentRequest(PaymentChannel paymentChannel) {
         ResponseURLs responseURLs = new ResponseURLs();
-        String responseUrl = paymentChannel.equals(PaymentChannel.APP)?StringUtils.EMPTY:redirectUrl;
+        String responseUrl = paymentChannel.equals(PaymentChannel.APP) ? StringUtils.EMPTY : "www.responseurl.com";
         responseURLs.setResponseUrlKo(responseUrl);
         responseURLs.setResponseUrlOk(responseUrl);
         responseURLs.setServerNotificationUrl("${postepay.notificationURL}");
@@ -166,6 +164,7 @@ public class ValidBeans {
         createPaymentRequest.setDescription("causale description");
         createPaymentRequest.setShopId("1");
         createPaymentRequest.setAuthType(IMMEDIATA);
+        createPaymentRequest.setBuyerName("Rupert Sciamenna");
         createPaymentRequest.setBuyerEmail("email@email.com");
 
         return createPaymentRequest;
@@ -173,15 +172,13 @@ public class ValidBeans {
     }
 
 
-    public static PostePayAuthRequest postePayAuthRequest(boolean valid) {
+    public static PostePayAuthRequest postePayAuthRequest(boolean isValid) {
         PostePayAuthRequest postePayAuthRequest = new PostePayAuthRequest();
-
         postePayAuthRequest.setDescription("causale description");
         postePayAuthRequest.setEmailNotice("email@email.com");
         postePayAuthRequest.setGrandTotal(1000);
         postePayAuthRequest.setName("Username");
-        postePayAuthRequest.setIdTransaction(valid?1L:null);
-
+        postePayAuthRequest.setIdTransaction(isValid ? 1L : null);
         return postePayAuthRequest;
 
     }
@@ -192,7 +189,6 @@ public class ValidBeans {
         microsoftAzureLoginResponse.setExpires_in(100);
         microsoftAzureLoginResponse.setToken_type("TOKEN_TYPE");
         microsoftAzureLoginResponse.setExt_expires_in(100);
-
         return microsoftAzureLoginResponse;
 
     }
@@ -214,12 +210,11 @@ public class ValidBeans {
         return ResponseEntity.status(status).body(postePayAuthResponse);
     }
 
-    public static InlineResponse200 inlineResponse200() {
+    public static InlineResponse200 getOkResponse() {
         InlineResponse200 inlineResponse200 = new InlineResponse200();
         inlineResponse200.setPaymentID("1234");
         inlineResponse200.setUserRedirectURL("www.userRedirectUrl.com");
         return inlineResponse200;
-
     }
 
 
@@ -254,9 +249,9 @@ public class ValidBeans {
 
     }
 
-    public static PostePayPollingResponse postePayPollingResponse(){
-        return new PostePayPollingResponse("APP", "www.userRedirectUrl.com", OutcomeEnum.OK,"" );
-       }
+    public static PostePayPollingResponse postePayPollingResponse() {
+        return new PostePayPollingResponse("APP", "www.userRedirectUrl.com", OutcomeEnum.OK, "");
+    }
 
 }
 

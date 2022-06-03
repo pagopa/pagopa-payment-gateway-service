@@ -45,11 +45,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.core.IsEqual.equalTo;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = PaymentTransactionsController.class)
+@SpringBootTest(classes = BancomatPayPaymentTransactionsController.class)
 @AutoConfigureMockMvc
 @EnableWebMvc
 
-public class ControllerTests {
+public class BancomatPayControllerTests {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();

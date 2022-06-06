@@ -239,15 +239,15 @@ public class PostePayPaymentTransactionsController {
         Map<String, String> configsMap = getConfigValues(configs);
 
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
-        createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
-        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
-        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsMap.get(AUTH_TYPE_CONFIG)));
-        createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
-        createPaymentRequest.setCurrency(EURO_ISO_CODE);
-        createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
         createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
         createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
-
+        createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
+        createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
+        createPaymentRequest.setCurrency(EURO_ISO_CODE);
+        createPaymentRequest.setBuyerName(postePayAuthRequest.getName());
+        createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
+        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
+        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsMap.get(AUTH_TYPE_CONFIG)));
         ResponseURLs responseURLs = createResponseUrls(clientId, configsMap.get(NOTIFICATION_URL_CONFIG));
         createPaymentRequest.setResponseURLs(responseURLs);
         return createPaymentRequest;

@@ -21,8 +21,10 @@ import java.util.Objects;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
-
+    private static final String EURO_ISO_CODE = "978";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String RESPONSE_URL_OK_KO = "https://portal.test.pagopa.gov.it/pmmockserviceapi/home";
+    public static final String NOTIFICATION_URL = "${postepay.notificationURL}";
 
     public static BPayPaymentRequest bPayPaymentRequest() {
         BPayPaymentRequest request = new BPayPaymentRequest();
@@ -149,38 +151,37 @@ public class ValidBeans {
     }
 
     public static CreatePaymentRequest createPaymentRequest(PaymentChannel paymentChannel) {
-        ResponseURLs responseURLs = new ResponseURLs();
-        String responseUrl = paymentChannel.equals(PaymentChannel.APP) ? StringUtils.EMPTY : "www.responseurl.com";
-        responseURLs.setResponseUrlKo(responseUrl);
-        responseURLs.setResponseUrlOk(responseUrl);
-        responseURLs.setServerNotificationUrl("${postepay.notificationURL}");
-
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+        String shopId = paymentChannel.equals(PaymentChannel.APP) ? "shopIdTmp_APP" : "shopIdTmp_WEB";
+        createPaymentRequest.setShopId(shopId);
         createPaymentRequest.setShopTransactionId("1");
+        createPaymentRequest.setAmount("1234");
+        createPaymentRequest.setDescription("Pagamento bollo auto");
+        createPaymentRequest.setCurrency(EURO_ISO_CODE);
+        createPaymentRequest.setBuyerName("Mario Rossi");
+        createPaymentRequest.setBuyerEmail("mario.rossi@gmail.com");
         createPaymentRequest.setPaymentChannel(paymentChannel);
-        createPaymentRequest.setResponseURLs(responseURLs);
-        createPaymentRequest.setAmount("1000");
-        createPaymentRequest.setCurrency("978");
-        createPaymentRequest.setDescription("causale description");
-        createPaymentRequest.setShopId("shopIdTmp_APP");
         createPaymentRequest.setAuthType(IMMEDIATA);
-        createPaymentRequest.setBuyerName(null);
-        createPaymentRequest.setBuyerEmail("email@email.com");
 
+        ResponseURLs responseUrls = new ResponseURLs();
+        String urlOkKo = paymentChannel.equals(PaymentChannel.APP) ? StringUtils.EMPTY : RESPONSE_URL_OK_KO;
+        responseUrls.setResponseUrlKo(urlOkKo);
+        responseUrls.setResponseUrlOk(urlOkKo);
+        responseUrls.setServerNotificationUrl(NOTIFICATION_URL);
+
+        createPaymentRequest.setResponseURLs(responseUrls);
         return createPaymentRequest;
-
     }
 
 
     public static PostePayAuthRequest postePayAuthRequest(boolean isValid) {
         PostePayAuthRequest postePayAuthRequest = new PostePayAuthRequest();
-        postePayAuthRequest.setDescription("causale description");
-        postePayAuthRequest.setEmailNotice("email@email.com");
-        postePayAuthRequest.setGrandTotal(1000);
-        postePayAuthRequest.setName("Username");
+        postePayAuthRequest.setGrandTotal(1234);
         postePayAuthRequest.setIdTransaction(isValid ? 1L : null);
+        postePayAuthRequest.setName("Mario Rossi");
+        postePayAuthRequest.setEmailNotice("mario.rossi@gmail.com");
+        postePayAuthRequest.setDescription("Pagamento bollo auto");
         return postePayAuthRequest;
-
     }
 
     public static MicrosoftAzureLoginResponse microsoftAzureLoginResponse() {

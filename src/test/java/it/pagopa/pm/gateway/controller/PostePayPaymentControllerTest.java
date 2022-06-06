@@ -92,13 +92,12 @@ public class PostePayPaymentControllerTest {
             PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
             MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
             String bearerToken = "Bearer " + azureLoginResponse.getAccess_token();
-            CreatePaymentRequest request = ValidBeans.createPaymentRequest(PaymentChannel.APP);
-            String appConfigurationProperty = "shopIdTmp_APP|APP|IMMEDIATA|";
+            CreatePaymentRequest appRequest = ValidBeans.createPaymentRequest(PaymentChannel.APP);
             InlineResponse200 okResponse = ValidBeans.getOkResponse();
 
             given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
-            given(env.getProperty(String.format("postepay.clientId.%s.config", PaymentChannel.APP.getValue()))).willReturn(appConfigurationProperty);
-            given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, request)).willReturn(okResponse);
+            given(env.getProperty("postepay.clientId.APP.config")).willReturn("shopIdTmp_APP|APP|IMMEDIATA|");
+            given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, appRequest)).willReturn(okResponse);
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
                             .header(Headers.CLIENT_ID, PaymentChannel.APP.getValue())

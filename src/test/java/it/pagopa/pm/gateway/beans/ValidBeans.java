@@ -162,9 +162,9 @@ public class ValidBeans {
         createPaymentRequest.setAmount("1000");
         createPaymentRequest.setCurrency("978");
         createPaymentRequest.setDescription("causale description");
-        createPaymentRequest.setShopId("1");
+        createPaymentRequest.setShopId("shopIdTmp_APP");
         createPaymentRequest.setAuthType(IMMEDIATA);
-        createPaymentRequest.setBuyerName("Rupert Sciamenna");
+        createPaymentRequest.setBuyerName(null);
         createPaymentRequest.setBuyerEmail("email@email.com");
 
         return createPaymentRequest;

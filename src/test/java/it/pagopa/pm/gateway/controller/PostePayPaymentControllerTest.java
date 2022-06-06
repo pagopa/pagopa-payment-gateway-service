@@ -38,7 +38,6 @@ import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -107,26 +106,35 @@ public class PostePayPaymentControllerTest {
         }
     }
 
-    @Test
+   @Test
     public void givenPostePayPaymentRequestWEB_returnPostePayAuthResponse() throws Exception {
+        final UUID uuid = UUID.fromString(UUID_SAMPLE);
+        try (MockedStatic<UUID> mockedUuid = Mockito.mockStatic(UUID.class)) {
+            mockedUuid.when(UUID::randomUUID).thenReturn(uuid);
 
-        PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
-        CreatePaymentRequest createPaymentRequest = ValidBeans.createPaymentRequest(PaymentChannel.WEB);
+            PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
 
-        MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
-        String authorizationBearer = "Bearer " + azureLoginResponse.getAccess_token();
+            MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
+            String bearerToken = "Bearer " + azureLoginResponse.getAccess_token();
+            CreatePaymentRequest request = ValidBeans.createPaymentRequest(PaymentChannel.APP);
+            String appConfigurationProperty = "shopIdTmp_APP|APP|IMMEDIATA|";
+            InlineResponse200 okResponse = ValidBeans.getOkResponse();
 
-        given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(ValidBeans.microsoftAzureLoginResponse());
-        given(env.getProperty(String.format("postepay.clientId.%s.config", "WEB"))).willReturn("1|WEB|IMMEDIATA|www.responseurl.com");
-        given(postePayControllerApi.apiV1PaymentCreatePost(authorizationBearer, createPaymentRequest)).willReturn(ValidBeans.getOkResponse());
 
-        mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY).header("Client-ID", "WEB").content(mapper.writeValueAsString(postePayAuthRequest)).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("WEB", false, null))));
-        verify(paymentRequestRepository).findByIdTransaction(1L);
-        verify(paymentRequestRepository).save(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, "WEB"));
+            given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(ValidBeans.microsoftAzureLoginResponse());
+            given(env.getProperty(String.format("postepay.clientId.%s.config", "WEB"))).willReturn(appConfigurationProperty);
+            given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, request)).willReturn(okResponse);
+
+            mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY).header("Client-ID", "WEB")
+                    .content(mapper.writeValueAsString(postePayAuthRequest)).contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("WEB", false, null))));
+            verify(paymentRequestRepository).findByIdTransaction(1L);
+            verify(paymentRequestRepository).save(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, "WEB"));
+        }
     }
 
-
-    @Test
+   @Test
     public void givenRequestWithNoIdTransaction_shouldReturnBadRequestResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(false);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -137,7 +145,7 @@ public class PostePayPaymentControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true, BAD_REQUEST_MSG))));
     }
 
-    @Test
+   @Test
     public void givenRequestWithInvalidClientId_shouldReturnBadRequestClientIdResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -149,7 +157,7 @@ public class PostePayPaymentControllerTest {
     }
 
 
-    @Test
+   @Test
     public void givenRequestWithAlreadyProcessedTransaction_shouldReturnAlreadyProcessedTransactionResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
 

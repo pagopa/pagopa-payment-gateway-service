@@ -138,7 +138,7 @@ public class PostePayPaymentControllerTest {
         }
     }
 
-  // @Test
+   @Test
     public void givenRequestWithNoIdTransaction_shouldReturnBadRequestResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(false);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -149,7 +149,7 @@ public class PostePayPaymentControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true, BAD_REQUEST_MSG))));
     }
 
-    //@Test
+    @Test
     public void givenRequestWithInvalidClientId_shouldReturnBadRequestClientIdResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -161,7 +161,7 @@ public class PostePayPaymentControllerTest {
     }
 
 
-   //@Test
+   @Test
     public void givenRequestWithAlreadyProcessedTransaction_shouldReturnAlreadyProcessedTransactionResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
 
@@ -178,7 +178,7 @@ public class PostePayPaymentControllerTest {
     }
 
 
-    //@Test
+    @Test
     public void givenPostePayClientResponseNull_shouldReturnExecutingPaymentErrorMsgResponse() throws Exception {
 
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
@@ -203,7 +203,7 @@ public class PostePayPaymentControllerTest {
     }
 
 
-    //@Test
+    @Test
     public void thrownApiException_shouldReturnExecutingPaymentErrorMsgResponse() throws Exception {
 
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
@@ -228,7 +228,7 @@ public class PostePayPaymentControllerTest {
         verify(postePayControllerApi).apiV1PaymentCreatePost("Bearer " + microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
     }
 
-    //@Test
+    @Test
     public void thrownUncheckedException_shouldReturnExecutingPaymentErrorMsgResponse() throws Exception {
 
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
@@ -254,7 +254,7 @@ public class PostePayPaymentControllerTest {
     }
 
 
-    //@Test
+    @Test
     public void shouldReturnPollingResponseOK() throws Exception {
 
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
@@ -265,7 +265,7 @@ public class PostePayPaymentControllerTest {
     }
 
 
-    //@Test
+    @Test
     public void givenNotFoundPaymentResponseEntity_shouldThrowTransactionNotFoundException() throws Exception {
 
         thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_NOT_FOUND)));

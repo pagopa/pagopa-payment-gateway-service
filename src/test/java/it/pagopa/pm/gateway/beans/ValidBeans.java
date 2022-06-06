@@ -250,7 +250,7 @@ public class ValidBeans {
     }
 
     public static PostePayPollingResponse postePayPollingResponse() {
-        return new PostePayPollingResponse("APP", "www.userRedirectUrl.com", OutcomeEnum.OK, "");
+        return new PostePayPollingResponse("APP", "www.userRedirectUrl.com", OutcomeEnum.OK, null);
     }
 
 }

@@ -31,7 +31,7 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
 @Slf4j
-public class PaymentTransactionsController {
+public class BancomatPayPaymentTransactionsController {
 
     private static final String INQUIRY_RESPONSE_EFF = "EFF";
     private static final String INQUIRY_RESPONSE_ERR = "ERR";

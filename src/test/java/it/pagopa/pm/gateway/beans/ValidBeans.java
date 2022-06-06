@@ -251,9 +251,14 @@ public class ValidBeans {
     }
 
     public static PostePayPollingResponse postePayPollingResponse() {
-        return new PostePayPollingResponse("APP", "www.userRedirectUrl.com", OutcomeEnum.OK, null);
+        PostePayPollingResponse postePayPollingResponse = new PostePayPollingResponse();
+        postePayPollingResponse.setChannel(PaymentChannel.APP.getValue());
+        postePayPollingResponse.setUrlRedirect("www.userRedirectUrl.com");
+        postePayPollingResponse.setAuthOutcome(OutcomeEnum.OK);
+        postePayPollingResponse.setClientResponseUrl("${postepay.pgs.response.clientResponseUrl}www.userRedirectUrl.com");
+        postePayPollingResponse.setError(StringUtils.EMPTY);
+        return postePayPollingResponse;
     }
-
 }
 
 

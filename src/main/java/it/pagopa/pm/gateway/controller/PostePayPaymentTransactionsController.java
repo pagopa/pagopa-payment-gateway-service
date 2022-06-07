@@ -63,6 +63,9 @@ public class PostePayPaymentTransactionsController {
     @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
 
+    @Value("${postepay.pgs.response.clientResponseUrl}")
+    private String PGS_CLIENT_RESPONSE_URL;
+
     @Autowired
     private AzureLoginClient azureLoginClient;
 
@@ -196,9 +199,7 @@ public class PostePayPaymentTransactionsController {
             log.error("No PostePay request entity object has been found for GUID " + requestId);
             throw new RestApiException(ExceptionsEnum.TRANSACTION_NOT_FOUND);
         }
-        OutcomeEnum authorizationOutcome = Objects.isNull(requestEntity.getAuthorizationOutcome()) ? null : requestEntity.getAuthorizationOutcome() ? OK : KO;
-        PostePayPollingResponse postePayPollingResponse = new PostePayPollingResponse(requestEntity.getClientId(), requestEntity.getAuthorizationUrl(), authorizationOutcome, requestEntity.getErrorCode());
-        return createPollingResponse(requestId, postePayPollingResponse);
+        return createPollingResponse(requestId, requestEntity);
     }
 
     @Async
@@ -294,18 +295,26 @@ public class PostePayPaymentTransactionsController {
         return ResponseEntity.status(status).body(postePayAuthResponse);
     }
 
-    private PostePayPollingResponse createPollingResponse(String requestId, PostePayPollingResponse response) {
-        OutcomeEnum authOutcome = response.getAuthOutcome();
-        if (Objects.isNull(authOutcome)) {
+    private PostePayPollingResponse createPollingResponse(String requestId, PaymentRequestEntity entity) {
+        PostePayPollingResponse response = new PostePayPollingResponse();
+        Boolean outcome = entity.getAuthorizationOutcome();
+        OutcomeEnum authorizationOutcome = Objects.isNull(outcome) ? null : outcome ? OK : KO;
+        response.setAuthOutcome(authorizationOutcome);
+        response.setChannel(entity.getClientId());
+        if (Objects.isNull(authorizationOutcome)) {
             log.warn("No authorization outcome has been received yet for requestId " + requestId);
-            response.setUrlRedirect(null);
             response.setError("No authorization outcome has been received yet");
-        } else if (authOutcome.equals(KO)) {
+        } else if (authorizationOutcome.equals(KO)) {
             log.error("Authorization is KO for requestId " + requestId);
-            response.setUrlRedirect(null);
             response.setError("Payment authorization has not been granted");
+        } else {
+            String urlRedirect = entity.getAuthorizationUrl();
+            String clientResponseUrl = StringUtils.join(PGS_CLIENT_RESPONSE_URL, urlRedirect);
+            response.setUrlRedirect(urlRedirect);
+            response.setClientResponseUrl(clientResponseUrl);
+            response.setError(StringUtils.EMPTY);
         }
-        log.info("END - get PostePay authorization response for GUID: " + requestId + " - authorization is " + authOutcome);
+        log.info("END - get PostePay authorization response for GUID: " + requestId + " - authorization is " + authorizationOutcome);
         return response;
     }
 }

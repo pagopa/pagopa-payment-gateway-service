@@ -2,14 +2,20 @@ package it.pagopa.pm.gateway.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import it.pagopa.pm.gateway.ExceptionUtil.ExceptionEnumMatcher;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.ApiPaths;
 import it.pagopa.pm.gateway.constant.Headers;
+import it.pagopa.pm.gateway.dto.ACKMessage;
+import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.PostePayAuthRequest;
+import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
+import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
+import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import org.junit.Rule;
@@ -32,6 +38,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.util.NestedServletException;
 
@@ -39,12 +46,14 @@ import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -265,6 +274,32 @@ public class PostePayPaymentControllerTest {
 
 
     @Test
+    public void givenPaymentRequestEntityWithNoAuthOutcome_shouldReturnPollingResponseError() throws Exception {
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
+                willReturn(ValidBeans.paymentRequestEntity(null, null, "APP"));
+
+        mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE))
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.
+                        postePayPollingResponseError("No authorization outcome has been received yet", null))));
+
+    }
+
+
+    @Test
+    public void givenPaymentRequestEntityWithKOAuthOutcome_shouldReturnPollingResponseError() throws Exception {
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
+                willReturn(ValidBeans.paymentRequestEntity(null, false, "APP"));
+
+        mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE))
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.
+                        postePayPollingResponseError("Payment authorization has not been granted", OutcomeEnum.KO))));
+    }
+
+
+
+    @Test
     public void givenNotFoundPaymentResponseEntity_shouldThrowTransactionNotFoundException() throws Exception {
 
         thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_NOT_FOUND)));
@@ -279,5 +314,141 @@ public class PostePayPaymentControllerTest {
 
     }
 
+
+
+
+
+    @Test
+    public void givenAuthMessage_shouldReturnACKMessage() throws Exception {
+
+        AuthMessage authMessage = ValidBeans.authMessage();
+        ACKMessage ackMessage = ValidBeans.ackMessageResponse();
+        final String correlationID = "correlation-ID";
+
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
+
+        given( paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
+        given(restapiCdClient.callClosePayment(paymentRequestEntity.getIdTransaction(), true, authMessage.getAuthCode()))
+                .willReturn(OutcomeEnum.OK.toString());
+
+        mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
+                .header("X-Correlation-ID", correlationID)
+                .content(mapper.writeValueAsString(authMessage))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
+                 verify(paymentRequestRepository).save(paymentRequestEntity);
+    }
+
+    @Test
+    public void givenAlreadyProcessedPaymentResponseEntity_shouldReturnTransactionAlreadyProcessedException() throws Exception {
+
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED)));
+
+        AuthMessage authMessage = ValidBeans.authMessage();
+        ACKMessage ackMessage = ValidBeans.ackMessageResponse();
+        final String correlationID = "correlation-ID";
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
+        paymentRequestEntity.setIsProcessed(true);
+
+        given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
+
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
+                    .header("X-Correlation-ID", correlationID)
+                    .content(mapper.writeValueAsString(authMessage))
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+
+    }
+
+
+    @Test
+    public void givenNotFoundPaymentResponseEntity_shouldReturnTransactionNotFoundException() throws Exception {
+
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_NOT_FOUND)));
+
+        AuthMessage authMessage = ValidBeans.authMessage();
+        ACKMessage ackMessage = ValidBeans.ackMessageResponse();
+        final String correlationID = "correlation-ID";
+
+        given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(null);
+
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
+                    .header("X-Correlation-ID", correlationID)
+                    .content(mapper.writeValueAsString(authMessage))
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+
+    }
+
+
+
+    @Test
+    public void thrownFeignException_shouldReturnRestapiCDClientException() throws Exception {
+
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR)));
+
+        AuthMessage authMessage = ValidBeans.authMessage();
+        ACKMessage ackMessage = ValidBeans.ackMessageResponse();
+        final String correlationID = "correlation-ID";
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
+
+        doThrow(FeignException.class)
+                .when(restapiCdClient)
+                .callClosePayment(paymentRequestEntity.getIdTransaction(), true, authMessage.getAuthCode());
+
+        given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
+
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
+                    .header("X-Correlation-ID", correlationID)
+                    .content(mapper.writeValueAsString(authMessage))
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+
+    }
+
+    @Test
+    public void thrownException_shouldReturnGenericErrorException() throws Exception {
+
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
+
+        AuthMessage authMessage = ValidBeans.authMessage();
+        ACKMessage ackMessage = ValidBeans.ackMessageResponse();
+        final String correlationID = "correlation-ID";
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
+
+        doThrow(RuntimeException.class)
+                .when(restapiCdClient)
+                .callClosePayment(paymentRequestEntity.getIdTransaction(), true, authMessage.getAuthCode());
+
+        given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
+
+        try {
+            mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
+                    .header("X-Correlation-ID", correlationID)
+                    .content(mapper.writeValueAsString(authMessage))
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+
+    }
 
 }

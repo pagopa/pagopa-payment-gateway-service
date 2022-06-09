@@ -168,7 +168,6 @@ public class PostePayPaymentControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("XXX", true, BAD_REQUEST_MSG_CLIENT_ID))));
     }
 
-
    @Test
     public void givenRequestWithAlreadyProcessedTransaction_shouldReturnAlreadyProcessedTransactionResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
@@ -184,7 +183,6 @@ public class PostePayPaymentControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true, TRANSACTION_ALREADY_PROCESSED_MSG))));
 
     }
-
 
     @Test
     public void givenPostePayClientResponseNull_shouldReturnExecutingPaymentErrorMsgResponse() throws Exception {
@@ -209,7 +207,6 @@ public class PostePayPaymentControllerTest {
                         GENERIC_ERROR_MSG + postePayAuthRequest.getIdTransaction()))));
         verify(postePayControllerApi).apiV1PaymentCreatePost("Bearer " + microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
     }
-
 
     @Test
     public void thrownApiException_shouldReturnExecutingPaymentErrorMsgResponse() throws Exception {
@@ -261,7 +258,6 @@ public class PostePayPaymentControllerTest {
         verify(postePayControllerApi).apiV1PaymentCreatePost("Bearer " + microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
     }
 
-
     @Test
     public void shouldReturnPollingResponseOK() throws Exception {
 
@@ -271,7 +267,6 @@ public class PostePayPaymentControllerTest {
         mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayPollingResponse())));
     }
-
 
     @Test
     public void givenPaymentRequestEntityWithNoAuthOutcome_shouldReturnPollingResponseError() throws Exception {
@@ -285,7 +280,6 @@ public class PostePayPaymentControllerTest {
 
     }
 
-
     @Test
     public void givenPaymentRequestEntityWithKOAuthOutcome_shouldReturnPollingResponseError() throws Exception {
 
@@ -296,8 +290,6 @@ public class PostePayPaymentControllerTest {
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.
                         postePayPollingResponseError("Payment authorization has not been granted", OutcomeEnum.KO))));
     }
-
-
 
     @Test
     public void givenNotFoundPaymentResponseEntity_shouldThrowTransactionNotFoundException() throws Exception {
@@ -313,10 +305,6 @@ public class PostePayPaymentControllerTest {
         }
 
     }
-
-
-
-
 
     @Test
     public void givenAuthMessage_shouldReturnACKMessage() throws Exception {
@@ -366,7 +354,6 @@ public class PostePayPaymentControllerTest {
 
     }
 
-
     @Test
     public void givenNotFoundPaymentResponseEntity_shouldReturnTransactionNotFoundException() throws Exception {
 
@@ -390,8 +377,6 @@ public class PostePayPaymentControllerTest {
         }
 
     }
-
-
 
     @Test
     public void thrownFeignException_shouldReturnRestapiCDClientException() throws Exception {

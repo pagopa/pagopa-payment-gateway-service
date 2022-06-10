@@ -258,6 +258,17 @@ public class ValidBeans {
         postePayPollingResponse.setError(StringUtils.EMPTY);
         return postePayPollingResponse;
     }
+
+
+    public static PostePayPollingResponse postePayPollingResponseError(String error, OutcomeEnum outcomeEnum) {
+        PostePayPollingResponse postePayPollingResponse = new PostePayPollingResponse();
+        postePayPollingResponse.setChannel(PaymentChannel.APP.getValue());
+        postePayPollingResponse.setUrlRedirect(null);
+        postePayPollingResponse.setAuthOutcome(outcomeEnum);
+        postePayPollingResponse.setClientResponseUrl(null);
+        postePayPollingResponse.setError(error);
+        return postePayPollingResponse;
+    }
 }
 
 

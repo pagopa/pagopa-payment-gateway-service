@@ -242,7 +242,6 @@ public class ValidBeans {
         paymentRequestEntity.setId(null);
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setMdcInfo(null);
-        paymentRequestEntity.setErrorCode(null);
         paymentRequestEntity.setResourcePath(null);
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
         return paymentRequestEntity;

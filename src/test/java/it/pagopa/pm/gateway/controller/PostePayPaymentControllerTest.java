@@ -100,7 +100,7 @@ public class PostePayPaymentControllerTest {
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, appRequest)).willReturn(okResponse);
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                            .header(Headers.CLIENT_ID, PaymentChannel.APP.getValue())
+                            .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
                             .content(mapper.writeValueAsString(postePayAuthRequest))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())

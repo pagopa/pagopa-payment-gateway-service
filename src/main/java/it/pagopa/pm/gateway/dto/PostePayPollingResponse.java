@@ -8,8 +8,9 @@ public class PostePayPollingResponse {
 
     String channel;
     String urlRedirect;
-    OutcomeEnum authOutcome;
+    String logoResourcePath;
     String clientResponseUrl;
+    OutcomeEnum authOutcome;
     String error;
 
 }

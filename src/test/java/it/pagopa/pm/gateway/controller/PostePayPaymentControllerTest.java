@@ -131,7 +131,7 @@ public class PostePayPaymentControllerTest {
             given(env.getProperty(String.format("postepay.clientId.%s.config", "WEB"))).willReturn(appConfigurationProperty);
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, request)).willReturn(okResponse);
 
-            mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY).header("Client-ID", "WEB")
+            mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY).header(Headers.X_CLIENT_ID, "WEB")
                     .content(mapper.writeValueAsString(postePayAuthRequest)).contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("WEB", false, null))));
@@ -144,7 +144,7 @@ public class PostePayPaymentControllerTest {
     public void givenRequestWithNoIdTransaction_shouldReturnBadRequestResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(false);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                        .header("Client-ID", "APP")
+                        .header(Headers.X_CLIENT_ID, "APP")
                         .content(mapper.writeValueAsString(postePayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -155,7 +155,7 @@ public class PostePayPaymentControllerTest {
     public void givenRequestWithInvalidClientId_shouldReturnBadRequestClientIdResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                        .header("Client-ID", "XXX")
+                        .header(Headers.X_CLIENT_ID, "XXX")
                         .content(mapper.writeValueAsString(postePayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -170,7 +170,7 @@ public class PostePayPaymentControllerTest {
                 willReturn(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, "APP"));
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                        .header("Client-ID", "APP")
+                        .header(Headers.X_CLIENT_ID, "APP")
                         .content(mapper.writeValueAsString(postePayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
@@ -193,7 +193,7 @@ public class PostePayPaymentControllerTest {
                 .willReturn(null);
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                        .header("Client-ID", "APP")
+                        .header(Headers.X_CLIENT_ID, "APP")
                         .content(mapper.writeValueAsString(postePayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
@@ -218,7 +218,7 @@ public class PostePayPaymentControllerTest {
                 .apiV1PaymentCreatePost(microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                        .header("Client-ID", "APP")
+                        .header(Headers.X_CLIENT_ID, "APP")
                         .content(mapper.writeValueAsString(postePayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
@@ -243,7 +243,7 @@ public class PostePayPaymentControllerTest {
                 .apiV1PaymentCreatePost(microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                        .header("Client-ID", "APP")
+                        .header(Headers.X_CLIENT_ID, "APP")
                         .content(mapper.writeValueAsString(postePayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())

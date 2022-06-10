@@ -234,24 +234,28 @@ public class PostePayPaymentTransactionsController {
         log.info("END - execute PostePay payment authorization request for transaction " + idTransaction);
     }
 
-    private CreatePaymentRequest createAuthorizationRequest(PostePayAuthRequest postePayAuthRequest, String clientId) {
+    private CreatePaymentRequest createAuthorizationRequest(PostePayAuthRequest postePayAuthRequest, String clientId) throws NullPointerException {
         String clientIdProperty = String.format(POSTEPAY_CLIENT_ID_PROPERTY, clientId);
         String configs = environment.getProperty(clientIdProperty);
-        Map<String, String> configsMap = getConfigValues(configs);
-
-        CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
-        createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
-        createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
-        createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
-        createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
-        createPaymentRequest.setCurrency(EURO_ISO_CODE);
-        createPaymentRequest.setBuyerName(postePayAuthRequest.getName());
-        createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
-        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
-        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsMap.get(AUTH_TYPE_CONFIG)));
-        ResponseURLs responseURLs = createResponseUrls(clientId, configsMap.get(NOTIFICATION_URL_CONFIG));
-        createPaymentRequest.setResponseURLs(responseURLs);
-        return createPaymentRequest;
+        if (StringUtils.isBlank(configs)) {
+            log.error("Property " + clientIdProperty + " has not been found in configuration");
+            throw new NullPointerException();
+        } else {
+            Map<String, String> configsMap = getConfigValues(configs);
+            CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+            createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
+            createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
+            createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
+            createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
+            createPaymentRequest.setCurrency(EURO_ISO_CODE);
+            createPaymentRequest.setBuyerName(postePayAuthRequest.getName());
+            createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
+            createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
+            createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsMap.get(AUTH_TYPE_CONFIG)));
+            ResponseURLs responseURLs = createResponseUrls(clientId, configsMap.get(NOTIFICATION_URL_CONFIG));
+            createPaymentRequest.setResponseURLs(responseURLs);
+            return createPaymentRequest;
+        }
     }
 
     private ResponseURLs createResponseUrls(String clientId, String responseUrl) {

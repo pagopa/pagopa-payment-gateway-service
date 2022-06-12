@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.beans;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
+import it.pagopa.pm.gateway.constant.LogoPaths;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
@@ -13,8 +14,6 @@ import org.openapitools.client.model.CreatePaymentRequest;
 import org.openapitools.client.model.InlineResponse200;
 import org.openapitools.client.model.PaymentChannel;
 import org.openapitools.client.model.ResponseURLs;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.util.Objects;
 
@@ -207,10 +206,6 @@ public class ValidBeans {
 
     }
 
-    public static ResponseEntity<PostePayAuthResponse> postePayAuthResponseResponseEntity(PostePayAuthResponse postePayAuthResponse, HttpStatus status) {
-        return ResponseEntity.status(status).body(postePayAuthResponse);
-    }
-
     public static InlineResponse200 getOkResponse() {
         InlineResponse200 inlineResponse200 = new InlineResponse200();
         inlineResponse200.setPaymentID("1234");
@@ -242,9 +237,9 @@ public class ValidBeans {
         paymentRequestEntity.setId(null);
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setMdcInfo(null);
-        paymentRequestEntity.setErrorCode(null);
         paymentRequestEntity.setResourcePath(null);
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
+        paymentRequestEntity.setResourcePath(LogoPaths.POSTEPAY_LOGO_PATH);
         return paymentRequestEntity;
 
 
@@ -257,6 +252,18 @@ public class ValidBeans {
         postePayPollingResponse.setAuthOutcome(OutcomeEnum.OK);
         postePayPollingResponse.setClientResponseUrl("${postepay.pgs.response.clientResponseUrl}www.userRedirectUrl.com");
         postePayPollingResponse.setError(StringUtils.EMPTY);
+        postePayPollingResponse.setLogoResourcePath(LogoPaths.POSTEPAY_LOGO_PATH);
+        return postePayPollingResponse;
+    }
+
+
+    public static PostePayPollingResponse postePayPollingResponseError(String error, OutcomeEnum outcomeEnum) {
+        PostePayPollingResponse postePayPollingResponse = new PostePayPollingResponse();
+        postePayPollingResponse.setChannel(PaymentChannel.APP.getValue());
+        postePayPollingResponse.setUrlRedirect(null);
+        postePayPollingResponse.setAuthOutcome(outcomeEnum);
+        postePayPollingResponse.setClientResponseUrl(null);
+        postePayPollingResponse.setError(error);
         return postePayPollingResponse;
     }
 }

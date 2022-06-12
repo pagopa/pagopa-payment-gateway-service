@@ -6,6 +6,6 @@ public class Headers {
 
     public static final String MDC_FIELDS = "MDC-Fields";
     public static final String X_CORRELATION_ID = "X-Correlation-ID";
-    public static final String CLIENT_ID = "Client-ID";
+    public static final String X_CLIENT_ID = "X-Client-ID";
 
 }

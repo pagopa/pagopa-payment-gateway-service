@@ -4,7 +4,7 @@ services:
  
   pagopa-payment-transactions-gateway:
     container_name: pagopa-payment-transactions-gateway
-    env_file: .env
+    env_file: .env.local
     build:
       context: .
     ports:

@@ -15,8 +15,11 @@ import org.openapitools.client.model.InlineResponse200;
 import org.openapitools.client.model.PaymentChannel;
 import org.openapitools.client.model.ResponseURLs;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
+import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
@@ -24,6 +27,8 @@ public class ValidBeans {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String RESPONSE_URL_OK_KO = "https://portal.test.pagopa.gov.it/pmmockserviceapi/home";
     public static final String NOTIFICATION_URL = "${postepay.notificationURL}";
+    private static final String OUTCOME_PARAM = "outcome";
+    private static final String AUTH_CODE_PARAM = "authCode";
 
     public static BPayPaymentRequest bPayPaymentRequest() {
         BPayPaymentRequest request = new BPayPaymentRequest();
@@ -266,6 +271,18 @@ public class ValidBeans {
         postePayPollingResponse.setError(error);
         return postePayPollingResponse;
     }
+
+    public static Map<String, Object> requestMap() {
+        Map<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put(OUTCOME_PARAM, true);
+        parameters.put(AUTH_CODE_PARAM, "200");
+        return parameters;
+    }
+
+    public static Map<String, Object> headerMap() {
+        return buildMdcHeader();
+    }
+
 }
 
 

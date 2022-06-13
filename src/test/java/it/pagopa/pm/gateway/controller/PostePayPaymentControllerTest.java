@@ -319,6 +319,7 @@ public class PostePayPaymentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
+                verify(restapiCdClient).callClosePayment(paymentRequestEntity.getIdTransaction(), true, authMessage.getAuthCode());
                  verify(paymentRequestRepository).save(paymentRequestEntity);
     }
 

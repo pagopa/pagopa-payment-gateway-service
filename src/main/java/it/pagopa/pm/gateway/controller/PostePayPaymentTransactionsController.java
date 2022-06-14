@@ -54,6 +54,8 @@ public class PostePayPaymentTransactionsController {
     private static final String WEB_ORIGIN = "WEB";
     private static final String EURO_ISO_CODE = "978";
     private static final String POSTEPAY_CLIENT_ID_PROPERTY = "postepay.clientId.%s.config";
+    private static final String PGS_CLIENT_RESPONSE_URL = "postepay.pgs.response.%s.clientResponseUrl";
+
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
@@ -63,9 +65,6 @@ public class PostePayPaymentTransactionsController {
 
     @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
-
-    @Value("${postepay.pgs.response.clientResponseUrl}")
-    private String PGS_CLIENT_RESPONSE_URL;
 
     @Autowired
     private AzureLoginClient azureLoginClient;
@@ -304,6 +303,8 @@ public class PostePayPaymentTransactionsController {
         PostePayPollingResponse response = new PostePayPollingResponse();
         Boolean outcome = entity.getAuthorizationOutcome();
         OutcomeEnum authorizationOutcome = Objects.isNull(outcome) ? null : outcome ? OK : KO;
+        String urlRedirect = entity.getAuthorizationUrl();
+        response.setUrlRedirect(urlRedirect);
         response.setAuthOutcome(authorizationOutcome);
         response.setChannel(entity.getClientId());
         if (Objects.isNull(authorizationOutcome)) {
@@ -313,9 +314,7 @@ public class PostePayPaymentTransactionsController {
             log.error("Authorization is KO for requestId " + requestId);
             response.setError("Payment authorization has not been granted");
         } else {
-            String urlRedirect = entity.getAuthorizationUrl();
-            String clientResponseUrl = StringUtils.join(PGS_CLIENT_RESPONSE_URL, urlRedirect);
-            response.setUrlRedirect(urlRedirect);
+            String clientResponseUrl = String.format(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
             response.setClientResponseUrl(clientResponseUrl);
             response.setLogoResourcePath(entity.getResourcePath());
             response.setError(StringUtils.EMPTY);

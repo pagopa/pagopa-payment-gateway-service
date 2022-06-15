@@ -250,7 +250,7 @@ public class ValidBeans {
         postePayPollingResponse.setChannel(PaymentChannel.APP.getValue());
         postePayPollingResponse.setUrlRedirect("www.userRedirectUrl.com");
         postePayPollingResponse.setAuthOutcome(OutcomeEnum.OK);
-        postePayPollingResponse.setClientResponseUrl("${postepay.pgs.response.clientResponseUrl}www.userRedirectUrl.com");
+        postePayPollingResponse.setClientResponseUrl("www.clientResponseUrl.com");
         postePayPollingResponse.setError(StringUtils.EMPTY);
         postePayPollingResponse.setLogoResourcePath(LogoPaths.POSTEPAY_LOGO_PATH);
         return postePayPollingResponse;
@@ -260,7 +260,7 @@ public class ValidBeans {
     public static PostePayPollingResponse postePayPollingResponseError(String error, OutcomeEnum outcomeEnum) {
         PostePayPollingResponse postePayPollingResponse = new PostePayPollingResponse();
         postePayPollingResponse.setChannel(PaymentChannel.APP.getValue());
-        postePayPollingResponse.setUrlRedirect(null);
+        postePayPollingResponse.setUrlRedirect("www.userRedirectUrl.com");
         postePayPollingResponse.setAuthOutcome(outcomeEnum);
         postePayPollingResponse.setClientResponseUrl(null);
         postePayPollingResponse.setError(error);

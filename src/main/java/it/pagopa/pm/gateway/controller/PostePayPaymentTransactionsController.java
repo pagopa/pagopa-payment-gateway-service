@@ -54,6 +54,7 @@ public class PostePayPaymentTransactionsController {
     private static final String WEB_ORIGIN = "WEB";
     private static final String EURO_ISO_CODE = "978";
     private static final String POSTEPAY_CLIENT_ID_PROPERTY = "postepay.clientId.%s.config";
+    private static final String PGS_CLIENT_RESPONSE_URL = "postepay.pgs.response.%s.clientResponseUrl";
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
@@ -63,9 +64,6 @@ public class PostePayPaymentTransactionsController {
 
     @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
-
-    @Value("${postepay.pgs.response.clientResponseUrl}")
-    private String PGS_CLIENT_RESPONSE_URL;
 
     @Autowired
     private AzureLoginClient azureLoginClient;
@@ -153,7 +151,7 @@ public class PostePayPaymentTransactionsController {
         Long idTransaction = postePayAuthRequest.getIdTransaction();
         if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
         }
 
         log.info(String.format("Requesting authorization from %s channel for transaction %s", clientId, idTransaction));
@@ -207,10 +205,10 @@ public class PostePayPaymentTransactionsController {
     private void executePostePayAuthorizationCall(PostePayAuthRequest postePayAuthRequest, String clientId, PaymentRequestEntity paymentRequestEntity) throws RestApiException {
         Long idTransaction = postePayAuthRequest.getIdTransaction();
         log.info("START - execute PostePay payment authorization request for transaction " + idTransaction);
-        CreatePaymentRequest createPaymentRequest = createAuthorizationRequest(postePayAuthRequest, clientId);
         String correlationId;
         String authorizationUrl;
         try {
+            CreatePaymentRequest createPaymentRequest = createAuthorizationRequest(postePayAuthRequest, clientId);
             MicrosoftAzureLoginResponse microsoftAzureLoginResponse = azureLoginClient.requestMicrosoftAzureLoginPostepay();
             String bearerToken = BEARER_TOKEN_PREFIX + microsoftAzureLoginResponse.getAccess_token();
             log.debug("bearer token acquired: " + bearerToken);
@@ -235,27 +233,22 @@ public class PostePayPaymentTransactionsController {
     }
 
     private CreatePaymentRequest createAuthorizationRequest(PostePayAuthRequest postePayAuthRequest, String clientId) throws NullPointerException {
-        String clientIdProperty = String.format(POSTEPAY_CLIENT_ID_PROPERTY, clientId);
-        String configs = environment.getProperty(clientIdProperty);
-        if (StringUtils.isBlank(configs)) {
-            log.error("Property " + clientIdProperty + " has not been found in configuration");
-            throw new NullPointerException();
-        } else {
-            Map<String, String> configsMap = getConfigValues(configs);
-            CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
-            createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
-            createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
-            createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
-            createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
-            createPaymentRequest.setCurrency(EURO_ISO_CODE);
-            createPaymentRequest.setBuyerName(postePayAuthRequest.getName());
-            createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
-            createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
-            createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsMap.get(AUTH_TYPE_CONFIG)));
-            ResponseURLs responseURLs = createResponseUrls(clientId, configsMap.get(NOTIFICATION_URL_CONFIG));
-            createPaymentRequest.setResponseURLs(responseURLs);
-            return createPaymentRequest;
-        }
+        String clientConfig = getCustomEnvironmentProperty(POSTEPAY_CLIENT_ID_PROPERTY, clientId);
+        Map<String, String> configsMap = getConfigValues(clientConfig);
+        CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+        createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
+        createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
+        createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
+        createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
+        createPaymentRequest.setCurrency(EURO_ISO_CODE);
+        createPaymentRequest.setBuyerName(postePayAuthRequest.getName());
+        createPaymentRequest.setBuyerEmail(postePayAuthRequest.getEmailNotice());
+        createPaymentRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
+        createPaymentRequest.setAuthType(AuthorizationType.fromValue(configsMap.get(AUTH_TYPE_CONFIG)));
+        ResponseURLs responseURLs = createResponseUrls(clientId, configsMap.get(NOTIFICATION_URL_CONFIG));
+        createPaymentRequest.setResponseURLs(responseURLs);
+        return createPaymentRequest;
+
     }
 
     private ResponseURLs createResponseUrls(String clientId, String responseUrl) {
@@ -304,6 +297,8 @@ public class PostePayPaymentTransactionsController {
         PostePayPollingResponse response = new PostePayPollingResponse();
         Boolean outcome = entity.getAuthorizationOutcome();
         OutcomeEnum authorizationOutcome = Objects.isNull(outcome) ? null : outcome ? OK : KO;
+        String urlRedirect = entity.getAuthorizationUrl();
+        response.setUrlRedirect(urlRedirect);
         response.setAuthOutcome(authorizationOutcome);
         response.setChannel(entity.getClientId());
         if (Objects.isNull(authorizationOutcome)) {
@@ -313,14 +308,29 @@ public class PostePayPaymentTransactionsController {
             log.error("Authorization is KO for requestId " + requestId);
             response.setError("Payment authorization has not been granted");
         } else {
-            String urlRedirect = entity.getAuthorizationUrl();
-            String clientResponseUrl = StringUtils.join(PGS_CLIENT_RESPONSE_URL, urlRedirect);
-            response.setUrlRedirect(urlRedirect);
+            String clientResponseUrl = getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
             response.setClientResponseUrl(clientResponseUrl);
             response.setLogoResourcePath(entity.getResourcePath());
             response.setError(StringUtils.EMPTY);
         }
         log.info("END - get PostePay authorization response for GUID: " + requestId + " - authorization is " + authorizationOutcome);
         return response;
+    }
+
+    private String getCustomEnvironmentProperty(String parameterizedPropertyName, String clientId) throws NullPointerException {
+        String propertyToSearch = String.format(parameterizedPropertyName, clientId);
+        if (StringUtils.isNotBlank(propertyToSearch)) {
+            String property = environment.getProperty(propertyToSearch);
+            if (StringUtils.isNotBlank(property)) {
+                return property;
+            } else {
+                log.error("Environment property " + propertyToSearch + " is blank or does not exist");
+                throw new NullPointerException();
+            }
+        } else {
+            log.error("Environment property to search is blank");
+            throw new NullPointerException();
+        }
+
     }
 }

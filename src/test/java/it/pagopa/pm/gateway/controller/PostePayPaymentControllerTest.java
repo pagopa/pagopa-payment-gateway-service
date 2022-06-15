@@ -173,7 +173,7 @@ public class PostePayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, "APP")
                         .content(mapper.writeValueAsString(postePayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isUnauthorized())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true, TRANSACTION_ALREADY_PROCESSED_MSG))));
 
     }
@@ -257,6 +257,7 @@ public class PostePayPaymentControllerTest {
 
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
                 willReturn(ValidBeans.paymentRequestEntity(null, true, "APP"));
+        given(env.getProperty("postepay.pgs.response.APP.clientResponseUrl")).willReturn("www.clientResponseUrl.com");
 
         mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayPollingResponse())));

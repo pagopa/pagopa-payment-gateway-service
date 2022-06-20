@@ -12,7 +12,7 @@ variables:
   azureSubscription: 'PM-Subscription-sit'
   KeyVaultName: 'kmn-pm-pagopa-test'
   liquibaseFolderScript: '$(Build.SourcesDirectory)/devops/db/liquibase'
-  validSchemas: 'PGS'
+  validSchemas: 'AGID_USER'
 #  rollbackToVersion: 'default'
 #  rollbackSchema: 'default'
 

@@ -64,16 +64,16 @@ jobs:
       # PGS
       - template: ../templates/liquibase-update.yml
         parameters:
-          url: $(sit-db-pgs-url-simple)
-          username: $(sit-db-pgs-username)
-          password: $(sit-db-pgs-password)
+          url: $(sit-db-agid-url-simple)
+          username: $(sit-db-agid-username)
+          password: $(sit-db-agid-password)
           classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-          liquibaseSchemaName: $(sit-db-pgs-schema)
-          defaultSchemaName: $(sit-db-pgs-schema)
-          schema: $(sit-db-pgs-schema)
+          liquibaseSchemaName: $(sit-db-agid-schema)
+          defaultSchemaName: $(sit-db-agid-schema)
+          schema: $(sit-db-agid-schema)
           args: "-Dversion=${{ parameters.version }}"
-          liquibaseTablespaceName: $(sit-db-pgs-tablespace)
+          liquibaseTablespaceName: $(sit-db-agid-tablespace)
           title: "Update DB PGS"
-          databaseChangelogLockTableName: "DATABASECHANGELOGLOCK"
-          databaseChangelogTableName: "DATABASECHANGELOG"
+          databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+          databaseChangelogTableName: "DATABASECHANGELOG_PGS"
           contexts: "tag,baseline,incremental"

@@ -27,11 +27,11 @@ jobs:
       - script: echo ROLLBACK_SCHEMA '$(setRollbackSchema.ROLLBACK_SCHEMA)'
         displayName: Echo Rollback Schema
 
-  - job: job_rollback_rtd
-    displayName: RTD_USER Rollback Execution
+  - job: job_rollback_agid
+    displayName: AGID_USER Rollback Execution
     pool:
       name: ${{ parameters.poolName }}
-    condition: and(succeeded(), eq(dependencies.job_rollback_prep.outputs['setRollbackSchema.ROLLBACK_SCHEMA'], 'PGS'))
+    condition: and(succeeded(), eq(dependencies.job_rollback_prep.outputs['setRollbackSchema.ROLLBACK_SCHEMA'], 'AGID_USER'))
     dependsOn: job_rollback_prep
     steps:
       - checkout: none
@@ -39,17 +39,17 @@ jobs:
       # PGS (PM)
       - template: ./liquibase-rollback.yml
         parameters:
-          url: $(sit-db-pgs-url-simple)
-          username: $(sit-db-pgs-username)
-          password: $(sit-db-pgs-password)
+          url: $(sit-db-agid-url-simple)
+          username: $(sit-db-agid-username)
+          password: $(sit-db-agid-password)
           classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-          liquibaseSchemaName: $(sit-db-pgs-schema)
-          defaultSchemaName: $(sit-db-pgs-schema)
-          schema: $(sit-db-pgs-schema)
-          liquibaseTablespaceName: $(sit-db-pgs-tablespace)
+          liquibaseSchemaName: $(sit-db-agid-schema)
+          defaultSchemaName: $(sit-db-agid-schema)
+          schema: $(sit-db-agid-schema)
+          liquibaseTablespaceName: $(sit-db-agid-tablespace)
           title: "Rollback DB PGS"
-          databaseChangelogLockTableName: "DATABASECHANGELOGLOCK"
-          databaseChangelogTableName: "DATABASECHANGELOG"
+          databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+          databaseChangelogTableName: "DATABASECHANGELOG_PGS"
           version: ${{ parameters.version }}
           contexts: "tag,baseline,incremental"
           azureSubscription: ${{ parameters.azureSubscription }}

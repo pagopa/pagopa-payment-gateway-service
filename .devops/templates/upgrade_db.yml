@@ -67,7 +67,7 @@ jobs:
           url: $(sit-db-pgs-url-simple)
           username: $(sit-db-pgs-username)
           password: $(sit-db-pgs-password)
-          classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-gateway-service
+          classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
           liquibaseSchemaName: $(sit-db-pgs-schema)
           defaultSchemaName: $(sit-db-pgs-schema)
           schema: $(sit-db-pgs-schema)

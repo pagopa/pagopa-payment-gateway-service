@@ -1,0 +1,81 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger: none
+pr: none
+
+variables:
+  poolName: 'pm-agent-pool-sit'
+  vmImageNameDefault: 'ubuntu-latest'
+  azureSubscription: 'PM-Subscription-sit'
+  KeyVaultName: 'kmn-pm-pagopa-test'
+  liquibaseFolderScript: '$(Build.SourcesDirectory)/devops/db/liquibase'
+  validSchemas: 'PGS'
+#  rollbackToVersion: 'default'
+#  rollbackSchema: 'default'
+
+
+stages:
+  - stage: stage_rollback_check
+    displayName: "Check Rollback Stage"
+    jobs:
+      - job: job_rollback_prerequisite
+        displayName: Rollback Prerequisite Check
+        pool:
+          vmImage: $(vmImageNameDefault)
+        steps:
+          - script: |
+              inputSchema=$(rollbackSchema)
+              echo "Input Schema: $inputSchema"
+              upperSchema=$(echo $inputSchema | tr 'a-z' 'A-Z')
+              echo "Upper Case Schema: $upperSchema"
+              echo "##vso[task.setvariable variable=ROLLBACK_SCHEMA;isOutput=true]$upperSchema"
+            displayName: "Computing Rollback Schema"
+            name: setRollbackSchema
+
+          - script: echo Rolling back to version '$(rollbackToVersion)'
+            displayName: Echo Rollback Version
+
+          - script: echo Rolling back schema '$(setRollbackSchema.ROLLBACK_SCHEMA)'
+            displayName: Echo Rollback Schema
+
+          - powershell: |
+              $version="$(rollbackToVersion)"
+              if ($version -eq "" -or $version -eq "default") {throw 'Define rollbackVersion variable'}
+              $numbers=$version.Split(".")
+              if ($numbers.Count -ne 3) {throw 'Invalid rollbackToVersion variable'}
+              Foreach ($n in $numbers)
+              {
+                  if (!($n -match "^\d+$")) {throw 'Invalid rollbackToVersion variable'}
+              }
+            displayName: Verify Rollback Version
+
+          - powershell: |
+              $inputSchema="$(setRollbackSchema.ROLLBACK_SCHEMA)"
+              if ($inputSchema -eq "" -or $inputSchema -eq "DEFAULT") {throw 'Define rollbackSchema variable'}
+              $validSchemasArr="$(validSchemas)".Split(".")
+              if (-not $validSchemasArr -contains $inputSchema) {throw 'Invalid rollbackSchema variable, allowed values: $validSchemasArr}
+            displayName: Verify Rollback Schema
+
+          - publish: $(liquibaseFolderScript)
+            artifact: $(rollbackToVersion)-liquibase-script
+            displayName: Publish Liquibase Scripts
+
+  - stage: stage_rollback_exec
+    displayName: "Execute Rollback Stage"
+    dependsOn:
+      - stage_rollback_check
+    condition: succeeded('stage_rollback_check')
+    variables:
+      - name: rollbackSchemaName
+        value: $[ stageDependencies.stage_rollback_check.job_rollback_prerequisite.outputs['setRollbackSchema.ROLLBACK_SCHEMA'] ]
+    jobs:
+      - template: templates/rollback_db.yml
+        parameters:
+          version: $(rollbackToVersion)
+          schemaName: $(rollbackSchemaName)
+          poolName: $(poolName)
+          azureSubscription: $(azureSubscription)
+          KeyVaultName: $(KeyVaultName)

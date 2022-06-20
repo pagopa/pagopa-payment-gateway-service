@@ -15,6 +15,9 @@ variables:
   vmImageNameDefault: 'ubuntu-latest'
   maven_cache_folder: $(Pipeline.Workspace)/.m2/repository
   maven_opts: '-Dmaven.repo.local=$(maven_cache_folder)'
+  azureSubscription: 'PM-Subscription-sit'
+  KeyVaultName: 'kmn-pm-pagopa-test'
+  liquibaseFolderScript: '$(Build.SourcesDirectory)/devops/db/liquibase'
 
 stages:
   - stage: stage_build
@@ -82,6 +85,9 @@ stages:
             inputs:
               pathToPublish: './target/pagopa-payment-transactions-gateway-$(var.outputBranchVersion).war'
               artifactName: 'Build PTG $(var.outputBranchVersion)'
+          - publish: $(liquibaseFolderScript)
+            artifact: $(var.outputBranchVersion)-liquibase-script
+            displayName: Publish Liquibase Scripts
   - stage: stage_testing
     displayName: PTG Testing
     dependsOn:
@@ -130,11 +136,27 @@ stages:
               effectivePomSkip: true
               sonarQubeRunAnalysis: false
               publishJUnitResults: true
+  - stage: stage_liquibase
+    displayName: Execute Liquibase SIT
+    dependsOn:
+      - stage_build
+      - stage_testing
+    variables:
+      - name: outputBranchVersion
+        value: $[stageDependencies.stage_build.job_build.outputs['var.outputBranchVersion']]
+    jobs:
+      - template: templates/upgrade_db.yml
+        parameters:
+          version: $(outputBranchVersion)
+          poolName: $(poolName)
+          azureSubscription: $(azureSubscription)
+          KeyVaultName: $(KeyVaultName)
   - stage: stage_deploy_SIT
     displayName: Execute Deploy SIT
     dependsOn:
       - stage_build
       - stage_testing
+      - stage_liquibase
     variables:
       - name: outputBranchVersion
         value: $[stageDependencies.stage_build.job_build.outputs['var.outputBranchVersion']]

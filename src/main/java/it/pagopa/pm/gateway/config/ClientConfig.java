@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.config;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.config.RequestConfig;
@@ -23,7 +24,10 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.transport.WebServiceMessageSender;
 import org.springframework.ws.transport.http.HttpUrlConnectionMessageSender;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.time.Duration;
+import java.util.Objects;
 
 @Slf4j
 @Configuration
@@ -72,7 +76,10 @@ public class ClientConfig {
 
     @Bean
     public PaymentManagerControllerApi postePayControllerApi() {
-        return new PaymentManagerControllerApi(new ApiClient().setBasePath(POSTEPAY_CLIENT_URL).setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
+        ApiClient apiClient = addProxyToApiClient(new ApiClient()
+                .setBasePath(POSTEPAY_CLIENT_URL)
+                .setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
+        return new PaymentManagerControllerApi(apiClient);
     }
 
     @Bean
@@ -134,5 +141,16 @@ public class ClientConfig {
             log.info(String.format("%s client does not use proxy", className));
         }
         return proxy;
+    }
+
+    public static ApiClient addProxyToApiClient(ApiClient apiClient) {
+        HttpHost host = createProxy(ClientConfig.class.getName());
+        if (!Objects.isNull(host)) {
+            InetSocketAddress proxyAddress = new InetSocketAddress(host.getHostName(), host.getPort());
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, proxyAddress);
+            OkHttpClient httpClient = apiClient.getHttpClient().newBuilder().proxy(proxy).build();
+            return apiClient.setHttpClient(httpClient);
+        }
+        return apiClient;
     }
 }

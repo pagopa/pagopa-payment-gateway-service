@@ -8,9 +8,10 @@ services:
     build:
       context: .
     ports:
-        - "8080:8080"
+        - "8085:8080"
     networks:
       - payment-gateway-net
+      - pagopa-ecommerce-net
 
   postgres:
     image: postgres:latest
@@ -49,3 +50,6 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: 1450
+
+  pagopa-ecommerce-net:
+    name: pagopa-ecommerce-net

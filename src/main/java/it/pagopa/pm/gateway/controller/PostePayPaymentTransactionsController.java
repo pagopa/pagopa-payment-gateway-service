@@ -21,6 +21,7 @@ import org.openapitools.client.model.CreatePaymentRequest;
 import org.openapitools.client.model.AuthorizationType;
 import org.openapitools.client.model.ResponseURLs;
 import org.openapitools.client.model.PaymentChannel;
+import org.openapitools.client.ApiException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -221,6 +222,11 @@ public class PostePayPaymentTransactionsController {
             authorizationUrl = inlineResponse200.getUserRedirectURL();
             log.info(String.format("Response from PostePay /createPayment for idTransaction %s: " +
                     "correlationId = %s - authorizationUrl = %s", idTransaction, correlationId, authorizationUrl));
+        } catch (ApiException e) {
+            log.error("Error while calling PostePay's /createPayment API. HTTP Status is: " + e.getCode());
+            log.error("Response body: " + e.getResponseBody());
+            log.error("Complete exception: ", e);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } catch (Exception e) {
             log.error("An exception occurred while executing PostePay authorization call", e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);

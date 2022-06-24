@@ -10,7 +10,9 @@ public enum ExceptionsEnum {
     RESTAPI_CD_CLIENT_ERROR ("Exception during call to RestapiCD", HttpStatus.FAILED_DEPENDENCY),
     TRANSACTION_NOT_FOUND("Transaction not found", HttpStatus.NOT_FOUND),
     TIMEOUT("Timeout", HttpStatus.GATEWAY_TIMEOUT),
-    MISSING_FIELDS("Missing mandatory fields", HttpStatus.BAD_REQUEST);
+    MISSING_FIELDS("Missing mandatory fields", HttpStatus.BAD_REQUEST),
+    TRANSACTION_ALREADY_REFUND("Transaction already refund", HttpStatus.UNAUTHORIZED),
+    PSP_CLIENT_EXCEPTION  ("Exception during call to PSP", HttpStatus.BAD_GATEWAY);
 
     @Getter
     private final String description;

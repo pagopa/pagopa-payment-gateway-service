@@ -17,6 +17,7 @@ parameters:
     values:
       - 'SIT'
       - 'UAT'
+#      - 'PT'
 #      - 'PROD'
 
 variables:
@@ -30,6 +31,10 @@ variables:
   poolNameUAT: 'pm-agent-pool-uat'
   azureSubscriptionUAT: 'Pm-Subscription-uat'
   KeyVaultNameUAT: 'u87-kmn-pm-uat-pci'
+  #PT
+#  poolNamePT: 'pm-agent-pool-pt'
+#  azureSubscriptionPT: 'Pm-Subscription-pt'
+#  KeyVaultNamePT: 'u87-kmn-pm-pt-pci'
   #PROD
 #  poolNamePROD: 'pm-agent-pool-prod'
 #  azureSubscriptionPROD: 'Pm-Subscription-prod'
@@ -89,6 +94,19 @@ stages:
           azureSubscription: $(azureSubscriptionUAT)
           KeyVaultName: $(KeyVaultNameUAT)
 
+#  - stage: stage_rollback_exec_PT
+#    displayName: "Execute Rollback Stage - PT"
+#    dependsOn:
+#      - stage_rollback_check
+#    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'PT') }})
+#    jobs:
+#      - template: templates/pt/rollback_db.yml
+#        parameters:
+#          version: ${{parameters.rollbackToVersion}}
+#          poolName: $(poolNamePT)
+#          azureSubscription: $(azureSubscriptionPT)
+#          KeyVaultName: $(KeyVaultNamePT)
+#
 #  - stage: stage_rollback_exec_PROD
 #    displayName: "Execute Rollback Stage - PROD"
 #    dependsOn:

@@ -5,8 +5,8 @@ import lombok.Data;
 @Data
 public class PostePayRefundResponse {
 
-        Long transactionId;
-        String  paymentId;
+        String requestId;
+        String paymentId;
         String refundOutcome;
         String error;
 

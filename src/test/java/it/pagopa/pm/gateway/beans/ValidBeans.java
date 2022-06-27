@@ -152,6 +152,7 @@ public class ValidBeans {
     public static CreatePaymentRequest createPaymentRequest(PaymentChannel paymentChannel) {
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
         String shopId = paymentChannel.equals(PaymentChannel.APP) ? "shopIdTmp_APP" : "shopIdTmp_WEB";
+        createPaymentRequest.setMerchantId("merchantId");
         createPaymentRequest.setShopId(shopId);
         createPaymentRequest.setShopTransactionId("1");
         createPaymentRequest.setAmount("1234");

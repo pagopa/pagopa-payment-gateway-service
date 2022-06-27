@@ -38,7 +38,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
-
 import javax.transaction.Transactional;
 import java.util.*;
 
@@ -54,7 +53,6 @@ import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
-
 @RestController
 @Slf4j
 public class PostePayPaymentTransactionsController {
@@ -67,6 +65,7 @@ public class PostePayPaymentTransactionsController {
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
+    private static final String PIPE_SPLIT_CHAR = "\\|";
 
     @Value("${postepay.pgs.response.urlredirect}")
     private String PGS_RESPONSE_URL_REDIRECT;
@@ -230,6 +229,11 @@ public class PostePayPaymentTransactionsController {
             authorizationUrl = inlineResponse200.getUserRedirectURL();
             log.info(String.format("Response from PostePay /createPayment for idTransaction %s: " +
                     "correlationId = %s - authorizationUrl = %s", idTransaction, correlationId, authorizationUrl));
+        } catch (ApiException e) {
+            log.error("Error while calling PostePay's /createPayment API. HTTP Status is: " + e.getCode());
+            log.error("Response body: " + e.getResponseBody());
+            log.error("Complete exception: ", e);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } catch (Exception e) {
             log.error("An exception occurred while executing PostePay authorization call", e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
@@ -245,6 +249,7 @@ public class PostePayPaymentTransactionsController {
         String clientConfig = getCustomEnvironmentProperty(POSTEPAY_CLIENT_ID_PROPERTY, clientId);
         Map<String, String> configsMap = getConfigValues(clientConfig);
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+        createPaymentRequest.setMerchantId(configsMap.get(MERCHANT_ID_CONFIG));
         createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
         createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
         createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
@@ -280,12 +285,13 @@ public class PostePayPaymentTransactionsController {
     }
 
     private Map<String, String> getConfigValues(String config) {
-        List<String> listConfig = Arrays.asList(config.split("\\|"));
+        List<String> listConfig = Arrays.asList(config.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(SHOP_ID_CONFIG, listConfig.get(0));
-        configsMap.put(PAYMENT_CHANNEL_CONFIG, listConfig.get(1));
-        configsMap.put(AUTH_TYPE_CONFIG, listConfig.get(2));
-        configsMap.put(NOTIFICATION_URL_CONFIG, listConfig.size() > 3 ? listConfig.get(3) : StringUtils.EMPTY);
+        configsMap.put(MERCHANT_ID_CONFIG, listConfig.get(0));
+        configsMap.put(SHOP_ID_CONFIG, listConfig.get(1));
+        configsMap.put(PAYMENT_CHANNEL_CONFIG, listConfig.get(2));
+        configsMap.put(AUTH_TYPE_CONFIG, listConfig.get(3));
+        configsMap.put(NOTIFICATION_URL_CONFIG, listConfig.size() > 4 ? listConfig.get(4) : StringUtils.EMPTY);
         return configsMap;
     }
 
@@ -327,14 +333,17 @@ public class PostePayPaymentTransactionsController {
     }
 
     private ResponseEntity<PostePayRefundResponse> createPostePayRefundResponse(String requestId, String paymentId, String refundOutcome,
-                                                                                String errorMessage, HttpStatus status) {
+                                                                                ExceptionsEnum exceptionsEnum) {
         PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
         postePayRefundResponse.setRequestId(requestId);
         postePayRefundResponse.setPaymentId(paymentId);
         postePayRefundResponse.setRefundOutcome(refundOutcome);
-        postePayRefundResponse.setError(errorMessage);
+        if (Objects.nonNull(exceptionsEnum)) {
+            postePayRefundResponse.setError(exceptionsEnum.getDescription());
+            return ResponseEntity.status(exceptionsEnum.getRestApiCode()).body(postePayRefundResponse);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(postePayRefundResponse);
 
-        return ResponseEntity.status(status).body(postePayRefundResponse);
     }
 
     private String getCustomEnvironmentProperty(String parameterizedPropertyName, String clientId) throws NullPointerException {
@@ -364,16 +373,15 @@ public class PostePayPaymentTransactionsController {
 
         if (Objects.isNull(requestEntity) || !REQUEST_PAYMENTS_POSTEPAY.equals(requestEntity.getRequestEndpoint())) {
             log.error("No PostePay response entity object has been found with guid " + requestId);
-            return createPostePayRefundResponse(requestId, null, null,
-                    ExceptionsEnum.TRANSACTION_NOT_FOUND.getDescription(), ExceptionsEnum.TRANSACTION_NOT_FOUND.getRestApiCode());
+            return createPostePayRefundResponse(requestId, null, null, ExceptionsEnum.TRANSACTION_NOT_FOUND);
         }
 
         if (requestEntity.getIsRefund()) {
             log.info("Transaction with id " + requestEntity.getIdTransaction() + " has already be refunded");
-            return createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null,
-                    ExceptionsEnum.TRANSACTION_ALREADY_REFUND.getDescription(), ExceptionsEnum.TRANSACTION_ALREADY_REFUND.getRestApiCode());
+            return createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null, ExceptionsEnum.TRANSACTION_ALREADY_REFUNDED);
         }
 
+        // step 1. acquiring payment details PostePay side in order to validate the deletion request
         DetailsPaymentRequest detailsPaymentRequest = createDetailPaymentRequest(requestEntity);
 
         boolean authCodePresent = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
@@ -381,7 +389,7 @@ public class PostePayPaymentTransactionsController {
 
         if (!authCodePresent) {
             try {
-                 log.info("Starting check Details for detailsPaymentRequest with guid: " + requestEntity.getGuid());
+                log.info("Starting check Details for detailsPaymentRequest with guid: " + requestEntity.getGuid());
                 checkDetail = checkDetailStatus(detailsPaymentRequest);
             } catch (RestApiException e) {
                 log.error("Response for check status for paymentId: " + detailsPaymentRequest.getPaymentID() + " is null");
@@ -400,40 +408,34 @@ public class PostePayPaymentTransactionsController {
             return executeRefundRequest(detailsPaymentRequest, requestEntity);
         }
 
-        return createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null,
-                BAD_REQUEST_MSG_POSTEPAY_REFUND, ExceptionsEnum.TRANSACTION_REFUND_NOT_AUTHORIZED.getRestApiCode());
+        return createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null, ExceptionsEnum.TRANSACTION_REFUND_NOT_AUTHORIZED);
 
     }
 
-    private ResponseEntity<PostePayRefundResponse> executeRefundRequest(DetailsPaymentRequest detailsPaymentRequest, PaymentRequestEntity requestEntity)  {
+    private ResponseEntity<PostePayRefundResponse> executeRefundRequest(DetailsPaymentRequest detailsPaymentRequest, PaymentRequestEntity requestEntity) {
         InlineResponse2002 inlineResponse2002;
         log.info("START - execute refund PostePay request for paymentRequestEntity with guid: " + requestEntity.getGuid());
 
         try {
             inlineResponse2002 = postePayControllerApi.apiV1PaymentRefundPost(detailsPaymentRequest);
             if (Objects.isNull(inlineResponse2002)) {
-                log.error("Response for request refund for paymentId: "+ detailsPaymentRequest.getPaymentID() + " is null");
-                return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null,
-                        ExceptionsEnum.PSP_CLIENT_EXCEPTION.getDescription(), ExceptionsEnum.PSP_CLIENT_EXCEPTION.getRestApiCode());
+                log.error("Response for request refund for paymentId: " + detailsPaymentRequest.getPaymentID() + " is null");
+                return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.PSP_CLIENT_EXCEPTION);
             }
             requestEntity.setIsRefund(inlineResponse2002.getTransactionResult().equals(EsitoStorno.OK));
             paymentRequestRepository.save(requestEntity);
-            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), inlineResponse2002.getTransactionResult().getValue(),
-                    null, HttpStatus.OK);
+            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), inlineResponse2002.getTransactionResult().getValue(), null);
 
         } catch (ApiException e) {
             log.error("Exception while calling Postepay PSP for refund DetailsPaymentRequest with paymentId: " + detailsPaymentRequest.getPaymentID());
 
             if (e.getCode() == HttpStatus.REQUEST_TIMEOUT.value()) {
-                return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null,
-                        ExceptionsEnum.TIMEOUT.getDescription(), ExceptionsEnum.TIMEOUT.getRestApiCode());
+                return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.TIMEOUT);
             }
-            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null,
-                    ExceptionsEnum.PSP_CLIENT_EXCEPTION.getDescription(), ExceptionsEnum.PSP_CLIENT_EXCEPTION.getRestApiCode());
+            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.PSP_CLIENT_EXCEPTION);
         } catch (Exception e) {
             log.error("Generic Exception while refund DetailsPaymentRequest with paymentId: " + detailsPaymentRequest.getPaymentID());
-            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null,
-                    ExceptionsEnum.GENERIC_ERROR.getDescription(), ExceptionsEnum.GENERIC_ERROR.getRestApiCode());
+            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.GENERIC_ERROR);
 
         }
 
@@ -454,13 +456,11 @@ public class PostePayPaymentTransactionsController {
 
     private DetailsPaymentRequest createDetailPaymentRequest(PaymentRequestEntity paymentRequestEntity) {
         String clientConfig = getCustomEnvironmentProperty(POSTEPAY_CLIENT_ID_PROPERTY, paymentRequestEntity.getClientId());
-        Map<String, String> configsMap = getConfigValues(clientConfig);
-
+        String shopId = getConfigValues(clientConfig).get(SHOP_ID_CONFIG);
         DetailsPaymentRequest detailsPaymentRequest = new DetailsPaymentRequest();
         detailsPaymentRequest.setPaymentID(paymentRequestEntity.getCorrelationId());
-        detailsPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
-        detailsPaymentRequest.setShopTransactionId(paymentRequestEntity.getIdTransaction().toString());
-
+        detailsPaymentRequest.setShopId(shopId);
+        detailsPaymentRequest.setShopTransactionId(String.valueOf(paymentRequestEntity.getIdTransaction()));
         return detailsPaymentRequest;
 
     }

@@ -59,6 +59,7 @@ public class PostePayPaymentTransactionsController {
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
+    private static final String PIPE_SPLIT_CHAR = "\\|";
 
     @Value("${postepay.pgs.response.urlredirect}")
     private String PGS_RESPONSE_URL_REDIRECT;
@@ -242,6 +243,7 @@ public class PostePayPaymentTransactionsController {
         String clientConfig = getCustomEnvironmentProperty(POSTEPAY_CLIENT_ID_PROPERTY, clientId);
         Map<String, String> configsMap = getConfigValues(clientConfig);
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
+        createPaymentRequest.setMerchantId(configsMap.get(MERCHANT_ID_CONFIG));
         createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
         createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
         createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
@@ -277,12 +279,13 @@ public class PostePayPaymentTransactionsController {
     }
 
     private Map<String, String> getConfigValues(String config) {
-        List<String> listConfig = Arrays.asList(config.split("\\|"));
+        List<String> listConfig = Arrays.asList(config.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(SHOP_ID_CONFIG, listConfig.get(0));
-        configsMap.put(PAYMENT_CHANNEL_CONFIG, listConfig.get(1));
-        configsMap.put(AUTH_TYPE_CONFIG, listConfig.get(2));
-        configsMap.put(NOTIFICATION_URL_CONFIG, listConfig.size() > 3 ? listConfig.get(3) : StringUtils.EMPTY);
+        configsMap.put(MERCHANT_ID_CONFIG, listConfig.get(0));
+        configsMap.put(SHOP_ID_CONFIG, listConfig.get(1));
+        configsMap.put(PAYMENT_CHANNEL_CONFIG, listConfig.get(2));
+        configsMap.put(AUTH_TYPE_CONFIG, listConfig.get(3));
+        configsMap.put(NOTIFICATION_URL_CONFIG, listConfig.size() > 4 ? listConfig.get(4) : StringUtils.EMPTY);
         return configsMap;
     }
 

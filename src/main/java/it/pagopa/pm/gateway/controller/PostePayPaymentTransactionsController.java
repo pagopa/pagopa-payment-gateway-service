@@ -376,27 +376,20 @@ public class PostePayPaymentTransactionsController {
 
         DetailsPaymentRequest detailsPaymentRequest = createDetailPaymentRequest(requestEntity);
 
-        boolean authCodePresent = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
+        boolean isAuthCodePresent = StringUtils.isEmpty(requestEntity.getAuthorizationCode());
         boolean checkDetail = true;
 
-        if (!authCodePresent) {
+        if (isAuthCodePresent) {
             try {
-                 log.info("Starting check Details for detailsPaymentRequest with guid: " + requestEntity.getGuid());
+                log.info("Starting check Details for detailsPaymentRequest with guid: " + requestEntity.getGuid());
                 checkDetail = checkDetailStatus(detailsPaymentRequest);
-            } catch (RestApiException e) {
-                log.error("Response for check status for paymentId: " + detailsPaymentRequest.getPaymentID() + " is null");
-            } catch (ApiException e) {
-                log.error("Exception while calling Postepay PSP for check status for DetailsPaymentRequest with paymentId: "
-                        + detailsPaymentRequest.getPaymentID());
             } catch (Exception e) {
                 log.error("Generic Exception while checkDetailStatus DetailsPaymentRequest with paymentId: "
-                        + detailsPaymentRequest.getPaymentID());
-            } finally {
-                log.info("End check Details for detailsPaymentRequest with guid: " + requestEntity.getGuid());
+                        + detailsPaymentRequest.getPaymentID() + " error message " + e.getMessage());
             }
         }
 
-        if (authCodePresent || checkDetail) {
+        if (isAuthCodePresent || checkDetail) {
             return executeRefundRequest(detailsPaymentRequest, requestEntity);
         }
 

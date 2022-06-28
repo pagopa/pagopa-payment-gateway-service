@@ -58,6 +58,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableWebMvc
 public class PostePayPaymentControllerTest {
 
+    private static final String APP_CONFIG = "merchantId|shopIdTmp_APP|APP|IMMEDIATA|";
+    private static final String WEB_CONFIG = APP_CONFIG + "www.responseurl.com";
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -99,7 +101,7 @@ public class PostePayPaymentControllerTest {
             InlineResponse200 okResponse = ValidBeans.getOkResponse();
 
             given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
-            given(env.getProperty("postepay.clientId.APP.config")).willReturn("shopIdTmp_APP|APP|IMMEDIATA|");
+            given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, appRequest)).willReturn(okResponse);
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -123,7 +125,7 @@ public class PostePayPaymentControllerTest {
             MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
             String bearerToken = "Bearer " + azureLoginResponse.getAccess_token();
             CreatePaymentRequest request = ValidBeans.createPaymentRequest(PaymentChannel.APP);
-            String appConfigurationProperty = "shopIdTmp_APP|APP|IMMEDIATA|";
+            String appConfigurationProperty = APP_CONFIG;
             InlineResponse200 okResponse = ValidBeans.getOkResponse();
 
 
@@ -187,7 +189,7 @@ public class PostePayPaymentControllerTest {
 
         given(paymentRequestRepository.findByIdTransaction(1L)).willReturn(null);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(microsoftAzureLoginResponse);
-        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn("shopIdTmp_APP|APP|IMMEDIATA|www.responseurl.com");
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
 
         given(postePayControllerApi.apiV1PaymentCreatePost(microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest))
                 .willReturn(null);
@@ -211,7 +213,7 @@ public class PostePayPaymentControllerTest {
 
         given(paymentRequestRepository.findByIdTransaction(1L)).willReturn(null);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(microsoftAzureLoginResponse);
-        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn("shopIdTmp_APP|APP|IMMEDIATA|www.responseurl.com");
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
 
         doThrow(ApiException.class)
                 .when(postePayControllerApi)
@@ -236,7 +238,7 @@ public class PostePayPaymentControllerTest {
 
         given(paymentRequestRepository.findByIdTransaction(1L)).willReturn(null);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(microsoftAzureLoginResponse);
-        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn("shopIdTmp_APP|APP|IMMEDIATA|www.responseurl.com");
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
 
         doThrow(RuntimeException.class)
                 .when(postePayControllerApi)

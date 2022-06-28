@@ -384,10 +384,10 @@ public class PostePayPaymentTransactionsController {
         // step 1. acquiring payment details PostePay side in order to validate the deletion request
         DetailsPaymentRequest detailsPaymentRequest = createDetailPaymentRequest(requestEntity);
 
-        boolean isAuthCodePresent = StringUtils.isEmpty(requestEntity.getAuthorizationCode());
+        boolean isAuthCodeEmpty = StringUtils.isEmpty(requestEntity.getAuthorizationCode());
         boolean checkDetail = true;
 
-        if (isAuthCodePresent) {
+        if (isAuthCodeEmpty) {
             try {
                 log.info("Starting check Details for detailsPaymentRequest with guid: " + requestEntity.getGuid());
                 checkDetail = checkDetailStatus(detailsPaymentRequest);
@@ -397,7 +397,7 @@ public class PostePayPaymentTransactionsController {
             }
         }
 
-        if (isAuthCodePresent || checkDetail) {
+        if (!isAuthCodeEmpty || checkDetail) {
             return executeRefundRequest(detailsPaymentRequest, requestEntity);
         }
 

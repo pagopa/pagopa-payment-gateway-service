@@ -377,86 +377,93 @@ public class PostePayPaymentTransactionsController {
         }
 
         if (requestEntity.getIsRefunded()) {
-            log.info("PostePay request id " + requestEntity.getIdTransaction() + " has already be refunded");
+            log.info("RequestId " + requestId + " has already be refunded. Skipping refund");
             return createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null, ExceptionsEnum.REFUND_REQUEST_ALREADY_PROCESSED);
         }
 
-        // step 1. acquiring payment details PostePay side in order to validate the deletion request
         DetailsPaymentRequest detailsPaymentRequest = createDetailPaymentRequest(requestEntity);
+        boolean isAuthorizationApproved = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
 
-        boolean isRefundAuthorized = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
-
-        if (!isRefundAuthorized) {
+        if (!isAuthorizationApproved) {
+            log.info(String.format("An authorization code for request %s has not been acquired yet. " +
+                    "Calling PostePay /details to acquire authorization status", requestId));
             try {
-                isRefundAuthorized = checkDetailStatus(detailsPaymentRequest);
+                isAuthorizationApproved = checkDetailStatus(detailsPaymentRequest);
             } catch (Exception e) {
-                log.error("Generic Exception while checkDetailStatus DetailsPaymentRequest with paymentId: "
-                        + detailsPaymentRequest.getPaymentID() + " error message " + e.getMessage());
-                isRefundAuthorized = true;
+                // FIXME: if an exception occurs here, should the execution interrupt or should we continue with the refund anyway?
+                log.error("An exception occurred while checking the request authorization status for request id " + requestId);
+                isAuthorizationApproved = true;
             }
         }
 
-        if (isRefundAuthorized) {
-            return executeRefundRequest(detailsPaymentRequest, requestEntity);
-        }
-
-        return createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null, ExceptionsEnum.TRANSACTION_REFUND_NOT_AUTHORIZED);
-
+        return isAuthorizationApproved ? executeRefundRequest(detailsPaymentRequest, requestEntity) :
+                createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null, ExceptionsEnum.REFUND_NOT_AUTHORIZED);
     }
 
     private ResponseEntity<PostePayRefundResponse> executeRefundRequest(DetailsPaymentRequest detailsPaymentRequest, PaymentRequestEntity requestEntity) {
-        InlineResponse2002 inlineResponse2002;
-        log.info("START - execute refund PostePay request for paymentRequestEntity with guid: " + requestEntity.getGuid());
+        String requestId = requestEntity.getGuid();
+        String correlationId = requestEntity.getCorrelationId();
+        log.info("START - execute PostePay refund for request id: " + requestId);
 
-        EsitoStorno transactionResult;
-
+        InlineResponse2002 response;
+        EsitoStorno refundOutcome;
         try {
-            inlineResponse2002 = postePayControllerApi.apiV1PaymentRefundPost(detailsPaymentRequest);
+            response = postePayControllerApi.apiV1PaymentRefundPost(detailsPaymentRequest);
 
-            if (Objects.isNull(inlineResponse2002)) {
-                log.error("Response for request refund for paymentId: " + detailsPaymentRequest.getPaymentID() + " is null");
-                return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+            if (ObjectUtils.isEmpty(response)) {
+                log.error("Response to PostePay /refund API is null or empty");
+                return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
             } else {
-                transactionResult = inlineResponse2002.getTransactionResult();
-                if (Objects.isNull(transactionResult)) {
-                    log.error("Response outcome for request refund for paymentId: " + detailsPaymentRequest.getPaymentID() + " is null");
-                    return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+                refundOutcome = response.getTransactionResult();
+                log.info(String.format("Refund outcome for request id %s is: %s", requestId, refundOutcome));
+                if (ObjectUtils.isEmpty(refundOutcome)) {
+                    return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
                 }
             }
 
-            requestEntity.setIsRefunded(transactionResult.equals(EsitoStorno.OK));
+            requestEntity.setIsRefunded(refundOutcome.equals(EsitoStorno.OK));
             paymentRequestRepository.save(requestEntity);
-            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), transactionResult.getValue(), null);
-
+            return createPostePayRefundResponse(requestId, correlationId, refundOutcome.getValue(), null);
         } catch (ApiException e) {
-            log.error("Exception while calling Postepay for refund DetailsPaymentRequest with paymentId: " + detailsPaymentRequest.getPaymentID());
-
-            if (e.getCode() == HttpStatus.REQUEST_TIMEOUT.value()) {
-                return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.TIMEOUT);
-            }
-            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+            log.error("Error while calling PostePay's /refund API. HTTP Status is: " + e.getCode());
+            log.error("Response body: " + e.getResponseBody());
+            log.error("Complete exception: ", e);
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
         } catch (Exception e) {
-            log.error("Generic Exception while refund DetailsPaymentRequest with paymentId: " + detailsPaymentRequest.getPaymentID());
-            return createPostePayRefundResponse(requestEntity.getGuid(), requestEntity.getCorrelationId(), null, ExceptionsEnum.GENERIC_ERROR);
-
+            log.error("An exception occurred while requesting PostePay payment refund", e);
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.GENERIC_ERROR);
         }
-
     }
 
     private boolean checkDetailStatus(DetailsPaymentRequest detailsPaymentRequest) throws Exception {
         String paymentId = detailsPaymentRequest.getPaymentID();
-
         log.info("START - check Details for Payment Request with payment id: " + paymentId);
-        InlineResponse2001 inlineResponse2001;
-        inlineResponse2001 = postePayControllerApi.apiV1PaymentDetailsPost(detailsPaymentRequest);
-        if (Objects.isNull(inlineResponse2001)) {
-            log.error("Check Details for Payment Request with payment id: " + paymentId + " returned NULL response");
-            throw new RestApiException(ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+        InlineResponse2001 response;
+        try {
+            response = postePayControllerApi.apiV1PaymentDetailsPost(detailsPaymentRequest);
+        } catch (ApiException e) {
+            log.error("Error while calling PostePay's /details API. HTTP Status is: " + e.getCode());
+            log.error("Response body: " + e.getResponseBody());
+            log.error("Complete exception: ", e);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        } catch (Exception e) {
+            log.error("An exception occurred while requesting PostePay payment details", e);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
 
-        Esito esito = inlineResponse2001.getStatus();
-        log.info("END - check Details for Payment Request with payment id: " + paymentId);
-        return Objects.nonNull(esito) && esito.equals(Esito.APPROVED);
+        if (Objects.isNull(response)) {
+            log.error("Call to PostePay /details API returned an empty response");
+            throw new RestApiException(ExceptionsEnum.EMPTY_RESPONSE);
+        }
+
+        Esito esito = response.getStatus();
+        if (Objects.nonNull(esito)) {
+            log.info(String.format("END - check Details for payment request with payment id: %s - ESITO: %s", paymentId, esito.getValue()));
+            return esito.equals(Esito.APPROVED);
+        } else {
+            log.info("END - check Details for payment request with payment id: %s - ESITO is null");
+            return false;
+        }
 
     }
 

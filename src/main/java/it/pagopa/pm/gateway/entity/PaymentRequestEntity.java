@@ -52,8 +52,8 @@ public class PaymentRequestEntity {
     @Column(name = "MDC_INFO")
     private String mdcInfo;
 
-    @Column(name = "IS_REFUND")
-    private Boolean isRefund = false;
+    @Column(name = "IS_REFUNDED")
+    private Boolean isRefunded = false;
 
 
 

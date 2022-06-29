@@ -11,9 +11,10 @@ public enum ExceptionsEnum {
     TRANSACTION_NOT_FOUND("Transaction not found", HttpStatus.NOT_FOUND),
     TIMEOUT("Timeout", HttpStatus.GATEWAY_TIMEOUT),
     MISSING_FIELDS("Missing mandatory fields", HttpStatus.BAD_REQUEST),
-    TRANSACTION_ALREADY_REFUNDED("Transaction already refunded", HttpStatus.OK),
-    PSP_CLIENT_EXCEPTION("Exception during call to PSP", HttpStatus.BAD_GATEWAY),
-    TRANSACTION_REFUND_NOT_AUTHORIZED("Refund operation not authorized", HttpStatus.BAD_REQUEST);
+    REFUND_REQUEST_ALREADY_PROCESSED("Refund request already processed", HttpStatus.OK),
+    POSTEPAY_SERVICE_EXCEPTION("Exception during call to PostePay service", HttpStatus.BAD_GATEWAY),
+    TRANSACTION_REFUND_NOT_AUTHORIZED("Refund operation not authorized", HttpStatus.BAD_REQUEST),
+    PAYMENT_REQUEST_NOT_FOUND("Payment request not found", HttpStatus.NOT_FOUND);
 
 
     @Getter

@@ -38,6 +38,6 @@ jobs:
           databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
           databaseChangelogTableName: "DATABASECHANGELOG_PGS"
           version: ${{ parameters.version }}
-          contexts: "tag,baseline,incremental,insert-uat"
+          contexts: "tag,incremental-uat,insert-uat"
           azureSubscription: ${{ parameters.azureSubscription }}
           KeyVaultName: ${{ parameters.KeyVaultName }}

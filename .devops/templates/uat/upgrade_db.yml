@@ -90,4 +90,4 @@ jobs:
           title: "Update DB AGID_USER - UAT"
           databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
           databaseChangelogTableName: "DATABASECHANGELOG_PGS"
-          contexts: "tag,baseline,incremental,insert-uat"
+          contexts: "tag,incremental-uat,insert-uat"

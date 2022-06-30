@@ -339,9 +339,12 @@ public class PostePayPaymentTransactionsController {
         postePayRefundResponse.setPaymentId(paymentId);
         postePayRefundResponse.setRefundOutcome(refundOutcome);
         if (Objects.nonNull(exceptionsEnum)) {
-            postePayRefundResponse.setError(exceptionsEnum.getDescription());
+            String errorDescription = exceptionsEnum.getDescription();
+            log.warn("Transaction has not been refunded. Reason: " + errorDescription);
+            postePayRefundResponse.setError(errorDescription);
             return ResponseEntity.status(exceptionsEnum.getRestApiCode()).body(postePayRefundResponse);
         }
+        log.info("END - PostePay refund for requestId " + requestId);
         return ResponseEntity.status(HttpStatus.OK).body(postePayRefundResponse);
 
     }
@@ -377,7 +380,7 @@ public class PostePayPaymentTransactionsController {
         }
 
         if (requestEntity.getIsRefunded()) {
-            log.info("RequestId " + requestId + " has already be refunded. Skipping refund");
+            log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
             return createPostePayRefundResponse(requestId, requestEntity.getCorrelationId(), null, ExceptionsEnum.REFUND_REQUEST_ALREADY_PROCESSED);
         }
 
@@ -385,13 +388,13 @@ public class PostePayPaymentTransactionsController {
         boolean isAuthorizationApproved = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
 
         if (!isAuthorizationApproved) {
-            log.info(String.format("An authorization code for request %s has not been acquired yet. " +
-                    "Calling PostePay /details to acquire authorization status", requestId));
             try {
+                log.info(String.format("An authorization code for request %s has not been acquired yet. " +
+                        "Calling PostePay details API to acquire authorization status", requestId));
                 isAuthorizationApproved = checkDetailStatus(detailsPaymentRequest);
             } catch (Exception e) {
-                // FIXME: if an exception occurs here, should the execution interrupt or should we continue with the refund anyway?
-                log.error("An exception occurred while checking the request authorization status for request id " + requestId);
+                log.warn("An exception occurred while checking the authorization status for request id " + requestId);
+                log.warn("Proceeding anyway with refund request");
                 isAuthorizationApproved = true;
             }
         }
@@ -437,7 +440,7 @@ public class PostePayPaymentTransactionsController {
 
     private boolean checkDetailStatus(DetailsPaymentRequest detailsPaymentRequest) throws Exception {
         String paymentId = detailsPaymentRequest.getPaymentID();
-        log.info("START - check Details for Payment Request with payment id: " + paymentId);
+        log.info("START - check details for Payment Request with payment id: " + paymentId);
         InlineResponse2001 response;
         try {
             response = postePayControllerApi.apiV1PaymentDetailsPost(detailsPaymentRequest);
@@ -458,15 +461,13 @@ public class PostePayPaymentTransactionsController {
 
         Esito esito = response.getStatus();
         if (Objects.nonNull(esito)) {
-            log.info(String.format("END - check Details for payment request with payment id: %s - ESITO: %s", paymentId, esito.getValue()));
+            log.info(String.format("END - check details for payment request with payment id: %s - ESITO: %s", paymentId, esito.getValue()));
             return esito.equals(Esito.APPROVED);
         } else {
             log.info("END - check Details for payment request with payment id: %s - ESITO is null");
             return false;
         }
-
     }
-
 
     private DetailsPaymentRequest createDetailPaymentRequest(PaymentRequestEntity paymentRequestEntity) {
         String clientConfig = getCustomEnvironmentProperty(POSTEPAY_CLIENT_ID_PROPERTY, paymentRequestEntity.getClientId());

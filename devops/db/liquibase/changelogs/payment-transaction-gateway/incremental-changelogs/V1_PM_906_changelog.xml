@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+  <changeSet id="V3__PM_906_PP_PGS_REQUEST_INFO_MODIFY__AUTH_URL" author="liquibase" failOnError="true" context="incremental">
+    <sqlFile path="../scripts/table-creation/V3__PM_906_PP_PGS_REQUEST_INFO_MODIFY__AUTH_URL.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+  </changeSet>
+</databaseChangeLog>

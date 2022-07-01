@@ -1,0 +1,121 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger: none
+pr: none
+
+parameters:
+  - name: 'rollbackToVersion'
+    displayName: 'Rollback to Version'
+    type: string
+  - name: 'rollbackEnv'
+    displayName: 'Rollback Environment'
+    type: string
+    default: 'SIT'
+    values:
+      - 'SIT'
+      - 'UAT'
+#      - 'PT'
+#      - 'PROD'
+
+variables:
+  vmImageNameDefault: 'ubuntu-latest'
+  liquibaseFolderScript: '$(Build.SourcesDirectory)/devops/db/liquibase'
+  #SIT
+  poolNameSIT: 'pm-agent-pool-sit'
+  azureSubscriptionSIT: 'PM-Subscription-sit'
+  KeyVaultNameSIT: 'kmn-pm-pagopa-test'
+  #UAT
+  poolNameUAT: 'pm-agent-pool-uat'
+  azureSubscriptionUAT: 'Pm-Subscription-uat'
+  KeyVaultNameUAT: 'u87-kmn-pm-uat-pci'
+  #PT
+#  poolNamePT: 'pm-agent-pool-pt'
+#  azureSubscriptionPT: 'Pm-Subscription-pt'
+#  KeyVaultNamePT: 'u87-kmn-pm-pt-pci'
+  #PROD
+#  poolNamePROD: 'pm-agent-pool-prod'
+#  azureSubscriptionPROD: 'Pm-Subscription-prod'
+#  KeyVaultNamePROD: 'u87-kmn-pm-prod-pci'
+
+stages:
+  - stage: stage_rollback_check
+    displayName: "Check Rollback Stage"
+    jobs:
+      - job: job_rollback_prerequisite
+        displayName: Rollback Prerequisite Check
+        pool:
+          vmImage: $(vmImageNameDefault)
+        steps:
+
+          - script: echo Rolling back to version '${{parameters.rollbackToVersion}}'
+            displayName: Echo Rollback Version
+
+          - powershell: |
+              $version="${{parameters.rollbackToVersion}}"
+              if ($version -eq "" -or $version -eq "default") {throw 'Define rollbackVersion variable'}
+              $numbers=$version.Split(".")
+              if ($numbers.Count -ne 3) {throw 'Invalid rollbackToVersion variable'}
+              Foreach ($n in $numbers)
+              {
+                  if (!($n -match "^\d+$")) {throw 'Invalid rollbackToVersion variable'}
+              }
+            displayName: Verify Rollback Version
+
+          - publish: $(liquibaseFolderScript)
+            artifact: ${{parameters.rollbackToVersion}}-liquibase-script
+            displayName: Publish Liquibase Scripts
+
+  - stage: stage_rollback_exec_SIT
+    displayName: "Execute Rollback Stage - SIT"
+    dependsOn:
+      - stage_rollback_check
+    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'SIT') }})
+    jobs:
+      - template: templates/sit/rollback_db.yml
+        parameters:
+          version: ${{parameters.rollbackToVersion}}
+          poolName: $(poolNameSIT)
+          azureSubscription: $(azureSubscriptionSIT)
+          KeyVaultName: $(KeyVaultNameSIT)
+
+  - stage: stage_rollback_exec_UAT
+    displayName: "Execute Rollback Stage - UAT"
+    dependsOn:
+      - stage_rollback_check
+    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'UAT') }})
+    jobs:
+      - template: templates/uat/rollback_db.yml
+        parameters:
+          version: ${{parameters.rollbackToVersion}}
+          poolName: $(poolNameUAT)
+          azureSubscription: $(azureSubscriptionUAT)
+          KeyVaultName: $(KeyVaultNameUAT)
+
+#  - stage: stage_rollback_exec_PT
+#    displayName: "Execute Rollback Stage - PT"
+#    dependsOn:
+#      - stage_rollback_check
+#    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'PT') }})
+#    jobs:
+#      - template: templates/pt/rollback_db.yml
+#        parameters:
+#          version: ${{parameters.rollbackToVersion}}
+#          poolName: $(poolNamePT)
+#          azureSubscription: $(azureSubscriptionPT)
+#          KeyVaultName: $(KeyVaultNamePT)
+#
+#  - stage: stage_rollback_exec_PROD
+#    displayName: "Execute Rollback Stage - PROD"
+#    dependsOn:
+#      - stage_rollback_check
+#    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'PROD') }})
+#    jobs:
+#      - template: templates/prod/rollback_db.yml
+#        parameters:
+#          version: ${{parameters.rollbackToVersion}}
+#          poolName: $(poolNamePROD)
+#          azureSubscription: $(azureSubscriptionPROD)
+#          KeyVaultName: $(KeyVaultNamePROD)

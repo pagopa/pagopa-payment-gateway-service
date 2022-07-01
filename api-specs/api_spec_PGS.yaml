@@ -532,9 +532,8 @@ components:
     PostePayRefundResponse:
       type: object
       properties:
-        transactionId:
-          type: integer
-          format: int64
+        requestId:
+          type: string
         paymentId:
           type: string
         refundOutcome:

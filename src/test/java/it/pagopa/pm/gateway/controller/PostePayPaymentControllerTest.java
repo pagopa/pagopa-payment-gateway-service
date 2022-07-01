@@ -261,7 +261,7 @@ public class PostePayPaymentControllerTest {
                 willReturn(ValidBeans.paymentRequestEntity(null, true, "APP"));
         given(env.getProperty("postepay.pgs.response.APP.clientResponseUrl")).willReturn("www.clientResponseUrl.com");
 
-        mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE))
+        mvc.perform(get(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayPollingResponse())));
     }
 
@@ -271,7 +271,7 @@ public class PostePayPaymentControllerTest {
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
                 willReturn(ValidBeans.paymentRequestEntity(null, null, "APP"));
 
-        mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE))
+        mvc.perform(get(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.
                         postePayPollingResponseError("No authorization outcome has been received yet", null))));
 
@@ -283,7 +283,7 @@ public class PostePayPaymentControllerTest {
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
                 willReturn(ValidBeans.paymentRequestEntity(null, false, "APP"));
 
-        mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE))
+        mvc.perform(get(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.
                         postePayPollingResponseError("Payment authorization has not been granted", OutcomeEnum.KO))));
     }
@@ -296,7 +296,7 @@ public class PostePayPaymentControllerTest {
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
                 willReturn(null);
         try {
-            mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID, UUID_SAMPLE));
+            mvc.perform(get(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE));
         } catch (NestedServletException | JsonProcessingException e) {
             throw (Exception) e.getCause();
         }

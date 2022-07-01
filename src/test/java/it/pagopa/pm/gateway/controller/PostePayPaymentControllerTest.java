@@ -27,9 +27,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.openapitools.client.ApiException;
 import org.openapitools.client.api.PaymentManagerControllerApi;
-import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.InlineResponse200;
-import org.openapitools.client.model.PaymentChannel;
+import org.openapitools.client.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -432,5 +430,84 @@ public class PostePayPaymentControllerTest {
         }
 
     }
+
+    @Test
+    public void givenRequestId_executeRefund() throws Exception {
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2001(Esito.APPROVED));
+        given(postePayControllerApi.apiV1PaymentRefundPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2002(EsitoStorno.OK));
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", "OK", null))));
+                 verify(paymentRequestRepository).save(paymentRequestEntity);
+    }
+
+    @Test
+    public void givenInvalidRequestId_shouldReturn404PostePayRefundResponse() throws Exception {
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(null);
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, null, null, "Payment request not found"))));
+    }
+
+
+    @Test
+    public void givenInvalidRequestEndPoint_shouldReturn404PaymentNotFound() throws Exception {
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, true);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, null, null, "Payment request not found"))));
+    }
+
+
+    @Test
+    public void givenDeclinedDetailsCheck_shouldReturn200RefundNotAuthorized() throws Exception {
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2001(Esito.DECLINED));
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Transaction is not refundable: authorization has not been approved by PostePay or has been refunded already"))));
+    }
+
+
+    @Test
+    public void givenDeclinedDetailsCheck_shouldReturn200RefundNotAuthorized() throws Exception {
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2001(Esito.DECLINED));
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Transaction is not refundable: authorization has not been approved by PostePay or has been refunded already"))));
+    }
+
+
+
+
 
 }

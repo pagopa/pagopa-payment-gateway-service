@@ -10,10 +10,9 @@ import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginRespons
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.StringUtils;
-import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.InlineResponse200;
-import org.openapitools.client.model.PaymentChannel;
-import org.openapitools.client.model.ResponseURLs;
+import org.openapitools.client.model.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Objects;
 
@@ -218,7 +217,6 @@ public class ValidBeans {
     public static PaymentRequestEntity paymentRequestEntity(PostePayAuthRequest postePayAuthRequest, Boolean authorizationOutcome, String clientId) {
         String authRequestJson = null;
 
-
         if (Objects.nonNull(postePayAuthRequest)) {
             try {
                 authRequestJson = OBJECT_MAPPER.writeValueAsString(postePayAuthRequest);
@@ -232,7 +230,6 @@ public class ValidBeans {
         paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
         paymentRequestEntity.setIsProcessed(false);
         paymentRequestEntity.setCorrelationId("1234");
-        paymentRequestEntity.setAuthorizationCode(null);
         paymentRequestEntity.setIdTransaction(1L);
         paymentRequestEntity.setGuid("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         paymentRequestEntity.setId(null);
@@ -245,8 +242,18 @@ public class ValidBeans {
 
 
     }
+    public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
+        PaymentRequestEntity paymentRequestEntity = paymentRequestEntity(null, true, clientId);
+        paymentRequestEntity.setAuthorizationCode(authorizationCode);
+        paymentRequestEntity.setIsRefunded(isRefunded);
+        if (changeRequestEndPoint){
+            paymentRequestEntity.setRequestEndpoint("/invalidEndpoint");
+        }
+        return paymentRequestEntity;
 
-    public static PostePayPollingResponse postePayPollingResponse() {
+    }
+
+        public static PostePayPollingResponse postePayPollingResponse() {
         PostePayPollingResponse postePayPollingResponse = new PostePayPollingResponse();
         postePayPollingResponse.setChannel(PaymentChannel.APP.getValue());
         postePayPollingResponse.setUrlRedirect("www.userRedirectUrl.com");
@@ -267,6 +274,44 @@ public class ValidBeans {
         postePayPollingResponse.setError(error);
         return postePayPollingResponse;
     }
+
+    public static InlineResponse2001 inlineResponse2001(Esito esito){
+        InlineResponse2001 inlineResponse2001 = new InlineResponse2001();
+        inlineResponse2001.setStatus(esito);
+        return inlineResponse2001;
+    }
+
+    public static  InlineResponse2002 inlineResponse2002(EsitoStorno esitoStorno){
+        InlineResponse2002 inlineResponse2002 = new InlineResponse2002();
+        inlineResponse2002.setTransactionResult(esitoStorno);
+        return inlineResponse2002;
+
+    }
+
+
+    public static ResponseEntity<PostePayRefundResponse> postePayRefundResponseResponseEntity(String requestId, String paymentId, String refundOutcome){
+
+        PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
+        postePayRefundResponse.setRequestId(requestId);
+        postePayRefundResponse.setPaymentId(paymentId);
+        postePayRefundResponse.setRefundOutcome(refundOutcome);
+
+        return ResponseEntity.status(HttpStatus.OK).body(postePayRefundResponse);
+
+    }
+
+    public static PostePayRefundResponse postePayRefundResponse(String requestId, String paymentId, String refundOutcome, String error){
+        PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
+        postePayRefundResponse.setRequestId(requestId);
+        postePayRefundResponse.setPaymentId(paymentId);
+        postePayRefundResponse.setRefundOutcome(refundOutcome);
+        postePayRefundResponse.setError(error);
+
+        return postePayRefundResponse;
+
+    }
+
+
 }
 
 

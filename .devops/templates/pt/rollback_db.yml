@@ -1,0 +1,43 @@
+parameters:
+  - name: version
+  - name: poolName
+  - name: azureSubscription
+  - name: KeyVaultName
+
+jobs:
+  - job: job_rollback_prep
+    displayName: Rollback Preparation
+    pool:
+      name: ${{ parameters.poolName }}
+    steps:
+      - checkout: none
+
+      - script: echo Rolling back to version ${{ parameters.version }}
+        displayName: Echo Rollback Version
+
+  - job: job_rollback_agid
+    displayName: AGID_USER Rollback Execution
+    pool:
+      name: ${{ parameters.poolName }}
+    dependsOn: job_rollback_prep
+    steps:
+      - checkout: none
+
+      # AGID_USER (PM)
+      - template: ../liquibase-rollback.yml
+        parameters:
+          url: $(pt-db-pgs-url-simple)
+          username: $(pt-db-pgs-username)
+          password: $(pt-db-pgs-password)
+          classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
+          liquibaseSchemaName: $(pt-db-pgs-schema)
+          defaultSchemaName: $(pt-db-pgs-schema)
+          schema: $(pt-db-pgs-schema)
+          liquibaseTablespaceName: $(pt-db-pgs-tablespace)
+          title: "Rollback DB AGID_USER - PT"
+          databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+          databaseChangelogTableName: "DATABASECHANGELOG_PGS"
+          version: ${{ parameters.version }}
+          contexts: "tag,baseline,incremental,insert-pt"
+          azureSubscription: ${{ parameters.azureSubscription }}
+          KeyVaultName: ${{ parameters.KeyVaultName }}

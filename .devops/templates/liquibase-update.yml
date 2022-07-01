@@ -17,6 +17,9 @@ parameters:
   - name: databaseChangelogLockTableName
   - name: databaseChangelogTableName
 steps:
+  - script: echo performing ${{ parameters.title }}
+    displayName: Performing Liquibase update
+
   - script: |
       liquibase \
         --driver=oracle.jdbc.driver.OracleDriver \

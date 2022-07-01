@@ -20,8 +20,8 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 @Component
 public class RestapiCdClientImpl {
 
-    private static final String OUTCOME_PARAM = "outcome";
     private static final String AUTH_CODE_PARAM = "authCode";
+    private static final String RRN_PARAM = "rrn";
     @Value("${HOSTNAME_PM}")
     public String hostnamePm;
 
@@ -38,17 +38,17 @@ public class RestapiCdClientImpl {
         restapiCdClient.updateTransaction(id, headerMap, new TransactionUpdateRequestData(request));
     }
 
-    public String callClosePayment(Long idTransaction, boolean outcome, String authCode) {
-        log.info("Calling Payment Manager's closePayment for transaction " + idTransaction);
+    public String callClosePayment(Long id, String authCode, String rrn) {
+        log.info("Calling Payment Manager's closePayment for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
-        Map<String, Object> parameters = buildQueryParameters(outcome, authCode);
-        return restapiCdClient.closePayment(idTransaction, parameters, headerMap);
+        Map<String, Object> parameters = buildQueryParameters(authCode, rrn);
+        return restapiCdClient.closePayment(id, parameters, headerMap);
     }
 
-    private Map<String, Object> buildQueryParameters(boolean outcome, String authCode) {
+    private Map<String, Object> buildQueryParameters(String authCode, String rrn) {
         Map<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put(OUTCOME_PARAM, outcome);
         parameters.put(AUTH_CODE_PARAM, authCode);
+        parameters.put(RRN_PARAM, rrn);
         return parameters;
     }
 

@@ -7,4 +7,5 @@
   <include file="./data-insert-changelog.xml" relativeToChangelogFile="true"></include>
   <include file="./incremental-changelogs/V1_PM_906_changelog.xml" relativeToChangelogFile="true"></include>
   <include file="./incremental-changelogs/V2_PM_895-changelog.xml" relativeToChangelogFile="true"></include>
+  <include file="./incremental-changelogs/V3_PM_906_v2-changelog.xml" relativeToChangelogFile="true"></include>
 </databaseChangeLog>

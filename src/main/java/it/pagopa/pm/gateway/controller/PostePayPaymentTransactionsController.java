@@ -16,19 +16,19 @@ import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.api.PaymentManagerControllerApi;
-import org.openapitools.client.model.InlineResponse200;
 import org.openapitools.client.ApiException;
 import org.apache.commons.lang3.ObjectUtils;
 
-import org.openapitools.client.model.InlineResponse2001;
-import org.openapitools.client.model.InlineResponse2002;
-import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.ResponseURLs;
-import org.openapitools.client.model.PaymentChannel;
-import org.openapitools.client.model.AuthorizationType;
-import org.openapitools.client.model.EsitoStorno;
-import org.openapitools.client.model.DetailsPaymentRequest;
+import org.openapitools.client.model.CreatePaymentResponse;
+import org.openapitools.client.model.DetailsPaymentResponse;
 import org.openapitools.client.model.Esito;
+import org.openapitools.client.model.EsitoStorno;
+import org.openapitools.client.model.RefundPaymentResponse;
+import  org.openapitools.client.model.DetailsPaymentRequest;
+import org.openapitools.client.model.AuthorizationType;
+import org.openapitools.client.model.CreatePaymentRequest;
+import org.openapitools.client.model.PaymentChannel;
+import org.openapitools.client.model.ResponseURLs;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +49,7 @@ import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.LogoPaths.POSTEPAY_LOGO_PATH;
 import static it.pagopa.pm.gateway.constant.Messages.*;
+import static it.pagopa.pm.gateway.constant.Params.ONBOARDING;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
@@ -142,7 +143,8 @@ public class PostePayPaymentTransactionsController {
     @PostMapping(REQUEST_PAYMENTS_POSTEPAY)
     public ResponseEntity<PostePayAuthResponse> requestPaymentsPostepay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                         @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                                        @RequestBody PostePayAuthRequest postePayAuthRequest) {
+                                                                        @RequestBody PostePayAuthRequest postePayAuthRequest,
+                                                                        @RequestParam(required = false, value = ONBOARDING ) Boolean onboarding) {
         log.info("START - requesting PostePay payment authorization");
         setMdcFields(mdcFields);
 
@@ -175,7 +177,7 @@ public class PostePayPaymentTransactionsController {
         }
 
         try {
-            executePostePayAuthorizationCall(postePayAuthRequest, clientId, paymentRequestEntity);
+            executePostePayAuthorizationCall(postePayAuthRequest, clientId, paymentRequestEntity, onboarding);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + idTransaction, e);
             return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, HttpStatus.INTERNAL_SERVER_ERROR, null);
@@ -221,7 +223,7 @@ public class PostePayPaymentTransactionsController {
     }
 
     @Async
-    private void executePostePayAuthorizationCall(PostePayAuthRequest postePayAuthRequest, String clientId, PaymentRequestEntity paymentRequestEntity) throws RestApiException {
+    private void executePostePayAuthorizationCall(PostePayAuthRequest postePayAuthRequest, String clientId, PaymentRequestEntity paymentRequestEntity, Boolean onboarding) throws RestApiException {
         Long idTransaction = postePayAuthRequest.getIdTransaction();
         log.info("START - execute PostePay payment authorization request for transaction " + idTransaction);
         String correlationId;
@@ -229,13 +231,18 @@ public class PostePayPaymentTransactionsController {
         try {
             CreatePaymentRequest createPaymentRequest = createAuthorizationRequest(postePayAuthRequest, clientId);
             String bearerToken = acquireBearerToken();
-            InlineResponse200 inlineResponse200 = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
-            if (Objects.isNull(inlineResponse200)) {
+            CreatePaymentResponse createPaymentResponse;
+            if (onboarding != null && onboarding.equals(Boolean.TRUE)) {
+                createPaymentResponse = postePayControllerApi.apiV1UserOnboardingPost(bearerToken, createPaymentRequest);
+            } else {
+                createPaymentResponse =postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
+            }
+            if (Objects.isNull(createPaymentResponse)) {
                 log.error("/createPayment response from PostePay is null");
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
-            correlationId = inlineResponse200.getPaymentID();
-            authorizationUrl = inlineResponse200.getUserRedirectURL();
+            correlationId = createPaymentResponse.getPaymentID();
+            authorizationUrl = createPaymentResponse.getUserRedirectURL();
             log.info(String.format("Response from PostePay /createPayment for idTransaction %s: " +
                     "correlationId = %s - authorizationUrl = %s", idTransaction, correlationId, authorizationUrl));
         } catch (ApiException e) {
@@ -426,8 +433,8 @@ public class PostePayPaymentTransactionsController {
         String correlationId = requestEntity.getCorrelationId();
         log.info("START - execute PostePay refund for request id: " + requestId);
 
-        InlineResponse2002 response;
-        EsitoStorno refundOutcome;
+        RefundPaymentResponse response;
+        org.openapitools.client.model.EsitoStorno refundOutcome;
         try {
             response = postePayControllerApi.apiV1PaymentRefundPost(bearerToken, detailsPaymentRequest);
 
@@ -459,7 +466,7 @@ public class PostePayPaymentTransactionsController {
     private boolean checkDetailStatus(String bearerToken, DetailsPaymentRequest detailsPaymentRequest) throws Exception {
         String paymentId = detailsPaymentRequest.getPaymentID();
         log.info("START - check details for Payment Request with payment id: " + paymentId);
-        InlineResponse2001 response;
+        DetailsPaymentResponse response;
         try {
             response = postePayControllerApi.apiV1PaymentDetailsPost(bearerToken, detailsPaymentRequest);
         } catch (ApiException e) {

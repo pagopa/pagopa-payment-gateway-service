@@ -28,7 +28,7 @@ import org.mockito.Mockito;
 import org.openapitools.client.ApiException;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.InlineResponse200;
+import org.openapitools.client.model.CreatePaymentResponse;
 import org.openapitools.client.model.PaymentChannel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -98,7 +98,7 @@ public class PostePayPaymentControllerTest {
             MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
             String bearerToken = "Bearer " + azureLoginResponse.getAccess_token();
             CreatePaymentRequest appRequest = ValidBeans.createPaymentRequest(PaymentChannel.APP);
-            InlineResponse200 okResponse = ValidBeans.getOkResponse();
+            CreatePaymentResponse okResponse = ValidBeans.getOkResponse();
 
             given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
             given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
@@ -126,7 +126,7 @@ public class PostePayPaymentControllerTest {
             String bearerToken = "Bearer " + azureLoginResponse.getAccess_token();
             CreatePaymentRequest request = ValidBeans.createPaymentRequest(PaymentChannel.APP);
             String appConfigurationProperty = APP_CONFIG;
-            InlineResponse200 okResponse = ValidBeans.getOkResponse();
+            CreatePaymentResponse okResponse = ValidBeans.getOkResponse();
 
 
             given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(ValidBeans.microsoftAzureLoginResponse());

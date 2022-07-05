@@ -476,18 +476,16 @@ public class PostePayPaymentControllerTest {
 
 
     @Test
-    public void givenDeclinedDetailsCheck_shouldReturn200RefundNotAuthorized() throws Exception {
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+    public void givenRefundedTransaction_shouldReturn200AlreadyProcessed() throws Exception {
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, true, false);
 
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
-        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
-        given(postePayControllerApi.apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2001(Esito.DECLINED));
 
         mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
                 .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Transaction is not refundable: authorization has not been approved by PostePay or has been refunded already"))));
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Refund request already processed"))));
     }
 
 
@@ -507,7 +505,102 @@ public class PostePayPaymentControllerTest {
     }
 
 
+    @Test
+    public void thrownApiExceptionByCheckDetails_executeRefund() throws Exception {
 
+       PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentRefundPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2002(EsitoStorno.OK));
+
+        doThrow(ApiException.class)
+                .when(postePayControllerApi)
+                .apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ));
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", "OK", null))));
+        verify(paymentRequestRepository).save(paymentRequestEntity);
+    }
+
+    @Test
+    public void checkDetailsResponseIsNull_executeRefund() throws Exception {
+
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentRefundPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2002(EsitoStorno.OK));
+
+        doThrow(ApiException.class)
+                .when(postePayControllerApi)
+                .apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ));
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", "OK", null))));
+        verify(paymentRequestRepository).save(paymentRequestEntity);
+    }
+
+    @Test
+    public void refundResponseIsNull_shouldReturn500PostePayServiceException() throws Exception {
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2001(Esito.APPROVED));
+        given(postePayControllerApi.apiV1PaymentRefundPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(null);
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Exception during call to PostePay service"))));
+    }
+
+
+    @Test
+    public void refundResponseEsitoStornoIsNull_shouldReturn500PostePayServiceException() throws Exception {
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2001(Esito.APPROVED));
+        given(postePayControllerApi.apiV1PaymentRefundPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(ValidBeans.inlineResponse2002(null));
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Exception during call to PostePay service"))));
+    }
+
+
+    @Test
+    public void thrownApiExceptionByCheckDetails_shouldReturn500PostePayServiceException() throws Exception {
+
+        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+
+        given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
+        given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
+        given(postePayControllerApi.apiV1PaymentDetailsPost(Mockito.any( DetailsPaymentRequest.class ))).willReturn(null);
+
+        doThrow(ApiException.class)
+                .when(postePayControllerApi)
+                .apiV1PaymentRefundPost(Mockito.any( DetailsPaymentRequest.class ));
+
+        mvc.perform(delete(ApiPaths.REQUEST_PAYMENTS_POSTEPAY_REQUEST_ID,UUID_SAMPLE)
+                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Exception during call to PostePay service"))));
+
+    }
 
 
 }

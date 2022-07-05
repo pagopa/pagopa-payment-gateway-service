@@ -53,6 +53,12 @@ paths:
         - Payment Manager Controller
       summary: Recupero dello stato della transazione
       description: ""
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
       requestBody:
         content:
           application/json:
@@ -141,6 +147,12 @@ paths:
         - Payment Manager Controller
       summary: Storno
       description: ""
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
       requestBody:
         content:
           application/json:
@@ -182,6 +194,12 @@ paths:
         - Payment Manager Controller
       summary: Messaggio di conferma eseguito presso serverNotificationUrl
       description: ""
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
       requestBody:
         content:
           application/json:

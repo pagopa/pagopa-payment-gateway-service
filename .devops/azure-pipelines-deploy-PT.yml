@@ -1,0 +1,102 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+trigger: none
+pr: none
+
+parameters:
+  - name: 'buildVersion'
+    displayName: 'Build Version'
+    type: string
+
+variables:
+  vmImageNameDefault: 'ubuntu-latest'
+  poolNamePT: 'pm-agent-pool-pt'
+  azureSubscriptionPT: 'Pm-Subscription-pt'
+  KeyVaultNamePT: 'u87-kmn-pm-pt-pci'
+  definitionId: 113
+
+stages:
+
+  - stage: stage_check_prerequisites
+    displayName: Check Prerequisites
+    pool:
+      vmImage: $(vmImageNameDefault)
+    jobs:
+      - job: job_check_version
+        displayName: Check Version
+        steps:
+          - template: 'templates/verify-branch-version.yml'
+            parameters:
+              buildVersion: '${{parameters.buildVersion}}'
+          - script: echo '${{parameters.buildVersion}}'
+            displayName: Branch Version
+
+  - stage: stage_deploy_PT_liquibase
+    displayName: Execute Deploy PT - Liquibase
+    dependsOn:
+      - stage_check_prerequisites
+    condition: succeeded('stage_check_prerequisites')
+    jobs:
+      - template: templates/pt/upgrade_db.yml
+        parameters:
+          version: ${{ parameters.buildVersion }}
+          poolName: $(poolNamePT)
+          azureSubscription: $(azureSubscriptionPT)
+          KeyVaultName: $(KeyVaultNamePT)
+          definitionId: $(definitionId)
+
+  - stage: stage_deploy_PT
+    displayName: Execute Deploy PT
+    dependsOn:
+      - stage_check_prerequisites
+      - stage_deploy_PT_liquibase
+      condition: and(succeeded('stage_check_prerequisites'), succeeded('stage_deploy_PT_liquibase'))
+    pool:
+      name: $(poolNamePT)
+    jobs:
+      - deployment: deploy_PT
+        displayName: Deploy PT
+        environment: 'PT'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPipelineArtifact@2
+                  displayName: Download Artifact
+                  inputs:
+                    source: 'specific'
+                    project: 'PaymentManager'
+                    pipeline: $(definitionId)
+                    runVersion: 'latestFromBranch'
+                    runBranch: 'refs/heads/releases/${{parameters.buildVersion}}'
+                    allowPartiallySucceededBuilds: true
+                    artifact: 'Build PTG ${{parameters.buildVersion}}'
+                    path: '$(Pipeline.Workspace)'
+                - template: 'templates/check-files.yml'
+                  parameters:
+                    buildVersion: '${{parameters.buildVersion}}'
+                - task: AzureKeyVault@2
+                  inputs:
+                    azureSubscription: $(azureSubscriptionPT)
+                    KeyVaultName: $(KeyVaultNamePT)
+                    SecretsFilter: '*'
+                    RunAsPreJob: false
+                - template: 'templates/deploy-artifact-on-azure-appservice.yml'
+                  parameters:
+                    moduleName: 'PTG'
+                    artifactType: 'WAR'
+                    azureSubscription: $(azureSubscriptionPT)
+                    webAppName: '$(payment-gateway-appsrv-pt)'
+                    workingDir: '$(Pipeline.Workspace)'
+                    fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
+                    deployToSlotOrASE: true
+                    resourceGroupName: U87-PM-AppServices-pci-pt
+                    slotName: release
+                - task: PublishBuildArtifacts@1
+                  displayName: Publish Artifact
+                  inputs:
+                    pathToPublish: '$(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
+                    artifactName: 'PT - Deployed PTG ${{parameters.buildVersion}}'

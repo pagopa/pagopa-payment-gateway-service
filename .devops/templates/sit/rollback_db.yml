@@ -3,7 +3,6 @@ parameters:
   - name: poolName
   - name: azureSubscription
   - name: KeyVaultName
-  - name: schemaName
 
 jobs:
   - job: job_rollback_prep
@@ -16,28 +15,16 @@ jobs:
       - script: echo Rolling back to version ${{ parameters.version }}
         displayName: Echo Rollback Version
 
-      - script: echo Rolling back schema ${{ parameters.schemaName }}
-        displayName: Echo Rollback Schema
-
-      - script: |
-          echo "##vso[task.setvariable variable=ROLLBACK_SCHEMA;isOutput=true]${{ parameters.schemaName }}"
-        displayName: "Setting ROLLBACK_SCHEMA Variable"
-        name: setRollbackSchema
-
-      - script: echo ROLLBACK_SCHEMA '$(setRollbackSchema.ROLLBACK_SCHEMA)'
-        displayName: Echo Rollback Schema
-
-  - job: job_rollback_agid
+  - job: job_rollback_rtd
     displayName: AGID_USER Rollback Execution
     pool:
       name: ${{ parameters.poolName }}
-    condition: and(succeeded(), eq(dependencies.job_rollback_prep.outputs['setRollbackSchema.ROLLBACK_SCHEMA'], 'AGID_USER'))
     dependsOn: job_rollback_prep
     steps:
       - checkout: none
 
-      # PGS (PM)
-      - template: ./liquibase-rollback.yml
+      # AGID_USER (PM)
+      - template: ../liquibase-rollback.yml
         parameters:
           url: $(sit-db-pgs-url-simple)
           username: $(sit-db-pgs-username)
@@ -47,10 +34,10 @@ jobs:
           defaultSchemaName: $(sit-db-pgs-schema)
           schema: $(sit-db-pgs-schema)
           liquibaseTablespaceName: $(sit-db-pgs-tablespace)
-          title: "Rollback DB PGS"
+          title: "Rollback DB AGID_USER - SIT"
           databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
           databaseChangelogTableName: "DATABASECHANGELOG_PGS"
           version: ${{ parameters.version }}
-          contexts: "tag,baseline,incremental"
+          contexts: "tag,baseline,incremental,insert-sit"
           azureSubscription: ${{ parameters.azureSubscription }}
           KeyVaultName: ${{ parameters.KeyVaultName }}

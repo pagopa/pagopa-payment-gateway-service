@@ -4,5 +4,5 @@ public class Params {
 
     private Params() {}
 
-    public static final String ONBOARDING = "onboarding";
+    public static final String ONBOARDING = "isOnboarding";
 }

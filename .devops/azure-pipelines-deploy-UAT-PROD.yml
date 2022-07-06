@@ -62,8 +62,9 @@ stages:
     displayName: Execute Deploy UAT
     dependsOn:
       - stage_check_prerequisites
-      - stage_deploy_UAT_liquibase
-      condition: and(succeeded('stage_check_prerequisites'), and(succeeded('stage_deploy_UAT_liquibase'), ${{ eq(parameters.env, 'UAT') }}))
+#      - stage_deploy_UAT_liquibase
+#    condition: and(succeeded('stage_check_prerequisites'), and(succeeded('stage_deploy_UAT_liquibase'), ${{ eq(parameters.env, 'UAT') }}))
+    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
     pool:
       name: $(poolNameUAT)
     jobs:

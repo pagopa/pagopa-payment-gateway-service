@@ -19,6 +19,8 @@ import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.openapitools.client.ApiException;
 import org.apache.commons.lang3.ObjectUtils;
 
+import org.openapitools.client.model.RefundPaymentRequest;
+import org.openapitools.client.model.RefundPaymentResponse;
 import org.openapitools.client.model.CreatePaymentResponse;
 import org.openapitools.client.model.DetailsPaymentResponse;
 import org.openapitools.client.model.Esito;
@@ -49,7 +51,6 @@ import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.LogoPaths.POSTEPAY_LOGO_PATH;
 import static it.pagopa.pm.gateway.constant.Messages.*;
-import static it.pagopa.pm.gateway.constant.Params.ONBOARDING;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
@@ -396,6 +397,8 @@ public class PostePayPaymentTransactionsController {
         }
 
         String correlationId = requestEntity.getCorrelationId();
+        boolean isAuthorizationApproved = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
+
         if (requestEntity.getIsRefunded()) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
             return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_REQUEST_ALREADY_PROCESSED);
@@ -409,13 +412,11 @@ public class PostePayPaymentTransactionsController {
             return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
         }
 
-        DetailsPaymentRequest detailsPaymentRequest = createDetailPaymentRequest(requestEntity);
-        boolean isAuthorizationApproved = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
-
         if (!isAuthorizationApproved) {
             try {
                 log.info(String.format("An authorization code for request %s has not been acquired yet. " +
                         "Calling PostePay details API to acquire authorization status", requestId));
+                DetailsPaymentRequest detailsPaymentRequest = createDetailPaymentRequest(requestEntity);
                 isAuthorizationApproved = checkDetailStatus(bearerToken, detailsPaymentRequest);
             } catch (Exception e) {
                 log.warn("An exception occurred while checking the authorization status for request id " + requestId);
@@ -424,17 +425,21 @@ public class PostePayPaymentTransactionsController {
             }
         }
 
-        return isAuthorizationApproved ? executeRefundRequest(bearerToken, detailsPaymentRequest, requestEntity) :
-                createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_NOT_AUTHORIZED);
+        if (!isAuthorizationApproved) {
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_NOT_AUTHORIZED);
+        } else {
+            RefundPaymentRequest refundPaymentRequest = createRefundRequest(requestEntity);
+            return executeRefundRequest(bearerToken, refundPaymentRequest, requestEntity);
+        }
     }
 
-    private ResponseEntity<PostePayRefundResponse> executeRefundRequest(String bearerToken, DetailsPaymentRequest detailsPaymentRequest, PaymentRequestEntity requestEntity) {
+    private ResponseEntity<PostePayRefundResponse> executeRefundRequest(String bearerToken, RefundPaymentRequest detailsPaymentRequest, PaymentRequestEntity requestEntity) {
         String requestId = requestEntity.getGuid();
         String correlationId = requestEntity.getCorrelationId();
         log.info("START - execute PostePay refund for request id: " + requestId);
 
         RefundPaymentResponse response;
-        org.openapitools.client.model.EsitoStorno refundOutcome;
+        EsitoStorno refundOutcome;
         try {
             response = postePayControllerApi.apiV1PaymentRefundPost(bearerToken, detailsPaymentRequest);
 
@@ -507,4 +512,16 @@ public class PostePayPaymentTransactionsController {
 
     }
 
+    private RefundPaymentRequest createRefundRequest(PaymentRequestEntity requestEntity) {
+        String clientConfig = getCustomEnvironmentProperty(POSTEPAY_CLIENT_ID_PROPERTY, requestEntity.getClientId());
+        Map<String, String> configValues = getConfigValues(clientConfig);
+        RefundPaymentRequest refundPaymentRequest = new RefundPaymentRequest();
+        refundPaymentRequest.setMerchantId(configValues.get(MERCHANT_ID_CONFIG));
+        refundPaymentRequest.setShopId(configValues.get(SHOP_ID_CONFIG));
+        refundPaymentRequest.setShopTransactionId(String.valueOf(requestEntity.getIdTransaction()));
+        refundPaymentRequest.setCurrency(EURO_ISO_CODE);
+        refundPaymentRequest.setPaymentID(requestEntity.getCorrelationId());
+        refundPaymentRequest.setAuthNumber(requestEntity.getAuthorizationCode());
+        return refundPaymentRequest;
+    }
 }

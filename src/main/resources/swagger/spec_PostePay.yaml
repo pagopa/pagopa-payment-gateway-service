@@ -80,7 +80,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DetailsPaymentRequest'
+              $ref: '#/components/schemas/RefundPaymentRequest'
       responses:
         "200":
           description: OK
@@ -426,14 +426,17 @@ components:
     RefundPaymentRequest:
       description: ""
       required:
+        - merchantId
         - shopId
         - shopTransactionId
-        - amount
         - currency
         - paymentID
         - authNumber
       type: object
       properties:
+        merchantId:
+          description: identificativo del merchant
+          type: string
         shopId:
           description: identificativo del negozio
           type: string

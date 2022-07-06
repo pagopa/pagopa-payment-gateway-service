@@ -100,7 +100,7 @@ public class PostePayPaymentTransactionsController {
 
         try {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
-            String closePaymentResult = restapiCdClient.callClosePayment(requestEntity.getIdTransaction(), isAuthOutcomeOk, authMessage.getAuthCode());
+            String closePaymentResult = restapiCdClient.callClosePayment(requestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationId);
             log.info("Response from closePayment for correlation-id: " + correlationId + " " + closePaymentResult);
             requestEntity.setIsProcessed(true);
             requestEntity.setAuthorizationOutcome(isAuthOutcomeOk);

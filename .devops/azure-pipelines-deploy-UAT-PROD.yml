@@ -44,19 +44,19 @@ stages:
           - script: echo '${{parameters.buildVersion}}'
             displayName: Branch Version
 
-  - stage: stage_deploy_UAT_liquibase
-    displayName: Execute Deploy UAT - Liquibase
-    dependsOn:
-      - stage_check_prerequisites
-    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
-    jobs:
-      - template: templates/uat/upgrade_db.yml
-        parameters:
-          version: ${{ parameters.buildVersion }}
-          poolName: $(poolNameUAT)
-          azureSubscription: $(azureSubscriptionUAT)
-          KeyVaultName: $(KeyVaultNameUAT)
-          definitionId: $(definitionId)
+#  - stage: stage_deploy_UAT_liquibase
+#    displayName: Execute Deploy UAT - Liquibase
+#    dependsOn:
+#      - stage_check_prerequisites
+#    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
+#    jobs:
+#      - template: templates/uat/upgrade_db.yml
+#        parameters:
+#          version: ${{ parameters.buildVersion }}
+#          poolName: $(poolNameUAT)
+#          azureSubscription: $(azureSubscriptionUAT)
+#          KeyVaultName: $(KeyVaultNameUAT)
+#          definitionId: $(definitionId)
 
   - stage: stage_deploy_UAT
     displayName: Execute Deploy UAT

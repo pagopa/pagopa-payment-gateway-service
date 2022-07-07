@@ -2,6 +2,7 @@ package it.pagopa.pm.gateway.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.StatusErrorCodeOutcomeEnum;
 import lombok.*;
 
 @Data
@@ -14,5 +15,6 @@ public class PostePayPollingResponse {
     String clientResponseUrl;
     OutcomeEnum authOutcome;
     String error;
+    StatusErrorCodeOutcomeEnum statusErrorCodeOutcome;
 
 }

@@ -8,6 +8,7 @@ import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.StatusErrorCodeOutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
@@ -338,9 +339,11 @@ public class PostePayPaymentTransactionsController {
         if (Objects.isNull(authorizationOutcome)) {
             log.warn("No authorization outcome has been received yet for requestId " + requestId);
             response.setError("No authorization outcome has been received yet");
+            response.setStatusErrorCodeOutcome(StatusErrorCodeOutcomeEnum.getEnum(ExceptionsEnum.GENERIC_ERROR));
         } else if (authorizationOutcome.equals(KO)) {
             log.error("Authorization is KO for requestId " + requestId);
             response.setError("Payment authorization has not been granted");
+            response.setStatusErrorCodeOutcome(StatusErrorCodeOutcomeEnum.getEnum(ExceptionsEnum.GENERIC_ERROR));
         } else {
             String clientResponseUrl = getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
             response.setClientResponseUrl(clientResponseUrl);

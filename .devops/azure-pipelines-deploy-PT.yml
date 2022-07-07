@@ -13,8 +13,8 @@ parameters:
 
 variables:
   vmImageNameDefault: 'ubuntu-latest'
-  poolNamePT: 'pm-agent-pool-pt'
-  azureSubscriptionPT: 'Pm-Subscription-pt'
+  poolNamePT: 'pm-agent-pool-uat'
+  azureSubscriptionPT: 'Pm-Subscription-uat'
   KeyVaultNamePT: 'u87-kmn-pm-pt-pci'
   definitionId: 113
 
@@ -93,7 +93,7 @@ stages:
                     workingDir: '$(Pipeline.Workspace)'
                     fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
                     deployToSlotOrASE: true
-                    resourceGroupName: U87-PM-AppServices-pci-pt
+                    resourceGroupName: U87-PM-AppServices-pci-pft
                     slotName: release
                 - task: PublishBuildArtifacts@1
                   displayName: Publish Artifact

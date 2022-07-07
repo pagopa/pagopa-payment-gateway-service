@@ -11,7 +11,7 @@ import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.InlineResponse200;
+import org.openapitools.client.model.CreatePaymentResponse;
 import org.openapitools.client.model.PaymentChannel;
 import org.openapitools.client.model.ResponseURLs;
 
@@ -207,8 +207,8 @@ public class ValidBeans {
 
     }
 
-    public static InlineResponse200 getOkResponse() {
-        InlineResponse200 inlineResponse200 = new InlineResponse200();
+    public static CreatePaymentResponse getOkResponse() {
+        CreatePaymentResponse inlineResponse200 = new CreatePaymentResponse();
         inlineResponse200.setPaymentID("1234");
         inlineResponse200.setUserRedirectURL("www.userRedirectUrl.com");
         return inlineResponse200;

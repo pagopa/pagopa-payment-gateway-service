@@ -44,26 +44,27 @@ stages:
           - script: echo '${{parameters.buildVersion}}'
             displayName: Branch Version
 
-  - stage: stage_deploy_UAT_liquibase
-    displayName: Execute Deploy UAT - Liquibase
-    dependsOn:
-      - stage_check_prerequisites
-    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
-    jobs:
-      - template: templates/uat/upgrade_db.yml
-        parameters:
-          version: ${{ parameters.buildVersion }}
-          poolName: $(poolNameUAT)
-          azureSubscription: $(azureSubscriptionUAT)
-          KeyVaultName: $(KeyVaultNameUAT)
-          definitionId: $(definitionId)
+#  - stage: stage_deploy_UAT_liquibase
+#    displayName: Execute Deploy UAT - Liquibase
+#    dependsOn:
+#      - stage_check_prerequisites
+#    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
+#    jobs:
+#      - template: templates/uat/upgrade_db.yml
+#        parameters:
+#          version: ${{ parameters.buildVersion }}
+#          poolName: $(poolNameUAT)
+#          azureSubscription: $(azureSubscriptionUAT)
+#          KeyVaultName: $(KeyVaultNameUAT)
+#          definitionId: $(definitionId)
 
   - stage: stage_deploy_UAT
     displayName: Execute Deploy UAT
     dependsOn:
       - stage_check_prerequisites
-      - stage_deploy_UAT_liquibase
-      condition: and(succeeded('stage_check_prerequisites'), and(succeeded('stage_deploy_UAT_liquibase'), ${{ eq(parameters.env, 'UAT') }}))
+#      - stage_deploy_UAT_liquibase
+#    condition: and(succeeded('stage_check_prerequisites'), and(succeeded('stage_deploy_UAT_liquibase'), ${{ eq(parameters.env, 'UAT') }}))
+    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
     pool:
       name: $(poolNameUAT)
     jobs:

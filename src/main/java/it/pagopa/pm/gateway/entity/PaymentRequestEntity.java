@@ -55,6 +55,9 @@ public class PaymentRequestEntity {
     @Column(name = "IS_REFUNDED")
     private Boolean isRefunded = false;
 
+    @Column(name = "IS_ONBOARDING")
+    private Boolean isOnboarding;
+
 
 
 }

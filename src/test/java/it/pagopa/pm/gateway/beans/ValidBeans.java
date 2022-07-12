@@ -3,7 +3,6 @@ package it.pagopa.pm.gateway.beans;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.constant.LogoPaths;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
@@ -240,7 +239,7 @@ public class ValidBeans {
         paymentRequestEntity.setMdcInfo(null);
         paymentRequestEntity.setResourcePath(null);
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
-        paymentRequestEntity.setResourcePath(LogoPaths.POSTEPAY_LOGO_PATH);
+        paymentRequestEntity.setResourcePath("${postepay.logo.url}");
         return paymentRequestEntity;
 
 
@@ -253,7 +252,7 @@ public class ValidBeans {
         postePayPollingResponse.setAuthOutcome(OutcomeEnum.OK);
         postePayPollingResponse.setClientResponseUrl("www.clientResponseUrl.com");
         postePayPollingResponse.setError(StringUtils.EMPTY);
-        postePayPollingResponse.setLogoResourcePath(LogoPaths.POSTEPAY_LOGO_PATH);
+        postePayPollingResponse.setLogoResourcePath("${postepay.logo.url}");
         return postePayPollingResponse;
     }
 

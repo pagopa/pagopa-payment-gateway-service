@@ -16,5 +16,7 @@ public class PostePayPollingResponse {
     OutcomeEnum authOutcome;
     String error;
     StatusErrorCodeOutcomeEnum statusErrorCodeOutcome;
+    Long requestId;
+    String correlationId;
 
 }

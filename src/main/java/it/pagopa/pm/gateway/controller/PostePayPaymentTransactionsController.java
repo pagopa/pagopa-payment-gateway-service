@@ -27,7 +27,7 @@ import org.openapitools.client.model.CreatePaymentResponse;
 import org.openapitools.client.model.DetailsPaymentResponse;
 import org.openapitools.client.model.Esito;
 import org.openapitools.client.model.EsitoStorno;
-import  org.openapitools.client.model.DetailsPaymentRequest;
+import org.openapitools.client.model.DetailsPaymentRequest;
 import org.openapitools.client.model.AuthorizationType;
 import org.openapitools.client.model.CreatePaymentRequest;
 import org.openapitools.client.model.PaymentChannel;
@@ -50,7 +50,6 @@ import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 import static it.pagopa.pm.gateway.constant.ClientConfigs.NOTIFICATION_URL_CONFIG;
 import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
-import static it.pagopa.pm.gateway.constant.LogoPaths.POSTEPAY_LOGO_PATH;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.Params.ONBOARDING;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
@@ -65,7 +64,8 @@ public class PostePayPaymentTransactionsController {
     private static final String WEB_ORIGIN = "WEB";
     private static final String EURO_ISO_CODE = "978";
     private static final String POSTEPAY_CLIENT_ID_PROPERTY = "postepay.clientId.%s.config";
-    private static final String PGS_CLIENT_RESPONSE_URL = "postepay.pgs.response.%s.clientResponseUrl";
+    private static final String PGS_CLIENT_RESPONSE_URL = "postepay.pgs.response.%s.clientResponseUrl.payment";
+    private static final String PGS_CLIENT_RESPONSE_URL_ONBOARDING = "postepay.pgs.response.clientResponseUrl.onboarding";
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
@@ -76,6 +76,9 @@ public class PostePayPaymentTransactionsController {
 
     @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
+
+    @Value("${postepay.logo.url}")
+    private String POSTEPAY_LOGO_URL;
 
     @Autowired
     private AzureLoginClient azureLoginClient;
@@ -147,7 +150,7 @@ public class PostePayPaymentTransactionsController {
     public ResponseEntity<PostePayAuthResponse> requestPaymentsPostepay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                         @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                         @RequestBody PostePayAuthRequest postePayAuthRequest,
-                                                                        @RequestParam(required = false, value = ONBOARDING ) Boolean isOnboarding) {
+                                                                        @RequestParam(required = false, value = ONBOARDING) Boolean isOnboarding) {
         log.info("START - requesting PostePay payment authorization");
         setMdcFields(mdcFields);
 
@@ -239,7 +242,7 @@ public class PostePayPaymentTransactionsController {
             if (BooleanUtils.isTrue(isOnboarding)) {
                 createPaymentResponse = postePayControllerApi.apiV1UserOnboardingPost(bearerToken, createPaymentRequest);
             } else {
-                createPaymentResponse =postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
+                createPaymentResponse = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
             }
             if (Objects.isNull(createPaymentResponse)) {
                 log.error("/createPayment response from PostePay is null");
@@ -260,7 +263,7 @@ public class PostePayPaymentTransactionsController {
         }
         paymentRequestEntity.setCorrelationId(correlationId);
         paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
-        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_PATH);
+        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_URL);
         paymentRequestRepository.save(paymentRequestEntity);
         log.info("END - execute PostePay payment authorization request for transaction " + idTransaction);
     }
@@ -336,16 +339,19 @@ public class PostePayPaymentTransactionsController {
         response.setUrlRedirect(urlRedirect);
         response.setAuthOutcome(authorizationOutcome);
         response.setChannel(entity.getClientId());
+        response.setRequestId(entity.getId());
+        response.setCorrelationId(entity.getCorrelationId());
         if (Objects.isNull(authorizationOutcome)) {
             log.warn("No authorization outcome has been received yet for requestId " + requestId);
             response.setError("No authorization outcome has been received yet");
-            response.setStatusErrorCodeOutcome(StatusErrorCodeOutcomeEnum.getEnum(ExceptionsEnum.GENERIC_ERROR));
         } else if (authorizationOutcome.equals(KO)) {
             log.error("Authorization is KO for requestId " + requestId);
             response.setError("Payment authorization has not been granted");
             response.setStatusErrorCodeOutcome(StatusErrorCodeOutcomeEnum.getEnum(ExceptionsEnum.GENERIC_ERROR));
         } else {
-            String clientResponseUrl = getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
+            String clientResponseUrl = BooleanUtils.isTrue(entity.getIsOnboarding()) ?
+                    environment.getProperty(PGS_CLIENT_RESPONSE_URL_ONBOARDING) :
+                    getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
             response.setClientResponseUrl(clientResponseUrl);
             response.setLogoResourcePath(entity.getResourcePath());
             response.setError(StringUtils.EMPTY);

@@ -16,17 +16,55 @@ parameters:
     default: 'UAT'
     values:
       - 'UAT'
-      - 'PROD'
+#      - 'PROD'
 
 variables:
+  vmImageNameDefault: 'ubuntu-latest'
   poolNameUAT: 'pm-agent-pool-uat'
-  poolNamePROD: 'pm-agent-pool-prod'
+  azureSubscriptionUAT: 'Pm-Subscription-uat'
+  KeyVaultNameUAT: 'u87-kmn-pm-uat-pci'
+#  poolNamePROD: 'pm-agent-pool-prod'
+#  azureSubscriptionPROD: 'Pm-Subscription-prod'
+#  KeyVaultNamePROD: 'u87-kmn-pm-prod-pci'
   definitionId: 113
 
 stages:
+
+  - stage: stage_check_prerequisites
+    displayName: Check Prerequisites
+    pool:
+      vmImage: $(vmImageNameDefault)
+    jobs:
+      - job: job_check_version
+        displayName: Check Version
+        steps:
+          - template: 'templates/verify-branch-version.yml'
+            parameters:
+              buildVersion: '${{parameters.buildVersion}}'
+          - script: echo '${{parameters.buildVersion}}'
+            displayName: Branch Version
+
+#  - stage: stage_deploy_UAT_liquibase
+#    displayName: Execute Deploy UAT - Liquibase
+#    dependsOn:
+#      - stage_check_prerequisites
+#    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
+#    jobs:
+#      - template: templates/uat/upgrade_db.yml
+#        parameters:
+#          version: ${{ parameters.buildVersion }}
+#          poolName: $(poolNameUAT)
+#          azureSubscription: $(azureSubscriptionUAT)
+#          KeyVaultName: $(KeyVaultNameUAT)
+#          definitionId: $(definitionId)
+
   - stage: stage_deploy_UAT
     displayName: Execute Deploy UAT
-    condition: ${{ eq(parameters.env, 'UAT') }}
+    dependsOn:
+      - stage_check_prerequisites
+#      - stage_deploy_UAT_liquibase
+#    condition: and(succeeded('stage_check_prerequisites'), and(succeeded('stage_deploy_UAT_liquibase'), ${{ eq(parameters.env, 'UAT') }}))
+    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'UAT') }})
     pool:
       name: $(poolNameUAT)
     jobs:
@@ -37,11 +75,6 @@ stages:
           runOnce:
             deploy:
               steps:
-                - template: 'templates/verify-branch-version.yml'
-                  parameters:
-                    buildVersion: '${{parameters.buildVersion}}'
-                - script: echo '${{parameters.buildVersion}}'
-                  displayName: Branch Version
                 - task: DownloadPipelineArtifact@2
                   displayName: Download Artifact
                   inputs:
@@ -58,15 +91,15 @@ stages:
                     buildVersion: '${{parameters.buildVersion}}'
                 - task: AzureKeyVault@2
                   inputs:
-                    azureSubscription: 'Pm-Subscription-uat'
-                    KeyVaultName: 'u87-kmn-pm-uat-pci'
+                    azureSubscription: $(azureSubscriptionUAT)
+                    KeyVaultName: $(KeyVaultNameUAT)
                     SecretsFilter: '*'
                     RunAsPreJob: false
                 - template: 'templates/deploy-artifact-on-azure-appservice.yml'
                   parameters:
                     moduleName: 'PTG'
                     artifactType: 'WAR'
-                    azureSubscription: 'Pm-Subscription-uat'
+                    azureSubscription: $(azureSubscriptionUAT)
                     webAppName: '$(payment-gateway-appsrv-uat)'
                     workingDir: '$(Pipeline.Workspace)'
                     fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
@@ -78,6 +111,21 @@ stages:
                   inputs:
                     pathToPublish: '$(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
                     artifactName: 'UAT - Deployed PTG ${{parameters.buildVersion}}'
+
+#  - stage: stage_deploy_PROD_liquibase
+#    displayName: Execute Deploy PROD - Liquibase
+#    dependsOn:
+#      - stage_check_prerequisites
+#    condition: and(succeeded('stage_check_prerequisites'), ${{ eq(parameters.env, 'PROD') }})
+#    jobs:
+#      - template: templates/prod/upgrade_db.yml
+#        parameters:
+#          version: ${{parameters.buildVersion}}
+#          poolName: $(poolNamePROD)
+#          azureSubscription: $(azureSubscriptionPROD)
+#          KeyVaultName: $(KeyVaultNamePROD)
+#          definitionId: $(definitionId)
+#
 #  - stage: stage_deploy_PROD
 #    displayName: Execute Deploy PROD
 #    condition: ${{ eq(parameters.env, 'PROD') }}
@@ -91,11 +139,6 @@ stages:
 #          runOnce:
 #            deploy:
 #              steps:
-#                - template: 'templates/verify-branch-version.yml'
-#                  parameters:
-#                    buildVersion: '${{parameters.buildVersion}}'
-#                - script: echo '${{parameters.buildVersion}}'
-#                  displayName: Branch Version
 #                - task: DownloadPipelineArtifact@2
 #                  displayName: Download Artifact
 #                  inputs:
@@ -112,15 +155,15 @@ stages:
 #                    buildVersion: '${{parameters.buildVersion}}'
 #                - task: AzureKeyVault@2
 #                  inputs:
-#                    azureSubscription: 'Pm-Subscription-prod'
-#                    KeyVaultName: 'u87-kmn-pm-prod-pci'
+#                    azureSubscription: $(azureSubscriptionPROD)
+#                    KeyVaultName: $(KeyVaultNamePROD)
 #                    SecretsFilter: '*'
 #                    RunAsPreJob: false
 #                - template: 'templates/deploy-artifact-on-azure-appservice.yml'
 #                  parameters:
 #                    moduleName: 'PTG'
 #                    artifactType: 'WAR'
-#                    azureSubscription: 'Pm-Subscription-prod'
+#                    azureSubscription: $(azureSubscriptionPROD)
 #                    webAppName: '$(payment-gateway-appsrv-prod)'
 #                    workingDir: '$(Pipeline.Workspace)'
 #                    fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'

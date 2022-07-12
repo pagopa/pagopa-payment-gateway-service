@@ -145,7 +145,7 @@ stages:
       - name: outputBranchVersion
         value: $[stageDependencies.stage_build.job_build.outputs['var.outputBranchVersion']]
     jobs:
-      - template: templates/upgrade_db.yml
+      - template: templates/sit/upgrade_db.yml
         parameters:
           version: $(outputBranchVersion)
           poolName: $(poolName)

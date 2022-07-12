@@ -76,9 +76,11 @@ public class ClientConfig {
 
     @Bean
     public PaymentManagerControllerApi postePayControllerApi() {
+  log.info("START postePayControllerApi()");
         ApiClient apiClient = addProxyToApiClient(new ApiClient()
                 .setBasePath(POSTEPAY_CLIENT_URL)
                 .setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
+       log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
         return new PaymentManagerControllerApi(apiClient);
     }
 

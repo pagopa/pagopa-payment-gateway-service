@@ -259,7 +259,7 @@ public class PostePayPaymentControllerTest {
 
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).
                 willReturn(ValidBeans.paymentRequestEntity(null, true, "APP"));
-        given(env.getProperty("postepay.pgs.response.APP.clientResponseUrl")).willReturn("www.clientResponseUrl.com");
+        given(env.getProperty("postepay.pgs.response.APP.clientResponseUrl.payment")).willReturn("www.clientResponseUrl.com");
 
         mvc.perform(get(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayPollingResponse())));

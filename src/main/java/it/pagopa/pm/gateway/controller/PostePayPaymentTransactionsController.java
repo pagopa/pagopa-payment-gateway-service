@@ -65,7 +65,8 @@ public class PostePayPaymentTransactionsController {
     private static final String WEB_ORIGIN = "WEB";
     private static final String EURO_ISO_CODE = "978";
     private static final String POSTEPAY_CLIENT_ID_PROPERTY = "postepay.clientId.%s.config";
-    private static final String PGS_CLIENT_RESPONSE_URL = "postepay.pgs.response.%s.clientResponseUrl";
+    private static final String PGS_CLIENT_RESPONSE_URL = "postepay.pgs.response.%s.clientResponseUrl.payment";
+    private static final String PGS_CLIENT_RESPONSE_URL_ONBOARDING = "postepay.pgs.response.APP.clientResponseUrl.onboarding";
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
@@ -344,7 +345,12 @@ public class PostePayPaymentTransactionsController {
             response.setError("Payment authorization has not been granted");
             response.setStatusErrorCodeOutcome(StatusErrorCodeOutcomeEnum.getEnum(ExceptionsEnum.GENERIC_ERROR));
         } else {
-            String clientResponseUrl = getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
+            String clientResponseUrl;
+            if(BooleanUtils.isTrue(entity.getIsOnboarding())) {
+                clientResponseUrl = environment.getProperty(PGS_CLIENT_RESPONSE_URL_ONBOARDING);
+            } else {
+                clientResponseUrl = getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
+            }
             response.setClientResponseUrl(clientResponseUrl);
             response.setLogoResourcePath(entity.getResourcePath());
             response.setError(StringUtils.EMPTY);

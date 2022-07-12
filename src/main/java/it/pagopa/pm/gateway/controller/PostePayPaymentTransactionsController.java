@@ -339,7 +339,6 @@ public class PostePayPaymentTransactionsController {
         if (Objects.isNull(authorizationOutcome)) {
             log.warn("No authorization outcome has been received yet for requestId " + requestId);
             response.setError("No authorization outcome has been received yet");
-            response.setStatusErrorCodeOutcome(StatusErrorCodeOutcomeEnum.getEnum(ExceptionsEnum.GENERIC_ERROR));
         } else if (authorizationOutcome.equals(KO)) {
             log.error("Authorization is KO for requestId " + requestId);
             response.setError("Payment authorization has not been granted");

@@ -444,7 +444,7 @@ public class PostePayPaymentTransactionsController {
         }
     }
 
-    private ResponseEntity<PostePayRefundResponse> executeRefundRequest(String bearerToken, RefundPaymentRequest detailsPaymentRequest, PaymentRequestEntity requestEntity) {
+    private ResponseEntity<PostePayRefundResponse> executeRefundRequest(String bearerToken, RefundPaymentRequest refundPaymentRequest, PaymentRequestEntity requestEntity) {
         String requestId = requestEntity.getGuid();
         String correlationId = requestEntity.getCorrelationId();
         log.info("START - execute PostePay refund for request id: " + requestId);
@@ -452,7 +452,7 @@ public class PostePayPaymentTransactionsController {
         RefundPaymentResponse response;
         EsitoStorno refundOutcome;
         try {
-            response = postePayControllerApi.apiV1PaymentRefundPost(bearerToken, detailsPaymentRequest);
+            response = postePayControllerApi.apiV1PaymentRefundPost(bearerToken, refundPaymentRequest);
 
             if (ObjectUtils.isEmpty(response)) {
                 log.error("Response to PostePay /refund API is null or empty");

@@ -50,7 +50,6 @@ import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 import static it.pagopa.pm.gateway.constant.ClientConfigs.NOTIFICATION_URL_CONFIG;
 import static it.pagopa.pm.gateway.constant.Headers.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
-import static it.pagopa.pm.gateway.constant.LogoPaths.POSTEPAY_LOGO_PATH;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.Params.ONBOARDING;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
@@ -77,6 +76,9 @@ public class PostePayPaymentTransactionsController {
 
     @Value("${postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
+
+    @Value("${postepay.logo.url}")
+    private String POSTEPAY_LOGO_URL;
 
     @Autowired
     private AzureLoginClient azureLoginClient;
@@ -261,7 +263,7 @@ public class PostePayPaymentTransactionsController {
         }
         paymentRequestEntity.setCorrelationId(correlationId);
         paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
-        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_PATH);
+        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_URL);
         paymentRequestRepository.save(paymentRequestEntity);
         log.info("END - execute PostePay payment authorization request for transaction " + idTransaction);
     }

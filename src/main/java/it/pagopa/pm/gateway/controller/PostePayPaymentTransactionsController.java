@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.constant.Scopes;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
@@ -322,7 +323,7 @@ public class PostePayPaymentTransactionsController {
         PostePayAuthResponse postePayAuthResponse = new PostePayAuthResponse();
         postePayAuthResponse.setChannel(channel);
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(PGS_RESPONSE_URL_REDIRECT, requestId);
+            String urlRedirect = String.format(PGS_RESPONSE_URL_REDIRECT, requestId, Scopes.POSTEPAY_SCOPE);
             postePayAuthResponse.setUrlRedirect(urlRedirect);
         } else {
             postePayAuthResponse.setError(errorMessage);

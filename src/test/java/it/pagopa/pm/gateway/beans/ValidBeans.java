@@ -208,7 +208,7 @@ public class ValidBeans {
         if (isError) {
             postePayAuthResponse.setError(errorMessage);
         } else {
-            postePayAuthResponse.setUrlRedirect("${postepay.pgs.response.urlredirect}8d8b30e3-de52-4f1c-a71c-9905a8043dac");
+            postePayAuthResponse.setUrlRedirect("${postepay.pgs.response.urlredirect}");
         }
 
         return postePayAuthResponse;

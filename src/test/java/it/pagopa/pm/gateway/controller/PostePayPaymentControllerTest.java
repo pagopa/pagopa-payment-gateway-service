@@ -102,6 +102,7 @@ public class PostePayPaymentControllerTest {
 
             given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
             given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
+            given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, appRequest)).willReturn(okResponse);
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -131,6 +132,7 @@ public class PostePayPaymentControllerTest {
 
             given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(ValidBeans.microsoftAzureLoginResponse());
             given(env.getProperty(String.format("postepay.clientId.%s.config", "WEB"))).willReturn(appConfigurationProperty);
+            given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, request)).willReturn(okResponse);
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY).header(Headers.X_CLIENT_ID, "WEB")

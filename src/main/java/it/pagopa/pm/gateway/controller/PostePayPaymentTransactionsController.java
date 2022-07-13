@@ -340,7 +340,7 @@ public class PostePayPaymentTransactionsController {
         response.setUrlRedirect(urlRedirect);
         response.setAuthOutcome(authorizationOutcome);
         response.setChannel(entity.getClientId());
-        response.setRequestId(entity.getId());
+        response.setGuid(entity.getGuid());
         response.setCorrelationId(entity.getCorrelationId());
         if (Objects.isNull(authorizationOutcome)) {
             log.warn("No authorization outcome has been received yet for requestId " + requestId);

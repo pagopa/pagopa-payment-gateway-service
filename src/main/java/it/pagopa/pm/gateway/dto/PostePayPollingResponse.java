@@ -18,5 +18,6 @@ public class PostePayPollingResponse {
     StatusErrorCodeOutcomeEnum statusErrorCodeOutcome;
     Long requestId;
     String correlationId;
+    Boolean isOnboarding;
 
 }

@@ -342,6 +342,7 @@ public class PostePayPaymentTransactionsController {
         response.setChannel(entity.getClientId());
         response.setRequestId(entity.getId());
         response.setCorrelationId(entity.getCorrelationId());
+        response.setIsOnboarding(entity.getIsOnboarding());
         if (Objects.isNull(authorizationOutcome)) {
             log.warn("No authorization outcome has been received yet for requestId " + requestId);
             response.setError("No authorization outcome has been received yet");

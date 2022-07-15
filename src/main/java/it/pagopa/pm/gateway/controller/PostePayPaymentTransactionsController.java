@@ -107,8 +107,11 @@ public class PostePayPaymentTransactionsController {
 
         try {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
-            String closePaymentResult = restapiCdClient.callClosePayment(requestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationId);
-            log.info("Response from closePayment for correlation-id: " + correlationId + " " + closePaymentResult);
+
+            if (BooleanUtils.isFalse(requestEntity.getIsOnboarding())) {
+                String closePaymentResult = restapiCdClient.callClosePayment(requestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationId);
+                log.info("Response from closePayment for correlation-id: " + correlationId + " " + closePaymentResult);
+            }
             requestEntity.setIsProcessed(true);
             requestEntity.setAuthorizationOutcome(isAuthOutcomeOk);
             requestEntity.setAuthorizationCode(authMessage.getAuthCode());
@@ -322,6 +325,7 @@ public class PostePayPaymentTransactionsController {
     private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String errorMessage, HttpStatus status, String requestId) {
         PostePayAuthResponse postePayAuthResponse = new PostePayAuthResponse();
         postePayAuthResponse.setChannel(channel);
+        postePayAuthResponse.setRequestId(requestId);
         if (StringUtils.isEmpty(errorMessage)) {
             String urlRedirect = String.format(PGS_RESPONSE_URL_REDIRECT, requestId, Scopes.POSTEPAY_SCOPE);
             postePayAuthResponse.setUrlRedirect(urlRedirect);
@@ -340,7 +344,7 @@ public class PostePayPaymentTransactionsController {
         response.setUrlRedirect(urlRedirect);
         response.setAuthOutcome(authorizationOutcome);
         response.setChannel(entity.getClientId());
-        response.setGuid(entity.getGuid());
+        response.setRequestId(entity.getGuid());
         response.setCorrelationId(entity.getCorrelationId());
         response.setIsOnboarding(entity.getIsOnboarding());
         if (Objects.isNull(authorizationOutcome)) {

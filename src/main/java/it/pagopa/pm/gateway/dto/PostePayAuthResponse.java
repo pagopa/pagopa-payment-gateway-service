@@ -11,6 +11,7 @@ public class PostePayAuthResponse {
    String channel;
    String urlRedirect;
    String error;
+   String requestId;
 
 
 }

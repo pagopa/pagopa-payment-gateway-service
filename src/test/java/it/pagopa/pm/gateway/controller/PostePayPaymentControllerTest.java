@@ -396,7 +396,7 @@ public class PostePayPaymentControllerTest {
         AuthMessage authMessage = ValidBeans.authMessage();
         ACKMessage ackMessage = ValidBeans.ackMessageResponse();
         final String correlationID = "correlation-ID";
-        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
 
         doThrow(FeignException.class)
                 .when(restapiCdClient)
@@ -425,7 +425,7 @@ public class PostePayPaymentControllerTest {
         AuthMessage authMessage = ValidBeans.authMessage();
         ACKMessage ackMessage = ValidBeans.ackMessageResponse();
         final String correlationID = "correlation-ID";
-        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
 
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)

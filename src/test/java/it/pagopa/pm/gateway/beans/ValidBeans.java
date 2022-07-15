@@ -250,10 +250,15 @@ public class ValidBeans {
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
         paymentRequestEntity.setResourcePath("${postepay.logo.url}");
         return paymentRequestEntity;
+ }
 
-
+    public static PaymentRequestEntity paymentRequestEntityOnboardingFalse(PostePayAuthRequest postePayAuthRequest, Boolean authorizationOutcome, String clientId) {
+        PaymentRequestEntity  paymentRequestEntity = paymentRequestEntity(postePayAuthRequest, authorizationOutcome, clientId);
+        paymentRequestEntity.setIsOnboarding(false);
+        return paymentRequestEntity;
     }
-    public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
+
+        public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
         PaymentRequestEntity paymentRequestEntity = paymentRequestEntity(null, true, clientId);
         paymentRequestEntity.setAuthorizationCode(authorizationCode);
         paymentRequestEntity.setIsRefunded(isRefunded);

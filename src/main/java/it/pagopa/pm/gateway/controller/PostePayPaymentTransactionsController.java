@@ -108,7 +108,7 @@ public class PostePayPaymentTransactionsController {
         try {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
 
-            if (Boolean.FALSE.equals(requestEntity.getIsOnboarding())) {
+            if (BooleanUtils.isFalse(requestEntity.getIsOnboarding())) {
                 String closePaymentResult = restapiCdClient.callClosePayment(requestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationId);
                 log.info("Response from closePayment for correlation-id: " + correlationId + " " + closePaymentResult);
             }

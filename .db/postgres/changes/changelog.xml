@@ -49,6 +49,8 @@
 				<column name="IS_PROCESSED" type="BOOLEAN"></column>
 				<column name="MDC_INFO" type="VARCHAR(500)"></column>
 				<column name="ERROR_CODE" type="VARCHAR(50)"></column>
+				<column name="IS_REFUND" type="BOOLEAN"></column>
+				<column name="IS_ONBOARDING" type="BOOLEAN"></column>
 			</createTable>
 			<createSequence sequenceName="SEQ_PGS_REQUEST_INFO" incrementBy="1" startValue="1" />
 		    <createIndex indexName="PGS_REQUEST_GUID_IDX" tableName="PP_PGS_REQUEST_INFO">

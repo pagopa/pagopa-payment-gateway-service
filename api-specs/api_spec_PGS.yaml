@@ -502,10 +502,14 @@ components:
     PostePayAuthResponseEntity:
       type: object
       required:
+        - requestId
         - channel
         - urlRedirect
         - error
       properties:
+        requestId:
+          type: string
+          description: payment request Id
         channel:
           type: string
           description: request payment channel (APP or WEB)

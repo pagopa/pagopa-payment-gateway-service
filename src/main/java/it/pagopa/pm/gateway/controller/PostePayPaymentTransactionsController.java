@@ -179,7 +179,7 @@ public class PostePayPaymentTransactionsController {
         try {
             String authRequestJson = OBJECT_MAPPER.writeValueAsString(postePayAuthRequest);
             log.debug("Resulting postePayAuthRequest JSON string = " + authRequestJson);
-            paymentRequestEntity = generateRequestEntity(clientId, mdcFields, idTransaction, isOnboarding);
+            paymentRequestEntity = generateRequestEntity(clientId, mdcFields, idTransaction.toString(), isOnboarding);
             paymentRequestEntity.setJsonRequest(authRequestJson);
         } catch (JsonProcessingException e) {
             log.error(SERIALIZATION_ERROR_MSG, e);
@@ -197,7 +197,7 @@ public class PostePayPaymentTransactionsController {
         return createPostePayAuthResponse(clientId, StringUtils.EMPTY, HttpStatus.OK, paymentRequestEntity.getGuid());
     }
 
-    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, Long idTransaction, Boolean isOnboarding) {
+    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, String idTransaction, Boolean isOnboarding) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
@@ -524,7 +524,7 @@ public class PostePayPaymentTransactionsController {
         DetailsPaymentRequest detailsPaymentRequest = new DetailsPaymentRequest();
         detailsPaymentRequest.setPaymentID(paymentRequestEntity.getCorrelationId());
         detailsPaymentRequest.setShopId(shopId);
-        detailsPaymentRequest.setShopTransactionId(String.valueOf(paymentRequestEntity.getIdTransaction()));
+        detailsPaymentRequest.setShopTransactionId(paymentRequestEntity.getIdTransaction());
         return detailsPaymentRequest;
 
     }
@@ -535,7 +535,7 @@ public class PostePayPaymentTransactionsController {
         RefundPaymentRequest refundPaymentRequest = new RefundPaymentRequest();
         refundPaymentRequest.setMerchantId(configValues.get(MERCHANT_ID_CONFIG));
         refundPaymentRequest.setShopId(configValues.get(SHOP_ID_CONFIG));
-        refundPaymentRequest.setShopTransactionId(String.valueOf(requestEntity.getIdTransaction()));
+        refundPaymentRequest.setShopTransactionId(requestEntity.getIdTransaction());
         refundPaymentRequest.setCurrency(EURO_ISO_CODE);
         refundPaymentRequest.setPaymentID(requestEntity.getCorrelationId());
         refundPaymentRequest.setAuthNumber(requestEntity.getAuthorizationCode());

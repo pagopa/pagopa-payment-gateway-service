@@ -42,8 +42,8 @@ public class RestapiCdClientImpl {
         log.info("Calling Payment Manager's closePayment for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
         Map<String, Object> parameters = buildQueryParameters(authCode, rrn);
-        Long idLongValue = Long.valueOf(id);
-        return restapiCdClient.closePayment(idLongValue, parameters, headerMap);
+        Long idTransaction = Long.valueOf(id);
+        return restapiCdClient.closePayment(idTransaction, parameters, headerMap);
     }
 
     private Map<String, Object> buildQueryParameters(String authCode, String rrn) {

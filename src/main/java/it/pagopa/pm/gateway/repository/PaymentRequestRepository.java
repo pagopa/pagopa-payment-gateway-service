@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PaymentRequestRepository extends JpaRepository<PaymentRequestEntity, Long> {
 
-    PaymentRequestEntity findByIdTransaction(Long idTransaction);
+    PaymentRequestEntity findByIdTransaction(String idTransaction);
 
     PaymentRequestEntity findByCorrelationIdAndRequestEndpoint(String correlationId, String requestEndpoint);
 

@@ -249,6 +249,7 @@ public class ValidBeans {
         paymentRequestEntity.setResourcePath(null);
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
         paymentRequestEntity.setResourcePath("${postepay.logo.url}");
+        paymentRequestEntity.setIsOnboarding(false);
         return paymentRequestEntity;
  }
 

@@ -38,11 +38,11 @@ public class RestapiCdClientImpl {
         restapiCdClient.updateTransaction(id, headerMap, new TransactionUpdateRequestData(request));
     }
 
-    public String callClosePayment(Long id, String authCode, String rrn) {
-        log.info("Calling Payment Manager's closePayment for transaction " + id);
+    public String callUpdatePostePayTransaction(Long id, String authCode, String rrn) {
+        log.info("Calling Payment Manager's updateTransaction PATCH API for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
         Map<String, Object> parameters = buildQueryParameters(authCode, rrn);
-        return restapiCdClient.closePayment(id, parameters, headerMap);
+        return restapiCdClient.updatePostePayTransaction(id, parameters, headerMap);
     }
 
     private Map<String, Object> buildQueryParameters(String authCode, String rrn) {

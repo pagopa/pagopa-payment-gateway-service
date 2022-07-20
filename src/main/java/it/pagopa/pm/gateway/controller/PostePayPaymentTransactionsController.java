@@ -108,19 +108,20 @@ public class PostePayPaymentTransactionsController {
         try {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
 
+            String authCode = authMessage.getAuthCode();
             if (!requestEntity.getIsOnboarding()) {
-                String closePaymentResult = restapiCdClient.callClosePayment(requestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationId);
-                log.info("Response from closePayment V2 for correlation-id: " + correlationId + " " + closePaymentResult);
+                String closePaymentResult = restapiCdClient.callUpdatePostePayTransaction(requestEntity.getIdTransaction(), authCode, correlationId);
+                log.info("Response from PATCH updateTransaction for correlation-id: " + correlationId + " " + closePaymentResult);
             }
             requestEntity.setIsProcessed(true);
             requestEntity.setAuthorizationOutcome(isAuthOutcomeOk);
-            requestEntity.setAuthorizationCode(authMessage.getAuthCode());
+            requestEntity.setAuthorizationCode(authCode);
             paymentRequestRepository.save(requestEntity);
         } catch (FeignException fe) {
-            log.error("Feign exception calling restapi-cd to close payment V2", fe);
+            log.error("A feign exception occurred while calling restapi-cd updateTransaction PATCH API", fe);
             throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());
         } catch (Exception e) {
-            log.error("An exception occurred while closing payment V2", e);
+            log.error("An exception occurred while calling restapi-cd updateTransaction PATCH API", e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } finally {
             log.info("END - Update PostePay transaction request for correlation-id: " + correlationId + " - authorization: " + authMessage);

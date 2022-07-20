@@ -326,7 +326,7 @@ public class PostePayPaymentControllerTest {
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
-        given(restapiCdClient.callClosePayment(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID))
+        given(restapiCdClient.callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID))
                 .willReturn(OutcomeEnum.OK.toString());
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -400,7 +400,7 @@ public class PostePayPaymentControllerTest {
 
         doThrow(FeignException.class)
                 .when(restapiCdClient)
-                .callClosePayment(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
+                .callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 
@@ -429,7 +429,7 @@ public class PostePayPaymentControllerTest {
 
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)
-                .callClosePayment(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
+                .callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 

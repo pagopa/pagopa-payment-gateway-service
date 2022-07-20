@@ -21,8 +21,7 @@ import java.net.SocketTimeoutException;
 import java.util.Objects;
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
@@ -44,6 +43,11 @@ public class BancomatPayPaymentTransactionsController {
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
 
+    @GetMapping(BPAY_PAYMENT_RESPONSE)
+    public BPayPaymentResponseEntity getBPayPaymentResponse(@RequestParam(ID) Long id) throws RestApiException {
+        return bPayPaymentResponseRepository.findById(id).orElseThrow(() -> new RestApiException(ExceptionsEnum.PAYMENT_RESPONSE_NOT_FOUND));
+    }
+    
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();

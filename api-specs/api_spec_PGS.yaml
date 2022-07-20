@@ -6,6 +6,48 @@ servers:
   - url: http://localhost:8080/
     description: Generated server url
 paths:
+  /bpay-payment-response/{id}:
+    get:
+      tags:
+        - payment-transactions-controller
+      operationId: getBPayPaymentResponse
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BPayPaymentResponseEntity'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Response not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Generic Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "504":
+          description: Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /request-payments/bancomatpay:
     put:
       tags:

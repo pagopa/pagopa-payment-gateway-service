@@ -105,14 +105,9 @@ public class BancomatPayPaymentTransactionsController {
         }
         String inquiryResponse = inquiryTransactionToBancomatPay(request);
         log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
-        switch (inquiryResponse) {
-            case INQUIRY_RESPONSE_EFF:
-                executeRefundRequest(request);
-                break;
-            case INQUIRY_RESPONSE_ERR:
-                break;
-            default:
-                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+
+        if(INQUIRY_RESPONSE_EFF.equals(inquiryResponse)) {
+            executeRefundRequest(request);
         }
     }
 

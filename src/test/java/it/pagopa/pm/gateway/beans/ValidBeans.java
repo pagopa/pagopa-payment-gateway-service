@@ -3,7 +3,6 @@ package it.pagopa.pm.gateway.beans;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.constant.LogoPaths;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
@@ -12,8 +11,17 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.CreatePaymentRequest;
 import org.openapitools.client.model.CreatePaymentResponse;
+import org.openapitools.client.model.Esito;
 import org.openapitools.client.model.PaymentChannel;
 import org.openapitools.client.model.ResponseURLs;
+import org.openapitools.client.model.DetailsPaymentResponse;
+import org.openapitools.client.model.RefundPaymentResponse;
+import org.openapitools.client.model.RefundPaymentRequest;
+import org.openapitools.client.model.EsitoStorno;
+import org.openapitools.client.model.DetailsPaymentRequest;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Objects;
 
@@ -200,7 +208,7 @@ public class ValidBeans {
         if (isError) {
             postePayAuthResponse.setError(errorMessage);
         } else {
-            postePayAuthResponse.setUrlRedirect("${postepay.pgs.response.urlredirect}8d8b30e3-de52-4f1c-a71c-9905a8043dac");
+            postePayAuthResponse.setUrlRedirect("${postepay.pgs.response.urlredirect}");
         }
 
         return postePayAuthResponse;
@@ -240,9 +248,25 @@ public class ValidBeans {
         paymentRequestEntity.setMdcInfo(null);
         paymentRequestEntity.setResourcePath(null);
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
-        paymentRequestEntity.setResourcePath(LogoPaths.POSTEPAY_LOGO_PATH);
+        paymentRequestEntity.setResourcePath("${postepay.logo.url}");
+        paymentRequestEntity.setIsOnboarding(false);
         return paymentRequestEntity;
+ }
 
+    public static PaymentRequestEntity paymentRequestEntityOnboardingFalse(PostePayAuthRequest postePayAuthRequest, Boolean authorizationOutcome, String clientId) {
+        PaymentRequestEntity  paymentRequestEntity = paymentRequestEntity(postePayAuthRequest, authorizationOutcome, clientId);
+        paymentRequestEntity.setIsOnboarding(false);
+        return paymentRequestEntity;
+    }
+
+        public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
+        PaymentRequestEntity paymentRequestEntity = paymentRequestEntity(null, true, clientId);
+        paymentRequestEntity.setAuthorizationCode(authorizationCode);
+        paymentRequestEntity.setIsRefunded(isRefunded);
+        if (changeRequestEndPoint){
+            paymentRequestEntity.setRequestEndpoint("/invalidEndpoint");
+        }
+        return paymentRequestEntity;
 
     }
 
@@ -253,7 +277,7 @@ public class ValidBeans {
         postePayPollingResponse.setAuthOutcome(OutcomeEnum.OK);
         postePayPollingResponse.setClientResponseUrl("www.clientResponseUrl.com");
         postePayPollingResponse.setError(StringUtils.EMPTY);
-        postePayPollingResponse.setLogoResourcePath(LogoPaths.POSTEPAY_LOGO_PATH);
+        postePayPollingResponse.setLogoResourcePath("${postepay.logo.url}");
         return postePayPollingResponse;
     }
 
@@ -267,6 +291,65 @@ public class ValidBeans {
         postePayPollingResponse.setError(error);
         return postePayPollingResponse;
     }
+
+
+    public static ResponseEntity<PostePayRefundResponse> postePayRefundResponseResponseEntity(String requestId, String paymentId, String refundOutcome){
+
+        PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
+        postePayRefundResponse.setRequestId(requestId);
+        postePayRefundResponse.setPaymentId(paymentId);
+        postePayRefundResponse.setRefundOutcome(refundOutcome);
+
+        return ResponseEntity.status(HttpStatus.OK).body(postePayRefundResponse);
+
+    }
+
+    public static PostePayRefundResponse postePayRefundResponse(String requestId, String paymentId, String refundOutcome, String error){
+        PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
+        postePayRefundResponse.setRequestId(requestId);
+        postePayRefundResponse.setPaymentId(paymentId);
+        postePayRefundResponse.setRefundOutcome(refundOutcome);
+        postePayRefundResponse.setError(error);
+
+        return postePayRefundResponse;
+
+    }
+
+    public static DetailsPaymentResponse detailsPaymentResponse(Esito esito){
+        DetailsPaymentResponse detailsPaymentResponse = new DetailsPaymentResponse();
+        detailsPaymentResponse.setStatus(esito);
+        return detailsPaymentResponse;
+
+    }
+
+    public static RefundPaymentResponse refundPaymentResponse(EsitoStorno esitoStorno){
+        RefundPaymentResponse refundPaymentResponse = new RefundPaymentResponse();
+        refundPaymentResponse.setTransactionResult(esitoStorno);
+        return refundPaymentResponse;
+    }
+
+    public static RefundPaymentRequest refundPaymentRequest(String authNumber){
+        RefundPaymentRequest refundPaymentRequest = new RefundPaymentRequest();
+        refundPaymentRequest.setMerchantId("merchantId");
+        refundPaymentRequest.setShopId("shopIdTmp_APP");
+        refundPaymentRequest.setShopTransactionId("1");
+        refundPaymentRequest.setCurrency("978");
+        refundPaymentRequest.setPaymentID("1234");
+        refundPaymentRequest.setAuthNumber(authNumber);
+
+        return refundPaymentRequest;
+    }
+
+
+    public static DetailsPaymentRequest detailsPaymentRequest(){
+        DetailsPaymentRequest detailsPaymentRequest = new DetailsPaymentRequest();
+        detailsPaymentRequest.setPaymentID("1234");
+        detailsPaymentRequest.setShopTransactionId("1");
+        detailsPaymentRequest.setShopId("shopIdTmp_APP");
+
+        return detailsPaymentRequest;
+   }
+
 }
 
 

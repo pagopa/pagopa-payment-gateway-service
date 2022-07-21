@@ -185,7 +185,7 @@ public class ValidBeans {
     public static PostePayAuthRequest postePayAuthRequest(boolean isValid) {
         PostePayAuthRequest postePayAuthRequest = new PostePayAuthRequest();
         postePayAuthRequest.setGrandTotal(1234);
-        postePayAuthRequest.setIdTransaction(isValid ? 1L : null);
+        postePayAuthRequest.setIdTransaction(isValid ? "1" : null);
         postePayAuthRequest.setName("Mario Rossi");
         postePayAuthRequest.setEmailNotice("mario.rossi@gmail.com");
         postePayAuthRequest.setDescription("Pagamento bollo auto");

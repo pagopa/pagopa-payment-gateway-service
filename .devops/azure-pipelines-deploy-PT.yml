@@ -15,7 +15,7 @@ variables:
   vmImageNameDefault: 'ubuntu-latest'
   poolNamePT: 'pm-agent-pool-uat'
   azureSubscriptionPT: 'Pm-Subscription-uat'
-  KeyVaultNamePT: 'u87-kmn-pm-pt-pci'
+  KeyVaultNamePT: 'u87-kmn-pm-uat-pci'
   definitionId: 113
 
 stages:

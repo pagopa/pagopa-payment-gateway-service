@@ -11,7 +11,7 @@ public class PostePayAuthRequest {
     private int grandTotal;
 
     @JsonProperty(required = true)
-    private Long idTransaction;
+    private String idTransaction;
 
     private String name;
     private String emailNotice;

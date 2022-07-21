@@ -185,7 +185,7 @@ public class ValidBeans {
     public static PostePayAuthRequest postePayAuthRequest(boolean isValid) {
         PostePayAuthRequest postePayAuthRequest = new PostePayAuthRequest();
         postePayAuthRequest.setGrandTotal(1234);
-        postePayAuthRequest.setIdTransaction(isValid ? 1L : null);
+        postePayAuthRequest.setIdTransaction(isValid ? "1" : null);
         postePayAuthRequest.setName("Mario Rossi");
         postePayAuthRequest.setEmailNotice("mario.rossi@gmail.com");
         postePayAuthRequest.setDescription("Pagamento bollo auto");
@@ -241,7 +241,7 @@ public class ValidBeans {
         paymentRequestEntity.setIsProcessed(false);
         paymentRequestEntity.setCorrelationId("1234");
         paymentRequestEntity.setAuthorizationCode(null);
-        paymentRequestEntity.setIdTransaction(1L);
+        paymentRequestEntity.setIdTransaction("1");
         paymentRequestEntity.setGuid("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         paymentRequestEntity.setId(null);
         paymentRequestEntity.setClientId(clientId);

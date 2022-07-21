@@ -89,7 +89,7 @@ stages:
                     moduleName: 'PTG'
                     artifactType: 'WAR'
                     azureSubscription: $(azureSubscriptionPT)
-                    webAppName: '$(payment-gateway-appsrv-pt)'
+                    webAppName: '$(payment-gateway-appsrv-prf)'
                     workingDir: '$(Pipeline.Workspace)'
                     fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
                     deployToSlotOrASE: true

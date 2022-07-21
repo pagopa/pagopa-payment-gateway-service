@@ -10,6 +10,7 @@ import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.StatusErrorCodeOutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
@@ -109,8 +110,12 @@ public class PostePayPaymentTransactionsController {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
 
             String authCode = authMessage.getAuthCode();
-            if (!requestEntity.getIsOnboarding()) {
-                String closePaymentResult = restapiCdClient.callUpdatePostePayTransaction(requestEntity.getIdTransaction(), authCode, correlationId);
+            if (requestEntity.getIsOnboarding()) {
+                log.info("This is an onboarding payment: skipping call to PATCH API on PM");
+            } else {
+                Long transactionStatus = isAuthOutcomeOk ? TransactionStatusEnum.TX_AUTHORIZED_BANCOMAT_PAY.getId() : TransactionStatusEnum.TX_REFUSED.getId();
+                PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(transactionStatus, authCode, correlationId);
+                String closePaymentResult = restapiCdClient.callUpdatePostePayTransaction(Long.valueOf(requestEntity.getIdTransaction()), postePayPatchRequest);
                 log.info("Response from PATCH updateTransaction for correlation-id: " + correlationId + " " + closePaymentResult);
             }
             requestEntity.setIsProcessed(true);

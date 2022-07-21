@@ -12,6 +12,7 @@ import it.pagopa.pm.gateway.constant.Headers;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.PostePayAuthRequest;
+import it.pagopa.pm.gateway.dto.PostePayPatchRequest;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
@@ -324,9 +325,10 @@ public class PostePayPaymentControllerTest {
         final String correlationID = "correlation-ID";
 
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
+        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
-        given(restapiCdClient.callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID))
+        given(restapiCdClient.callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest))
                 .willReturn(OutcomeEnum.OK.toString());
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -397,10 +399,11 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse();
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
+        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
 
         doThrow(FeignException.class)
                 .when(restapiCdClient)
-                .callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
+                .callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 
@@ -426,10 +429,11 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse();
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
+        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
 
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)
-                .callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
+                .callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 

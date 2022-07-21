@@ -350,6 +350,19 @@ public class ValidBeans {
         return detailsPaymentRequest;
    }
 
+   public static PostePayPatchRequest postePayPatchRequest(){
+        PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, "authCode", "correlation-ID");
+        return postePayPatchRequest;
+
+   }
+
+
+
+
+
+
+
+
 }
 
 

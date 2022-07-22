@@ -60,11 +60,10 @@ public class ValidBeans {
         return response;
     }
 
-    public static BPayPaymentResponseEntity bPayPaymentResponseEntityToReturn() {
-        BPayPaymentResponseEntity entity = new BPayPaymentResponseEntity();
-        entity.setIdPagoPa(1L);
-        entity.setOutcome(true);
-        return entity;
+    public static BPayOutcomeResponse bPayPaymentOutcomeResponseToReturn() {
+        BPayOutcomeResponse response = new BPayOutcomeResponse();
+        response.setOutcome(true);
+        return response;
     }
 
     public static BPayPaymentResponseEntity bPayPaymentResponseEntityToSave() {

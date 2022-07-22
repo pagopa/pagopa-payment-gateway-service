@@ -122,7 +122,7 @@ public class PostePayPaymentControllerTest {
                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse(PaymentChannel.APP.getValue(), false, null))));
-            verify(paymentRequestRepository).findByIdTransaction(1L);
+            verify(paymentRequestRepository).findByIdTransaction("1");
             verify(paymentRequestRepository).save(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, PaymentChannel.APP.getValue()));
         }
     }
@@ -150,7 +150,7 @@ public class PostePayPaymentControllerTest {
                     .content(mapper.writeValueAsString(postePayAuthRequest)).contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("WEB", false, null))));
-            verify(paymentRequestRepository).findByIdTransaction(1L);
+            verify(paymentRequestRepository).findByIdTransaction("1");
             verify(paymentRequestRepository).save(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, "WEB"));
         }
     }
@@ -181,7 +181,7 @@ public class PostePayPaymentControllerTest {
     public void givenRequestWithAlreadyProcessedTransaction_shouldReturnAlreadyProcessedTransactionResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
 
-        given(paymentRequestRepository.findByIdTransaction(1L)).
+        given(paymentRequestRepository.findByIdTransaction("1")).
                 willReturn(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, "APP"));
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -200,7 +200,7 @@ public class PostePayPaymentControllerTest {
         CreatePaymentRequest createPaymentRequest = ValidBeans.createPaymentRequest(PaymentChannel.APP);
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
 
-        given(paymentRequestRepository.findByIdTransaction(1L)).willReturn(null);
+        given(paymentRequestRepository.findByIdTransaction("1")).willReturn(null);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(microsoftAzureLoginResponse);
         given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
 
@@ -224,7 +224,7 @@ public class PostePayPaymentControllerTest {
         CreatePaymentRequest createPaymentRequest = ValidBeans.createPaymentRequest(PaymentChannel.APP);
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
 
-        given(paymentRequestRepository.findByIdTransaction(1L)).willReturn(null);
+        given(paymentRequestRepository.findByIdTransaction("1")).willReturn(null);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(microsoftAzureLoginResponse);
         given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
 
@@ -249,7 +249,7 @@ public class PostePayPaymentControllerTest {
         CreatePaymentRequest createPaymentRequest = ValidBeans.createPaymentRequest(PaymentChannel.APP);
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
 
-        given(paymentRequestRepository.findByIdTransaction(1L)).willReturn(null);
+        given(paymentRequestRepository.findByIdTransaction("1")).willReturn(null);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(microsoftAzureLoginResponse);
         given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
 
@@ -326,7 +326,7 @@ public class PostePayPaymentControllerTest {
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
-        given(restapiCdClient.callClosePayment(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID))
+        given(restapiCdClient.callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID))
                 .willReturn(OutcomeEnum.OK.toString());
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -400,7 +400,7 @@ public class PostePayPaymentControllerTest {
 
         doThrow(FeignException.class)
                 .when(restapiCdClient)
-                .callClosePayment(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
+                .callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 
@@ -429,7 +429,7 @@ public class PostePayPaymentControllerTest {
 
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)
-                .callClosePayment(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
+                .callUpdatePostePayTransaction(paymentRequestEntity.getIdTransaction(), authMessage.getAuthCode(), correlationID);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 

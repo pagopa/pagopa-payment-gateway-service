@@ -98,8 +98,8 @@ public class PostePayPaymentTransactionsController {
     private Environment environment;
 
     @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
-    public ACKMessage updatePostePayTransaction(@RequestBody AuthMessage authMessage,
-                                                @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
+    public ResponseEntity<ACKMessage> updatePostePayTransaction(@RequestBody AuthMessage authMessage,
+                                                                @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();
         log.info("START - Update PostePay transaction request for correlation-id: " + correlationId + " - authorization: " + authMessage);
         validatePutRequestEntryParams(authMessage, correlationId);
@@ -124,14 +124,14 @@ public class PostePayPaymentTransactionsController {
             paymentRequestRepository.save(requestEntity);
         } catch (FeignException fe) {
             log.error("A feign exception occurred while calling restapi-cd updateTransaction PATCH API", fe);
-            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ACKMessage(OutcomeEnum.KO));
         } catch (Exception e) {
             log.error("An exception occurred while calling restapi-cd updateTransaction PATCH API", e);
-            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ACKMessage(OutcomeEnum.KO));
         } finally {
             log.info("END - Update PostePay transaction request for correlation-id: " + correlationId + " - authorization: " + authMessage);
         }
-        return new ACKMessage(OK);
+        return ResponseEntity.status(HttpStatus.OK).body(new ACKMessage(OutcomeEnum.OK));
     }
 
     private void validatePutRequestForEntity(String correlationId, PaymentRequestEntity requestEntity) throws RestApiException {

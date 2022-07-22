@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.*;
 import javax.transaction.Transactional;
 import java.lang.Exception;
 import java.net.SocketTimeoutException;
@@ -44,8 +45,12 @@ public class BancomatPayPaymentTransactionsController {
     private RestapiCdClientImpl restapiCdClient;
 
     @GetMapping(BPAY_PAYMENT_RESPONSE)
-    public BPayPaymentResponseEntity getBPayPaymentResponse(@RequestParam(ID) Long id) throws RestApiException {
-        return bPayPaymentResponseRepository.findById(id).orElseThrow(() -> new RestApiException(ExceptionsEnum.PAYMENT_RESPONSE_NOT_FOUND));
+    public BPayPaymentResponseEntity getBPayPaymentResponse(@PathVariable Long id) throws RestApiException {
+        try {
+            return bPayPaymentResponseRepository.findByIdPagoPa(id);
+        } catch (NoResultException e) {
+            throw new RestApiException(ExceptionsEnum.PAYMENT_RESPONSE_NOT_FOUND);
+        }
     }
     
     @PutMapping(REQUEST_PAYMENTS_BPAY)

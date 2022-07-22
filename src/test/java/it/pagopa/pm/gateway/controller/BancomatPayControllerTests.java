@@ -10,6 +10,7 @@ import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.ApiPaths;
 import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.BPayRefundRequest;
+import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
@@ -113,10 +114,10 @@ public class BancomatPayControllerTests {
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
                 .header("X-Correlation-ID", "correlationId")
-                .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                .content(mapper.writeValueAsString(ValidBeans.authMessage(OutcomeEnum.OK)))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.ackMessageResponse())));
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.ackMessageResponse(OutcomeEnum.OK))));
         verify(bPayPaymentResponseRepository).findByCorrelationId("correlationId");
         verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave_2());
         verify(restapiCdClient).callTransactionUpdate(1L, ValidBeans.transactionUpdateRequest());
@@ -130,7 +131,7 @@ public class BancomatPayControllerTests {
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
                     .header("X-Correlation-ID", "correlationId")
-                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage(OutcomeEnum.OK)))
                     .contentType(MediaType.APPLICATION_JSON));
         } catch (NestedServletException | JsonProcessingException e) {
             throw (Exception) e.getCause();
@@ -145,7 +146,7 @@ public class BancomatPayControllerTests {
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
                     .header("X-Correlation-ID", "correlationId")
-                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage(OutcomeEnum.OK)))
                     .contentType(MediaType.APPLICATION_JSON));
         } catch (NestedServletException | JsonProcessingException e) {
             throw (Exception) e.getCause();
@@ -164,7 +165,7 @@ public class BancomatPayControllerTests {
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
                     .header("X-Correlation-ID", "correlationId")
-                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage(OutcomeEnum.OK)))
                     .contentType(MediaType.APPLICATION_JSON));
         } catch (NestedServletException | JsonProcessingException e) {
             throw (Exception) e.getCause();
@@ -182,7 +183,7 @@ public class BancomatPayControllerTests {
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
                     .header("X-Correlation-ID", "correlationId")
-                    .content(mapper.writeValueAsString(ValidBeans.authMessage()))
+                    .content(mapper.writeValueAsString(ValidBeans.authMessage(OutcomeEnum.OK)))
                     .contentType(MediaType.APPLICATION_JSON));
         } catch (NestedServletException | JsonProcessingException e) {
             throw (Exception) e.getCause();

@@ -102,18 +102,17 @@ public class ValidBeans {
         return entity;
     }
 
-    public static AuthMessage authMessage() {
+    public static AuthMessage authMessage(OutcomeEnum outcomeEnum) {
         AuthMessage authMessage = new AuthMessage();
         authMessage.setAuthCode("authCode");
-        authMessage.setAuthOutcome(OutcomeEnum.OK);
+        authMessage.setAuthOutcome(outcomeEnum);
         return authMessage;
     }
 
-    public static ACKMessage ackMessageResponse() {
+    public static ACKMessage ackMessageResponse(OutcomeEnum outcomeEnum) {
         ACKMessage ackMessage = new ACKMessage();
-        ackMessage.setOutcome(OutcomeEnum.OK);
+        ackMessage.setOutcome(outcomeEnum);
         return ackMessage;
-
     }
 
     public static TransactionUpdateRequest transactionUpdateRequest() {
@@ -349,6 +348,19 @@ public class ValidBeans {
 
         return detailsPaymentRequest;
    }
+
+   public static PostePayPatchRequest postePayPatchRequest(){
+        PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, "authCode", "correlation-ID");
+        return postePayPatchRequest;
+
+   }
+
+
+
+
+
+
+
 
 }
 

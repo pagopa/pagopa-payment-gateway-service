@@ -74,7 +74,7 @@ stages:
                     runBranch: 'refs/heads/releases/${{parameters.buildVersion}}'
                     allowPartiallySucceededBuilds: true
                     artifact: 'Build PTG ${{parameters.buildVersion}}'
-                    path: '$(Pipeline.Workspace)'
+                    path: '$(Pipeline.Workspace)/${{parameters.version}}-liquibase-script'
                 - template: 'templates/check-files.yml'
                   parameters:
                     buildVersion: '${{parameters.buildVersion}}'

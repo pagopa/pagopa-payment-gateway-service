@@ -7,6 +7,6 @@ import lombok.*;
 @AllArgsConstructor
 public class BPayOutcomeResponse {
 
-    private Boolean outcome;
+    private boolean outcome;
 
 }

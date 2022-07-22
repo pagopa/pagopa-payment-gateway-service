@@ -38,7 +38,7 @@ public class RestapiCdClientImpl {
     }
 
     public String callUpdatePostePayTransaction(Long id, PostePayPatchRequest postePayPatchRequest) {
-        log.info("Calling Payment Manager's closePayment for transaction " + id);
+        log.info("Calling Payment Manager's updatePostePayTransaction for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
         return restapiCdClient.updatePostePayTransaction(id, headerMap, new PostePayPatchRequestData(postePayPatchRequest));
     }

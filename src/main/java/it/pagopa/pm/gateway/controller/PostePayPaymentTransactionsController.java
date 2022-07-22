@@ -98,8 +98,8 @@ public class PostePayPaymentTransactionsController {
     private Environment environment;
 
     @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
-    public ACKMessage closePayment(@RequestBody AuthMessage authMessage,
-                                   @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
+    public ACKMessage updatePostePayTransaction(@RequestBody AuthMessage authMessage,
+                                                @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();
         log.info("START - Update PostePay transaction request for correlation-id: " + correlationId + " - authorization: " + authMessage);
         validatePutRequestEntryParams(authMessage, correlationId);

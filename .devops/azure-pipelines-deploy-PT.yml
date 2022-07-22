@@ -93,7 +93,7 @@ stages:
                     workingDir: '$(Pipeline.Workspace)'
                     fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
                     deployToSlotOrASE: true
-                    resourceGroupName: U87-PM-AppServices-pci-pft
+                    resourceGroupName: U87-PM-AppServices-pci-prf
                     slotName: release
                 - task: PublishBuildArtifacts@1
                   displayName: Publish Artifact

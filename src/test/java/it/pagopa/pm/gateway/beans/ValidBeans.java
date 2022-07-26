@@ -60,11 +60,10 @@ public class ValidBeans {
         return response;
     }
 
-    public static BPayPaymentResponseEntity bPayPaymentResponseEntityToReturn() {
-        BPayPaymentResponseEntity entity = new BPayPaymentResponseEntity();
-        entity.setIdPagoPa(1L);
-        entity.setOutcome(true);
-        return entity;
+    public static BPayOutcomeResponse bPayPaymentOutcomeResponseToReturn() {
+        BPayOutcomeResponse response = new BPayOutcomeResponse();
+        response.setOutcome(true);
+        return response;
     }
 
     public static BPayPaymentResponseEntity bPayPaymentResponseEntityToSave() {
@@ -102,18 +101,17 @@ public class ValidBeans {
         return entity;
     }
 
-    public static AuthMessage authMessage() {
+    public static AuthMessage authMessage(OutcomeEnum outcomeEnum) {
         AuthMessage authMessage = new AuthMessage();
         authMessage.setAuthCode("authCode");
-        authMessage.setAuthOutcome(OutcomeEnum.OK);
+        authMessage.setAuthOutcome(outcomeEnum);
         return authMessage;
     }
 
-    public static ACKMessage ackMessageResponse() {
+    public static ACKMessage ackMessageResponse(OutcomeEnum outcomeEnum) {
         ACKMessage ackMessage = new ACKMessage();
-        ackMessage.setOutcome(OutcomeEnum.OK);
+        ackMessage.setOutcome(outcomeEnum);
         return ackMessage;
-
     }
 
     public static TransactionUpdateRequest transactionUpdateRequest() {
@@ -185,7 +183,7 @@ public class ValidBeans {
     public static PostePayAuthRequest postePayAuthRequest(boolean isValid) {
         PostePayAuthRequest postePayAuthRequest = new PostePayAuthRequest();
         postePayAuthRequest.setGrandTotal(1234);
-        postePayAuthRequest.setIdTransaction(isValid ? 1L : null);
+        postePayAuthRequest.setIdTransaction(isValid ? "1" : null);
         postePayAuthRequest.setName("Mario Rossi");
         postePayAuthRequest.setEmailNotice("mario.rossi@gmail.com");
         postePayAuthRequest.setDescription("Pagamento bollo auto");
@@ -241,7 +239,7 @@ public class ValidBeans {
         paymentRequestEntity.setIsProcessed(false);
         paymentRequestEntity.setCorrelationId("1234");
         paymentRequestEntity.setAuthorizationCode(null);
-        paymentRequestEntity.setIdTransaction(1L);
+        paymentRequestEntity.setIdTransaction("1");
         paymentRequestEntity.setGuid("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         paymentRequestEntity.setId(null);
         paymentRequestEntity.setClientId(clientId);
@@ -349,6 +347,19 @@ public class ValidBeans {
 
         return detailsPaymentRequest;
    }
+
+   public static PostePayPatchRequest postePayPatchRequest(){
+        PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, "authCode", "correlation-ID");
+        return postePayPatchRequest;
+
+   }
+
+
+
+
+
+
+
 
 }
 

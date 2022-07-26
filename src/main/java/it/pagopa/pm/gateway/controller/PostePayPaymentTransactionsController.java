@@ -10,6 +10,7 @@ import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.StatusErrorCodeOutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
@@ -97,8 +98,8 @@ public class PostePayPaymentTransactionsController {
     private Environment environment;
 
     @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
-    public ACKMessage closePayment(@RequestBody AuthMessage authMessage,
-                                   @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
+    public ResponseEntity<ACKMessage> updatePostePayTransaction(@RequestBody AuthMessage authMessage,
+                                                                @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();
         log.info("START - Update PostePay transaction request for correlation-id: " + correlationId + " - authorization: " + authMessage);
         validatePutRequestEntryParams(authMessage, correlationId);
@@ -109,8 +110,12 @@ public class PostePayPaymentTransactionsController {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
 
             String authCode = authMessage.getAuthCode();
-            if (!requestEntity.getIsOnboarding()) {
-                String closePaymentResult = restapiCdClient.callUpdatePostePayTransaction(requestEntity.getIdTransaction(), authCode, correlationId);
+            if (requestEntity.getIsOnboarding()) {
+                log.info("This is an onboarding payment: skipping call to PATCH API on PM");
+            } else {
+                Long transactionStatus = isAuthOutcomeOk ? TransactionStatusEnum.TX_AUTHORIZED_BANCOMAT_PAY.getId() : TransactionStatusEnum.TX_REFUSED.getId();
+                PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(transactionStatus, authCode, correlationId);
+                String closePaymentResult = restapiCdClient.callUpdatePostePayTransaction(Long.valueOf(requestEntity.getIdTransaction()), postePayPatchRequest);
                 log.info("Response from PATCH updateTransaction for correlation-id: " + correlationId + " " + closePaymentResult);
             }
             requestEntity.setIsProcessed(true);
@@ -119,14 +124,14 @@ public class PostePayPaymentTransactionsController {
             paymentRequestRepository.save(requestEntity);
         } catch (FeignException fe) {
             log.error("A feign exception occurred while calling restapi-cd updateTransaction PATCH API", fe);
-            throw new RestApiException(ExceptionsEnum.RESTAPI_CD_CLIENT_ERROR, fe.status());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ACKMessage(OutcomeEnum.KO));
         } catch (Exception e) {
             log.error("An exception occurred while calling restapi-cd updateTransaction PATCH API", e);
-            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ACKMessage(OutcomeEnum.KO));
         } finally {
             log.info("END - Update PostePay transaction request for correlation-id: " + correlationId + " - authorization: " + authMessage);
         }
-        return new ACKMessage(OK);
+        return ResponseEntity.status(HttpStatus.OK).body(new ACKMessage(OutcomeEnum.OK));
     }
 
     private void validatePutRequestForEntity(String correlationId, PaymentRequestEntity requestEntity) throws RestApiException {
@@ -169,7 +174,7 @@ public class PostePayPaymentTransactionsController {
             return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
         }
 
-        Long idTransaction = postePayAuthRequest.getIdTransaction();
+        String idTransaction = postePayAuthRequest.getIdTransaction();
         if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
             return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
@@ -198,7 +203,7 @@ public class PostePayPaymentTransactionsController {
         return createPostePayAuthResponse(clientId, StringUtils.EMPTY, HttpStatus.OK, paymentRequestEntity.getGuid());
     }
 
-    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, Long idTransaction, Boolean isOnboarding) {
+    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, String idTransaction, Boolean isOnboarding) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
@@ -236,7 +241,7 @@ public class PostePayPaymentTransactionsController {
 
     @Async
     private void executePostePayAuthorizationCall(PostePayAuthRequest postePayAuthRequest, String clientId, PaymentRequestEntity paymentRequestEntity, Boolean isOnboarding) throws RestApiException {
-        Long idTransaction = postePayAuthRequest.getIdTransaction();
+        String idTransaction = postePayAuthRequest.getIdTransaction();
         log.info("START - execute PostePay payment authorization request for transaction " + idTransaction);
         String correlationId;
         String authorizationUrl;
@@ -279,7 +284,7 @@ public class PostePayPaymentTransactionsController {
         CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest();
         createPaymentRequest.setMerchantId(configsMap.get(MERCHANT_ID_CONFIG));
         createPaymentRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
-        createPaymentRequest.setShopTransactionId(String.valueOf(postePayAuthRequest.getIdTransaction()));
+        createPaymentRequest.setShopTransactionId(postePayAuthRequest.getIdTransaction());
         createPaymentRequest.setAmount(String.valueOf(postePayAuthRequest.getGrandTotal()));
         createPaymentRequest.setDescription(postePayAuthRequest.getDescription());
         createPaymentRequest.setCurrency(EURO_ISO_CODE);
@@ -525,7 +530,7 @@ public class PostePayPaymentTransactionsController {
         DetailsPaymentRequest detailsPaymentRequest = new DetailsPaymentRequest();
         detailsPaymentRequest.setPaymentID(paymentRequestEntity.getCorrelationId());
         detailsPaymentRequest.setShopId(shopId);
-        detailsPaymentRequest.setShopTransactionId(String.valueOf(paymentRequestEntity.getIdTransaction()));
+        detailsPaymentRequest.setShopTransactionId(paymentRequestEntity.getIdTransaction());
         return detailsPaymentRequest;
 
     }
@@ -536,7 +541,7 @@ public class PostePayPaymentTransactionsController {
         RefundPaymentRequest refundPaymentRequest = new RefundPaymentRequest();
         refundPaymentRequest.setMerchantId(configValues.get(MERCHANT_ID_CONFIG));
         refundPaymentRequest.setShopId(configValues.get(SHOP_ID_CONFIG));
-        refundPaymentRequest.setShopTransactionId(String.valueOf(requestEntity.getIdTransaction()));
+        refundPaymentRequest.setShopTransactionId(requestEntity.getIdTransaction());
         refundPaymentRequest.setCurrency(EURO_ISO_CODE);
         refundPaymentRequest.setPaymentID(requestEntity.getCorrelationId());
         refundPaymentRequest.setAuthNumber(requestEntity.getAuthorizationCode());

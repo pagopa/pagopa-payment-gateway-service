@@ -166,18 +166,18 @@ public class PostePayPaymentTransactionsController {
 
         if (ObjectUtils.anyNull(postePayAuthRequest, postePayAuthRequest.getIdTransaction()) || postePayAuthRequest.getGrandTotal() == 0) {
             log.error("Error: mandatory request parameters are missing");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null);
+            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null, null);
         }
 
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.error("Client id " + clientId + " is not valid");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
+            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null, null);
         }
 
         String idTransaction = postePayAuthRequest.getIdTransaction();
         if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
+            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null, null);
         }
 
         log.info(String.format("Requesting authorization from %s channel for transaction %s", clientId, idTransaction));
@@ -189,18 +189,18 @@ public class PostePayPaymentTransactionsController {
             paymentRequestEntity.setJsonRequest(authRequestJson);
         } catch (JsonProcessingException e) {
             log.error(SERIALIZATION_ERROR_MSG, e);
-            return createPostePayAuthResponse(clientId, SERIALIZATION_ERROR_MSG, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createPostePayAuthResponse(clientId, SERIALIZATION_ERROR_MSG, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
         }
 
         try {
             executePostePayAuthorizationCall(postePayAuthRequest, clientId, paymentRequestEntity, isOnboarding);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + idTransaction, e);
-            return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
         }
 
         log.info("END - POST request-payments/postepay for idTransaction: " + idTransaction);
-        return createPostePayAuthResponse(clientId, StringUtils.EMPTY, HttpStatus.OK, paymentRequestEntity.getGuid());
+        return createPostePayAuthResponse(clientId, StringUtils.EMPTY, HttpStatus.OK, paymentRequestEntity.getGuid(), paymentRequestEntity.getCorrelationId());
     }
 
     private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, String idTransaction, Boolean isOnboarding) {
@@ -328,10 +328,11 @@ public class PostePayPaymentTransactionsController {
         return configsMap;
     }
 
-    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String errorMessage, HttpStatus status, String requestId) {
+    private ResponseEntity<PostePayAuthResponse> createPostePayAuthResponse(String channel, String errorMessage, HttpStatus status, String requestId, String correlationId) {
         PostePayAuthResponse postePayAuthResponse = new PostePayAuthResponse();
         postePayAuthResponse.setChannel(channel);
         postePayAuthResponse.setRequestId(requestId);
+        postePayAuthResponse.setCorrelationId(correlationId);
         if (StringUtils.isEmpty(errorMessage)) {
             String urlRedirect = String.format(PGS_RESPONSE_URL_REDIRECT, requestId, Scopes.POSTEPAY_SCOPE);
             postePayAuthResponse.setUrlRedirect(urlRedirect);

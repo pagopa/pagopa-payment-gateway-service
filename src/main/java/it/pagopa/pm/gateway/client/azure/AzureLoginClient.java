@@ -58,7 +58,7 @@ public class AzureLoginClient {
         }
     }
 
-    public MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(MultiValueMap<String, String> body, String url) {
+    private MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(MultiValueMap<String, String> body, String url) {
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse;
         try {
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, createHttpHeadersAzureLoginRequest());

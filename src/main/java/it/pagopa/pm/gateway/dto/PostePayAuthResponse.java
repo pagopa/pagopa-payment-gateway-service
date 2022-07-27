@@ -12,6 +12,6 @@ public class PostePayAuthResponse {
    String urlRedirect;
    String error;
    String requestId;
-
+   String correlationId;
 
 }

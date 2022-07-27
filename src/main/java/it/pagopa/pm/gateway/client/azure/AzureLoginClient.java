@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.client.azure;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -12,37 +13,44 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.*;
+
+import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
+
 @Slf4j
 public class AzureLoginClient {
 
-    private final static String MICROSOFT_AZURE_LOGIN_GRANT_TYPE = "client_credentials";
-    private static final String CLIENT_ID_PARAMETER = "client_id";
-    private static final String CLIENT_SECRET_PARAMETER = "client_secret";
-    private static final String GRANT_TYPE_PARAMETER = "grant_type";
-    private static final String SCOPE_PARAMETER = "scope";
+    @Value("${azureAuth.client.postepay.config}")
+    private String AZUREAUTH_CLIENT_SPOSTEPAY_CONFIG;
 
-    @Value("${azureAuth.client.postepay.url}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_URL;
+    private final Map<String, String> configValues;
 
-    @Value("${azureAuth.client.postepay.client_id}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID;
+    {
+        configValues =  getConfigValues();
+    }
 
-    @Value("${azureAuth.client.postepay.client_secret}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET;
+    private Map<String, String> getConfigValues() {
+        List<String> listConfig = Arrays.asList(AZUREAUTH_CLIENT_SPOSTEPAY_CONFIG.split(PIPE_SPLIT_CHAR));
+        Map<String, String> configsMap = new HashMap<>();
+        configsMap.put(ENABLED, Objects.nonNull(listConfig.get(0))?listConfig.get(0):"true");
+        configsMap.put(URL, listConfig.get(1));
+        configsMap.put(SCOPE_PARAMETER, listConfig.get(2));
+        configsMap.put(CLIENT_ID_PARAMETER, listConfig.get(3));
+        configsMap.put(CLIENT_SECRET_PARAMETER, listConfig.get(4));
 
-    @Value("${azureAuth.client.postepay.scope}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE;
+        return configsMap;
+    }
 
-    @Value("${azureAuth.client.postepay.enabled:true}")
-    private Boolean MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED;
 
     @Autowired
     private RestTemplate microsoftAzureRestTemplate;
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
-        if (BooleanUtils.isTrue(MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED)) {
-            MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
-            return requestMicrosoftAzureLogin(loginRequest, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
+
+        if (BooleanUtils.isTrue(Boolean.valueOf(configValues.get(ENABLED)))) {
+            MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(configValues.get(CLIENT_ID_PARAMETER),
+                    configValues.get(CLIENT_SECRET_PARAMETER), configValues.get(SCOPE_PARAMETER));
+            return requestMicrosoftAzureLogin(loginRequest, configValues.get(URL));
         } else {
             // this is to avoid call to AZURE login if not needed, for local environment
             log.warn("Azure authentication phase bypassed");
@@ -50,7 +58,7 @@ public class AzureLoginClient {
         }
     }
 
-    private MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(MultiValueMap<String, String> body, String url) {
+    public MicrosoftAzureLoginResponse requestMicrosoftAzureLogin(MultiValueMap<String, String> body, String url) {
         MicrosoftAzureLoginResponse microsoftAzureLoginResponse;
         try {
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, createHttpHeadersAzureLoginRequest());

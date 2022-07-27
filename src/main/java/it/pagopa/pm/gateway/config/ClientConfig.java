@@ -27,7 +27,9 @@ import org.springframework.ws.transport.http.HttpUrlConnectionMessageSender;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.time.Duration;
-import java.util.Objects;
+import java.util.*;
+
+import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 
 @Slf4j
 @Configuration
@@ -36,26 +38,45 @@ public class ClientConfig {
 
     private static final String HTTPS_PROXY_HOST_PROPERTY = "https.proxyHost";
     private static final String HTTPS_PROXY_PORT_PROPERTY = "https.proxyPort";
-    @Value("${bancomatPay.client.url}")
-    private String BPAY_CLIENT_URL;
-
-    @Value("${bancomatPay.client.timeout.ms:5000}")
-    private int BPAY_CLIENT_TIMEOUT_MS;
-
-    @Value("${azureAuth.client.maxTotal:100}")
-    private int AZURE_CLIENT_MAX_TOTAL;
-
-    @Value("${azureAuth.client.maxPerRoute:100}")
-    private int AZURE_CLIENT_MAX_PER_ROUTE;
-
-    @Value("${azureAuth.client.timeout.ms:5000}")
-    private int AZURE_CLIENT_TIMEOUT;
 
     @Value("${postepay.client.url}")
     private String POSTEPAY_CLIENT_URL;
 
     @Value("${postepay.client.timeout.ms:5000}")
     private int POSTEPAY_CLIENT_TIMEOUT;
+
+    @Value("${azureAuth.client.config")
+    private String AZUREAUTH_CLIENT_CONFIG;
+
+    @Value("${bancomatPay.client.config}")
+    private String BANCOMAT_CLIENT_CONFIG;
+
+    private final Map<String, String> azureAuthClientConfigValues;
+    private final Map<String, String> bancomatClientConfigValues;
+
+    {
+        azureAuthClientConfigValues = getAzureAuthClientConfigValues();
+        bancomatClientConfigValues = getBancomatClientConfigValues();
+    }
+
+    private Map<String, String> getAzureAuthClientConfigValues() {
+        List<String> listConfig = Arrays.asList(AZUREAUTH_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
+        Map<String, String> configsMap = new HashMap<>();
+        configsMap.put(MAX_TOTAL, listConfig.get(0));
+        configsMap.put(MAX_PER_ROUTE, listConfig.get(1));
+        configsMap.put(TIMEOUT_MS, listConfig.get(2));
+
+        return configsMap;
+    }
+
+    private Map<String, String> getBancomatClientConfigValues() {
+        List<String> listConfig = Arrays.asList(BANCOMAT_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
+        Map<String, String> configsMap = new HashMap<>();
+        configsMap.put(URL, listConfig.get(4));
+        configsMap.put(TIMEOUT_MS, listConfig.get(5));
+
+        return configsMap;
+    }
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -86,33 +107,36 @@ public class ClientConfig {
 
     @Bean
     public WebServiceTemplate bancomatPayWebServiceTemplate() {
+       String url = bancomatClientConfigValues.get(URL);
+
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
-        webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
+        webServiceTemplate.setDefaultUri(url);
         for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders()) {
-            Duration durationTimeout = Duration.ofMillis(BPAY_CLIENT_TIMEOUT_MS);
+            Duration durationTimeout = Duration.ofMillis(Long.parseLong(bancomatClientConfigValues.get(TIMEOUT_MS)));
             if (sender instanceof HttpUrlConnectionMessageSender) {
                 ((HttpUrlConnectionMessageSender) sender).setConnectionTimeout(durationTimeout);
                 ((HttpUrlConnectionMessageSender) sender).setReadTimeout(durationTimeout);
             }
         }
-        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BPAY_CLIENT_URL);
+        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + url);
         return webServiceTemplate;
     }
 
     @Bean
     public RestTemplate microsoftAzureRestTemplate() {
+
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
                 new HttpComponentsClientHttpRequestFactory();
         httpComponentsClientHttpRequestFactory.setHttpClient(
                 HttpClientBuilder.create()
                         .setProxy(createProxy(this.getClass().getName()))
                         .setConnectionManager(createConnectionManager(
-                                AZURE_CLIENT_MAX_TOTAL,
-                                AZURE_CLIENT_MAX_PER_ROUTE))
+                                Integer.parseInt(azureAuthClientConfigValues.get(MAX_TOTAL)),
+                                Integer.parseInt(azureAuthClientConfigValues.get(MAX_PER_ROUTE))))
                         .setDefaultRequestConfig(createRequestConfig(
-                                AZURE_CLIENT_TIMEOUT))
+                                Integer.parseInt(azureAuthClientConfigValues.get(TIMEOUT_MS))))
                         .build());
         return new RestTemplate(httpComponentsClientHttpRequestFactory);
     }

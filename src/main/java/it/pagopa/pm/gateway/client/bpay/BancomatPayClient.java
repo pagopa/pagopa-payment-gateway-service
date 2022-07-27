@@ -1,15 +1,22 @@
 package it.pagopa.pm.gateway.client.bpay;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.BPayRefundRequest;
 import it.pagopa.pm.gateway.utils.ClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 
 @Slf4j
 public class BancomatPayClient {
@@ -17,16 +24,28 @@ public class BancomatPayClient {
     @Autowired
     private WebServiceTemplate webServiceTemplate;
 
-    @Value("${bancomatPay.client.group.code}")
-    public String GROUP_CODE;
-    @Value("${bancomatPay.client.institute.code}")
-    public String INSTITUTE_CODE;
-    @Value("${bancomatPay.client.tag}")
-    public String TAG;
-    @Value("${bancomatPay.client.token}")
-    public String TOKEN;
-
     private final ObjectFactory objectFactory = new ObjectFactory();
+
+    private final  Map<String, String> configValues;
+
+    {
+        configValues = getConfigValues();
+    }
+
+    @Value("${bancomatPay.client.config}")
+    private String BANCOMAT_CLIENT_CONFIG;
+
+    private Map<String, String> getConfigValues() {
+        List<String> listConfig = Arrays.asList(BANCOMAT_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
+        Map<String, String> configsMap = new HashMap<>();
+        configsMap.put(GROUP_CODE, listConfig.get(0));
+        configsMap.put(INSTITUTE_CODE, listConfig.get(1));
+        configsMap.put(TAG, listConfig.get(2));
+        configsMap.put(TOKEN, listConfig.get(3));
+
+        return configsMap;
+    }
+
 
     public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) {
         log.info("START sendPaymentRequest");
@@ -39,7 +58,7 @@ public class BancomatPayClient {
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(request.getAmount()));
         richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getEncryptedTelephoneNumber());
         richiestaPagamentoPagoPaVO.setCausale(request.getSubject());
-        richiestaPagamentoPagoPaVO.setTag(TAG);
+        richiestaPagamentoPagoPaVO.setTag(configValues.get(TAG));
         requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
         log.info("Payment request to be sent to BPay: " + inserimentoRichiestaPagamentoPagoPa);
@@ -71,12 +90,12 @@ public class BancomatPayClient {
     private ContestoVO createContesto(String guid, String language) {
         ContestoVO contestoVO = new ContestoVO();
         contestoVO.setGuid(guid);
-        contestoVO.setToken(TOKEN);
+        contestoVO.setToken(configValues.get(TOKEN));
         contestoVO.setLingua(LinguaEnum.fromValue(ClientUtils.getLanguageCode(language)));
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();
         utenteVO.setCodUtente(null);
-        utenteVO.setCodGruppo(GROUP_CODE);
-        utenteVO.setCodIstituto(INSTITUTE_CODE);
+        utenteVO.setCodGruppo(configValues.get(GROUP_CODE));
+        utenteVO.setCodIstituto(configValues.get(INSTITUTE_CODE));
         contestoVO.setUtenteAttivo(utenteVO);
         return contestoVO;
     }

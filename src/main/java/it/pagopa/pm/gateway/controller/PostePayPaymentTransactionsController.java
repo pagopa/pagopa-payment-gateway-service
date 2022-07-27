@@ -71,7 +71,6 @@ public class PostePayPaymentTransactionsController {
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
-    private static final String PIPE_SPLIT_CHAR = "\\|";
 
     @Value("${postepay.pgs.response.urlredirect}")
     private String PGS_RESPONSE_URL_REDIRECT;

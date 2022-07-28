@@ -2,6 +2,8 @@ package it.pagopa.pm.gateway.config;
 
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
+import it.pagopa.pm.gateway.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -13,12 +15,15 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.HttpHost;
 import org.openapitools.client.ApiClient;
 import org.openapitools.client.api.PaymentManagerControllerApi;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.transport.WebServiceMessageSender;
@@ -45,22 +50,19 @@ public class ClientConfig {
     @Value("${postepay.client.timeout.ms:5000}")
     private int POSTEPAY_CLIENT_TIMEOUT;
 
-    @Value("${azureAuth.client.config")
-    private String AZUREAUTH_CLIENT_CONFIG;
+    @Value("${azureAuth.client.config}")
+    private String AZURE_AUTH_CLIENT_CONFIG;
 
     @Value("${bancomatPay.client.config}")
     private String BANCOMAT_CLIENT_CONFIG;
 
-    private final Map<String, String> azureAuthClientConfigValues;
-    private final Map<String, String> bancomatClientConfigValues;
+    private Map<String, String> getAzureAuthClientConfigValues() throws RestApiException {
+        if (StringUtils.isEmpty(AZURE_AUTH_CLIENT_CONFIG)) {
+            log.error("Error while retrieving 'azureAuth.client.config' environment variable. Value is null");
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
 
-    {
-        azureAuthClientConfigValues = getAzureAuthClientConfigValues();
-        bancomatClientConfigValues = getBancomatClientConfigValues();
-    }
-
-    private Map<String, String> getAzureAuthClientConfigValues() {
-        List<String> listConfig = Arrays.asList(AZUREAUTH_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
+        List<String> listConfig = Arrays.asList(AZURE_AUTH_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
         configsMap.put(MAX_TOTAL, listConfig.get(0));
         configsMap.put(MAX_PER_ROUTE, listConfig.get(1));
@@ -69,10 +71,15 @@ public class ClientConfig {
         return configsMap;
     }
 
-    private Map<String, String> getBancomatClientConfigValues() {
+    private Map<String, String> getBancomatClientConfigValues() throws RestApiException {
+        if (StringUtils.isEmpty(BANCOMAT_CLIENT_CONFIG)) {
+            log.error("Error while retrieving 'bancomatPay.client.config' environment variable. Value is null");
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
+
         List<String> listConfig = Arrays.asList(BANCOMAT_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(URL, listConfig.get(4));
+        configsMap.put(BPAY_URL, listConfig.get(4));
         configsMap.put(TIMEOUT_MS, listConfig.get(5));
 
         return configsMap;
@@ -86,28 +93,29 @@ public class ClientConfig {
     }
 
     @Bean
-    public BancomatPayClient bancomatPayClient(Jaxb2Marshaller marshaller) {
+    public BancomatPayClient bancomatPayClient(Jaxb2Marshaller marshaller) throws RestApiException {
         return new BancomatPayClient();
     }
 
     @Bean
-    public AzureLoginClient azureLoginClient() {
+    public AzureLoginClient azureLoginClient() throws RestApiException {
         return new AzureLoginClient();
     }
 
     @Bean
     public PaymentManagerControllerApi postePayControllerApi() {
-  log.info("START postePayControllerApi()");
+        log.info("START postePayControllerApi()");
         ApiClient apiClient = addProxyToApiClient(new ApiClient()
                 .setBasePath(POSTEPAY_CLIENT_URL)
                 .setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
-       log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
+        log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
         return new PaymentManagerControllerApi(apiClient);
     }
 
     @Bean
-    public WebServiceTemplate bancomatPayWebServiceTemplate() {
-       String url = bancomatClientConfigValues.get(URL);
+    public WebServiceTemplate bancomatPayWebServiceTemplate() throws RestApiException {
+        Map<String, String> bancomatClientConfigValues = getBancomatClientConfigValues();
+        String url = bancomatClientConfigValues.get(BPAY_URL);
 
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
@@ -125,7 +133,8 @@ public class ClientConfig {
     }
 
     @Bean
-    public RestTemplate microsoftAzureRestTemplate() {
+    public RestTemplate microsoftAzureRestTemplate() throws RestApiException {
+        Map<String, String> azureAuthClientConfigValues = getAzureAuthClientConfigValues();
 
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
                 new HttpComponentsClientHttpRequestFactory();
@@ -179,4 +188,6 @@ public class ClientConfig {
         }
         return apiClient;
     }
+
+
 }

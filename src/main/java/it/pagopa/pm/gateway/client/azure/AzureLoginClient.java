@@ -1,11 +1,14 @@
 package it.pagopa.pm.gateway.client.azure;
 
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
+import it.pagopa.pm.gateway.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,19 +24,27 @@ import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 public class AzureLoginClient {
 
     @Value("${azureAuth.client.postepay.config}")
-    private String AZUREAUTH_CLIENT_SPOSTEPAY_CONFIG;
+    private static String AZURE_AUTH_CLIENT_POSTEPAY_CONFIG;
+
+    @Autowired
+    private Environment environment;
 
     private final Map<String, String> configValues;
 
-    {
+    public AzureLoginClient() throws RestApiException {
         configValues =  getConfigValues();
     }
 
-    private Map<String, String> getConfigValues() {
-        List<String> listConfig = Arrays.asList(AZUREAUTH_CLIENT_SPOSTEPAY_CONFIG.split(PIPE_SPLIT_CHAR));
+    private Map<String, String> getConfigValues() throws RestApiException {
+        if (StringUtils.isEmpty(AZURE_AUTH_CLIENT_POSTEPAY_CONFIG)) {
+            log.error("Error while retrieving 'azureAuth.client.postepay.config' environment variable. Value is blank");
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
+
+        List<String> listConfig = Arrays.asList(AZURE_AUTH_CLIENT_POSTEPAY_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(ENABLED, Objects.nonNull(listConfig.get(0))?listConfig.get(0):"true");
-        configsMap.put(URL, listConfig.get(1));
+        configsMap.put(IS_AZURE_AUTH_ENABLED, Objects.nonNull(listConfig.get(0))?listConfig.get(0):"true");
+        configsMap.put(AZURE_AUTH_URL, listConfig.get(1));
         configsMap.put(SCOPE_PARAMETER, listConfig.get(2));
         configsMap.put(CLIENT_ID_PARAMETER, listConfig.get(3));
         configsMap.put(CLIENT_SECRET_PARAMETER, listConfig.get(4));
@@ -47,10 +58,10 @@ public class AzureLoginClient {
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
 
-        if (BooleanUtils.isTrue(Boolean.valueOf(configValues.get(ENABLED)))) {
+        if (BooleanUtils.isTrue(Boolean.valueOf(configValues.get(IS_AZURE_AUTH_ENABLED)))) {
             MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(configValues.get(CLIENT_ID_PARAMETER),
                     configValues.get(CLIENT_SECRET_PARAMETER), configValues.get(SCOPE_PARAMETER));
-            return requestMicrosoftAzureLogin(loginRequest, configValues.get(URL));
+            return requestMicrosoftAzureLogin(loginRequest, configValues.get(AZURE_AUTH_URL));
         } else {
             // this is to avoid call to AZURE login if not needed, for local environment
             log.warn("Azure authentication phase bypassed");
@@ -85,4 +96,8 @@ public class AzureLoginClient {
         requestBody.add(SCOPE_PARAMETER, scope);
         return requestBody;
     }
+
+
 }
+
+

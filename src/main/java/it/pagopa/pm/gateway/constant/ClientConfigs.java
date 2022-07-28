@@ -1,12 +1,6 @@
 package it.pagopa.pm.gateway.constant;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Component
 public class ClientConfigs {
@@ -21,16 +15,17 @@ public class ClientConfigs {
     public static final String INSTITUTE_CODE = "instituteCode";
     public static final String TAG = "tag";
     public static final String TOKEN = "token";
-    public static final String URL = "url";
+    public static final String BPAY_URL = "url";
     public static final String TIMEOUT_MS = "timeoutMs";
     public final static String MICROSOFT_AZURE_LOGIN_GRANT_TYPE = "client_credentials";
     public static final String CLIENT_ID_PARAMETER = "client_id";
     public static final String CLIENT_SECRET_PARAMETER = "client_secret";
     public static final String GRANT_TYPE_PARAMETER = "grant_type";
     public static final String SCOPE_PARAMETER = "scope";
-    public static final String ENABLED = "enabled";
+    public static final String IS_AZURE_AUTH_ENABLED = "azure_auth_enabled";
     public static final String MAX_TOTAL = "max_total";
     public static final String MAX_PER_ROUTE = "max_per_route";
+    public static final String AZURE_AUTH_URL = "azure_auth_url";
 
 
 

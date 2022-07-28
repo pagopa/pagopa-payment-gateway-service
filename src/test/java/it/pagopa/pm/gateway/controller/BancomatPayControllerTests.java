@@ -49,7 +49,6 @@ import static org.hamcrest.core.IsEqual.equalTo;
 @SpringBootTest(classes = BancomatPayPaymentTransactionsController.class)
 @AutoConfigureMockMvc
 @EnableWebMvc
-
 public class BancomatPayControllerTests {
 
     @Rule
@@ -94,7 +93,7 @@ public class BancomatPayControllerTests {
     }
 
     @Test
-    public void givenIncorrectBpayEndpointUrl_shouldReturnGenericErrorException() {
+    public void givenIncorrectBpayEndpointUrl_shouldReturnGenericErrorException() throws RestApiException {
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
         String guid = "guid";
 

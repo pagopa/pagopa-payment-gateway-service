@@ -3,12 +3,21 @@ package it.pagopa.pm.gateway.client.bpay;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.BPayRefundRequest;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
+import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.utils.ClientUtils;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
+import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -18,24 +27,33 @@ import java.util.Map;
 
 import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
 
+
 @Slf4j
 public class BancomatPayClient {
 
     @Autowired
     private WebServiceTemplate webServiceTemplate;
 
+    @Autowired
+    private Environment environment;
+
     private final ObjectFactory objectFactory = new ObjectFactory();
-
-    private final  Map<String, String> configValues;
-
-    {
-        configValues = getConfigValues();
-    }
 
     @Value("${bancomatPay.client.config}")
     private String BANCOMAT_CLIENT_CONFIG;
 
-    private Map<String, String> getConfigValues() {
+    private Map<String, String> configValues;
+
+    private void initConfigValues() throws RestApiException
+    {
+        if (!MapUtils.isEmpty(configValues)){
+            return;
+        }
+
+        if (StringUtils.isEmpty(BANCOMAT_CLIENT_CONFIG)) {
+            log.error("Error while retrieving 'bancomatPay.client.config' environment variable. Value is blank");
+             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+        }
         List<String> listConfig = Arrays.asList(BANCOMAT_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
         configsMap.put(GROUP_CODE, listConfig.get(0));
@@ -43,17 +61,19 @@ public class BancomatPayClient {
         configsMap.put(TAG, listConfig.get(2));
         configsMap.put(TOKEN, listConfig.get(3));
 
-        return configsMap;
+        configValues = configsMap;
     }
 
 
-    public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) {
+    public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) throws RestApiException {
+        initConfigValues();
+
         log.info("START sendPaymentRequest");
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
         requestInserimentoRichiestaPagamentoPagoPaVO.setContesto(createContesto(guid, request.getLanguage()));
         RichiestaPagamentoPagoPaVO richiestaPagamentoPagoPaVO = new RichiestaPagamentoPagoPaVO();
-        richiestaPagamentoPagoPaVO.setIdPSP(request.getIdPsp()!=null? ClientUtils.INTESA_SP_CODICE_ABI :null);
+        richiestaPagamentoPagoPaVO.setIdPSP(request.getIdPsp() != null ? ClientUtils.INTESA_SP_CODICE_ABI : null);
         richiestaPagamentoPagoPaVO.setIdPagoPa(String.valueOf(request.getIdPagoPa()));
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(request.getAmount()));
         richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getEncryptedTelephoneNumber());
@@ -70,7 +90,9 @@ public class BancomatPayClient {
         return inserimentoRichiestaPagamentoPagoPaResponse;
     }
 
-    public StornoPagamentoResponse sendRefundRequest(BPayRefundRequest request, String guid) {
+    public StornoPagamentoResponse sendRefundRequest(BPayRefundRequest request, String guid) throws RestApiException {
+        initConfigValues();
+
         log.info("START sendRefundRequest");
         RequestStornoPagamentoVO requestStornoPagamentoVO = new RequestStornoPagamentoVO();
         requestStornoPagamentoVO.setContesto(createContesto(guid, request.getLanguage()));
@@ -100,7 +122,9 @@ public class BancomatPayClient {
         return contestoVO;
     }
 
-    public InquiryTransactionStatusResponse sendInquiryRequest(BPayRefundRequest bPayRefundRequest, String guid) {
+    public InquiryTransactionStatusResponse sendInquiryRequest(BPayRefundRequest bPayRefundRequest, String guid) throws RestApiException {
+        initConfigValues();
+
         log.info("START sendInquiryRequest");
         InquiryTransactionStatus inquiryTransactionStatus = new InquiryTransactionStatus();
         RequestInquiryTransactionStatusVO requestInquiryTransactionStatusVO = new RequestInquiryTransactionStatusVO();
@@ -118,7 +142,6 @@ public class BancomatPayClient {
         return inquiryTransactionStatusResponse;
 
     }
-
 
 
 }

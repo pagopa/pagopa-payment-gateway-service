@@ -57,7 +57,7 @@ class BPayClientTests {
     Environment environment;
 
     @Test
-    void testBpayClient() throws RestApiException {
+    void testBpayClient() throws Exception {
         ReflectionTestUtils.setField(client, "BANCOMAT_CLIENT_CONFIG",
                 "groupCode|instituteCode|tag|token|http://bancomatPay:7954/bpay|5000");
         ReflectionTestUtils.setField(clientConfig, "BANCOMAT_CLIENT_CONFIG",

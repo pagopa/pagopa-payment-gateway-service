@@ -66,7 +66,7 @@ public class BancomatPayPaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
             }
         }
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BANCOMAT_PAY.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
+        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
@@ -85,7 +85,7 @@ public class BancomatPayPaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+    public BPayOutcomeResponse requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
@@ -93,20 +93,16 @@ public class BancomatPayPaymentTransactionsController {
             throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
         }
         log.info("START requestPaymentToBancomatPay " + idPagoPa);
-        BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
-        bPayPaymentResponseEntity.setOutcome(true);
-        bPayPaymentResponseEntity.setIdPagoPa(idPagoPa);
         executePaymentRequest(request, mdcFields);
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
-        return bPayPaymentResponseEntity;
+        return new BPayOutcomeResponse(true);
     }
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public void requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+    public BPayOutcomeResponse requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
-
         log.info("START requestRefundToBancomatPay " + idPagoPa);
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
         if (Objects.isNull(alreadySaved)) {
@@ -114,10 +110,10 @@ public class BancomatPayPaymentTransactionsController {
         }
         String inquiryResponse = inquiryTransactionToBancomatPay(request);
         log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
-
-        if(INQUIRY_RESPONSE_EFF.equals(inquiryResponse)) {
+        if (INQUIRY_RESPONSE_EFF.equals(inquiryResponse)) {
             executeRefundRequest(request);
         }
+        return new BPayOutcomeResponse(true);
     }
 
 

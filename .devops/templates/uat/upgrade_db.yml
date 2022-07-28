@@ -37,7 +37,7 @@ jobs:
           runBranch: 'refs/heads/releases/${{parameters.version}}'
           allowPartiallySucceededBuilds: true
           artifact: '${{parameters.version}}-liquibase-script'
-          path: '$(Pipeline.Workspace)'
+          path: '$(Pipeline.Workspace)/${{parameters.version}}-liquibase-script'
 
       - script: |
           apt-get update

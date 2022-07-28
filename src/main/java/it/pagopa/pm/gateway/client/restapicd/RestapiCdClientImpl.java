@@ -4,6 +4,8 @@ import feign.Feign;
 import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
 import feign.okhttp.OkHttpClient;
+import it.pagopa.pm.gateway.dto.PostePayPatchRequest;
+import it.pagopa.pm.gateway.dto.PostePayPatchRequestData;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequestData;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
@@ -20,8 +21,6 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 @Component
 public class RestapiCdClientImpl {
 
-    private static final String AUTH_CODE_PARAM = "authCode";
-    private static final String RRN_PARAM = "rrn";
     @Value("${HOSTNAME_PM}")
     public String hostnamePm;
 
@@ -38,18 +37,10 @@ public class RestapiCdClientImpl {
         restapiCdClient.updateTransaction(id, headerMap, new TransactionUpdateRequestData(request));
     }
 
-    public String callUpdatePostePayTransaction(String transactionId, String authCode, String rrn) {
-        log.info("Calling Payment Manager's closePayment for transaction " + transactionId);
+    public String callUpdatePostePayTransaction(Long id, PostePayPatchRequest postePayPatchRequest) {
+        log.info("Calling Payment Manager's updatePostePayTransaction for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
-        Map<String, Object> parameters = buildQueryParameters(authCode, rrn);
-        return restapiCdClient.updatePostePayTransaction(Long.valueOf(transactionId), parameters, headerMap);
-    }
-
-    private Map<String, Object> buildQueryParameters(String authCode, String rrn) {
-        Map<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put(AUTH_CODE_PARAM, authCode);
-        parameters.put(RRN_PARAM, rrn);
-        return parameters;
+        return restapiCdClient.updatePostePayTransaction(id, headerMap, new PostePayPatchRequestData(postePayPatchRequest));
     }
 
 }

@@ -56,7 +56,7 @@ public class AzureLoginClient {
 
     private Map<String, String> getPostepayConfigValues() throws RestApiException {
         if (StringUtils.isEmpty(AZURE_AUTH_CLIENT_POSTEPAY_CONFIG)) {
-            log.error("Error while retrieving 'azureAuth.client.postepay.config' environment variable. Value is blank");
+            log.error("Error while retrieving 'azureAuth.client.postepay.config' environment variable. Value is empty");
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
 

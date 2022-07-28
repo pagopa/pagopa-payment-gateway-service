@@ -58,13 +58,12 @@ public class ClientConfig {
 
     private Map<String, String> getAzureAuthClientConfigValues() throws RestApiException {
         if (StringUtils.isEmpty(AZURE_AUTH_CLIENT_CONFIG)) {
-            log.error("Error while retrieving 'azureAuth.client.config' environment variable. Value is null");
+            log.error("Error while retrieving 'azureAuth.client.config' environment variable. Value is empty");
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
 
         List<String> listConfig = Arrays.asList(AZURE_AUTH_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(IS_AZURE_AUTH_ENABLED, listConfig.get(0));
         configsMap.put(MAX_TOTAL, listConfig.get(1));
         configsMap.put(MAX_PER_ROUTE, listConfig.get(2));
         configsMap.put(TIMEOUT_MS, listConfig.get(3));

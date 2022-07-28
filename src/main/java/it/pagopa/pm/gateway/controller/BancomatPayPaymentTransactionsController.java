@@ -15,16 +15,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.*;
 import javax.transaction.Transactional;
 import java.lang.Exception;
 import java.net.SocketTimeoutException;
 import java.util.Objects;
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
+import static it.pagopa.pm.gateway.constant.Params.ID_PAGOPA;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
@@ -44,6 +45,15 @@ public class BancomatPayPaymentTransactionsController {
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
 
+    @GetMapping(REQUEST_PAYMENTS_BPAY)
+    public BPayPaymentResponseEntity getBPayPaymentResponse(@RequestParam(ID_PAGOPA) Long idPagoPa) throws RestApiException {
+        try {
+            return bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
+        } catch (NoResultException e) {
+            throw new RestApiException(ExceptionsEnum.PAYMENT_RESPONSE_NOT_FOUND);
+        }
+    }
+    
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();

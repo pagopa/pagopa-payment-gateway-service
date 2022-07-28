@@ -15,5 +15,4 @@ public class ApiPaths {
     public static final String REQUEST_ID = "/{requestId}";
     public static final String POSTEPAY_REQUEST_PAYMENTS_PATH = REQUEST_PAYMENTS + POSTEPAY + REQUEST_ID;
 
-
 }

@@ -25,6 +25,7 @@ import java.util.UUID;
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
+import static it.pagopa.pm.gateway.constant.Params.ID_PAGOPA;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
@@ -44,10 +45,10 @@ public class BancomatPayPaymentTransactionsController {
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
 
-    @GetMapping(BPAY_PAYMENT_RESPONSE)
-    public BPayPaymentResponseEntity getBPayPaymentResponse(@PathVariable Long id) throws RestApiException {
+    @GetMapping(REQUEST_PAYMENTS_BPAY)
+    public BPayPaymentResponseEntity getBPayPaymentResponse(@RequestParam(ID_PAGOPA) Long idPagoPa) throws RestApiException {
         try {
-            return bPayPaymentResponseRepository.findByIdPagoPa(id);
+            return bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
         } catch (NoResultException e) {
             throw new RestApiException(ExceptionsEnum.PAYMENT_RESPONSE_NOT_FOUND);
         }

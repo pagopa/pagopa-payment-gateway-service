@@ -64,7 +64,6 @@ public class BancomatPayClient {
         configValues = configsMap;
     }
 
-
     public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) throws RestApiException {
         initConfigValues();
 

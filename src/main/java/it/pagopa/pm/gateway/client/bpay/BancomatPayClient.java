@@ -15,6 +15,7 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.annotation.PostConstruct;
@@ -44,29 +45,22 @@ public class BancomatPayClient {
 
     private Map<String, String> configValues;
 
+    @PostConstruct
     private void initConfigValues() throws RestApiException
     {
-        if (!MapUtils.isEmpty(configValues)){
-            return;
-        }
-
         if (StringUtils.isEmpty(BANCOMAT_CLIENT_CONFIG)) {
             log.error("Error while retrieving 'bancomatPay.client.config' environment variable. Value is blank");
              throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
         List<String> listConfig = Arrays.asList(BANCOMAT_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
-        Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(GROUP_CODE, listConfig.get(0));
-        configsMap.put(INSTITUTE_CODE, listConfig.get(1));
-        configsMap.put(TAG, listConfig.get(2));
-        configsMap.put(TOKEN, listConfig.get(3));
-
-        configValues = configsMap;
-    }
+        configValues=new HashMap<>();
+        configValues.put(GROUP_CODE, listConfig.get(0));
+        configValues.put(INSTITUTE_CODE, listConfig.get(1));
+        configValues.put(TAG, listConfig.get(2));
+        configValues.put(TOKEN, listConfig.get(3));
+     }
 
     public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) throws RestApiException {
-        initConfigValues();
-
         log.info("START sendPaymentRequest");
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
         RequestInserimentoRichiestaPagamentoPagoPaVO requestInserimentoRichiestaPagamentoPagoPaVO = new RequestInserimentoRichiestaPagamentoPagoPaVO();
@@ -90,8 +84,6 @@ public class BancomatPayClient {
     }
 
     public StornoPagamentoResponse sendRefundRequest(BPayRefundRequest request, String guid) throws RestApiException {
-        initConfigValues();
-
         log.info("START sendRefundRequest");
         RequestStornoPagamentoVO requestStornoPagamentoVO = new RequestStornoPagamentoVO();
         requestStornoPagamentoVO.setContesto(createContesto(guid, request.getLanguage()));
@@ -122,8 +114,6 @@ public class BancomatPayClient {
     }
 
     public InquiryTransactionStatusResponse sendInquiryRequest(BPayRefundRequest bPayRefundRequest, String guid) throws RestApiException {
-        initConfigValues();
-
         log.info("START sendInquiryRequest");
         InquiryTransactionStatus inquiryTransactionStatus = new InquiryTransactionStatus();
         RequestInquiryTransactionStatusVO requestInquiryTransactionStatusVO = new RequestInquiryTransactionStatusVO();

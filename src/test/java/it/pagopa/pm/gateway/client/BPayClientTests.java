@@ -30,6 +30,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import javax.xml.bind.*;
 
 import java.lang.Exception;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -57,11 +59,15 @@ class BPayClientTests {
     Environment environment;
 
     @Test
-    void testBpayClient() throws RestApiException {
+    void testBpayClient() throws RestApiException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ReflectionTestUtils.setField(client, "BANCOMAT_CLIENT_CONFIG",
                 "groupCode|instituteCode|tag|token|http://bancomatPay:7954/bpay|5000");
         ReflectionTestUtils.setField(clientConfig, "BANCOMAT_CLIENT_CONFIG",
                 "groupCode|instituteCode|tag|token|http://bancomatPay:7954/bpay|5000");
+
+        Method postConstruct = BancomatPayClient.class.getDeclaredMethod("initConfigValues",null);
+        postConstruct.setAccessible(true);
+        postConstruct.invoke(client);
 
         InserimentoRichiestaPagamentoPagoPaResponse response = new InserimentoRichiestaPagamentoPagoPaResponse();
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> jaxbResponse = objectFactory.createInserimentoRichiestaPagamentoPagoPaResponse(response);

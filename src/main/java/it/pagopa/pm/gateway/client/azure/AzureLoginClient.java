@@ -1,8 +1,6 @@
 package it.pagopa.pm.gateway.client.azure;
 
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
-import it.pagopa.pm.gateway.exception.ExceptionsEnum;
-import it.pagopa.pm.gateway.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,38 +33,35 @@ public class AzureLoginClient {
     private final Map<String, String> configValues;
     private final Map<String, String> postepayConfigValues;
 
-    public AzureLoginClient() throws RestApiException {
-        postepayConfigValues =  getPostepayConfigValues();
+    public AzureLoginClient() throws Exception {
+        postepayConfigValues = getPostepayConfigValues();
         configValues = getConfigValues();
     }
 
-    private Map<String, String> getConfigValues() throws RestApiException {
+    private Map<String, String> getConfigValues() throws Exception {
         if (StringUtils.isEmpty(AZURE_AUTH_CLIENT_CONFIG)) {
-            log.error("Error while retrieving 'azureAuth.client.config' environment variable. Value is blank");
-            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            log.error("Error while retrieving 'azureAuth.client.config' environment variable. Value is empty");
+            throw new Exception();
         }
 
         List<String> listConfig = Arrays.asList(AZURE_AUTH_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(IS_AZURE_AUTH_ENABLED, Objects.nonNull(listConfig.get(0))?listConfig.get(0):"true");
-
+        configsMap.put(IS_AZURE_AUTH_ENABLED, Objects.nonNull(listConfig.get(0)) ? listConfig.get(0) : "true");
         return configsMap;
     }
 
 
-    private Map<String, String> getPostepayConfigValues() throws RestApiException {
+    private Map<String, String> getPostepayConfigValues() throws Exception {
         if (StringUtils.isEmpty(AZURE_AUTH_CLIENT_POSTEPAY_CONFIG)) {
             log.error("Error while retrieving 'azureAuth.client.postepay.config' environment variable. Value is empty");
-            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            throw new Exception();
         }
-
         List<String> listConfig = Arrays.asList(AZURE_AUTH_CLIENT_POSTEPAY_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
         configsMap.put(AZURE_AUTH_URL, listConfig.get(0));
         configsMap.put(SCOPE_PARAMETER, listConfig.get(1));
         configsMap.put(CLIENT_ID_PARAMETER, listConfig.get(2));
         configsMap.put(CLIENT_SECRET_PARAMETER, listConfig.get(3));
-
         return configsMap;
     }
 
@@ -75,7 +70,6 @@ public class AzureLoginClient {
     private RestTemplate microsoftAzureRestTemplate;
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
-
         if (BooleanUtils.isTrue(Boolean.valueOf(configValues.get(IS_AZURE_AUTH_ENABLED)))) {
             MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(postepayConfigValues.get(CLIENT_ID_PARAMETER),
                     postepayConfigValues.get(CLIENT_SECRET_PARAMETER), postepayConfigValues.get(SCOPE_PARAMETER));
@@ -114,8 +108,4 @@ public class AzureLoginClient {
         requestBody.add(SCOPE_PARAMETER, scope);
         return requestBody;
     }
-
-
 }
-
-

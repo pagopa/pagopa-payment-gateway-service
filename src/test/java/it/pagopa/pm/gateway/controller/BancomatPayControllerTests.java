@@ -93,7 +93,7 @@ public class BancomatPayControllerTests {
     }
 
     @Test
-    public void givenIncorrectBpayEndpointUrl_shouldReturnGenericErrorException() throws RestApiException {
+    public void givenIncorrectBpayEndpointUrl_shouldReturnGenericErrorException() throws Exception {
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
         String guid = "guid";
 

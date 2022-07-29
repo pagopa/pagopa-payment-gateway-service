@@ -40,7 +40,7 @@ import static org.openapitools.client.model.Esito.DECLINED;
 import static org.openapitools.client.model.EsitoStorno.OK;
 
 
-
+import org.openapitools.client.api.UserApi;
 import org.openapitools.client.model.PaymentChannel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -91,6 +91,9 @@ public class PostePayPaymentControllerTest {
 
     @MockBean
     private PaymentManagerControllerApi postePayControllerApi;
+
+    @MockBean
+    private UserApi userApi;
 
     @MockBean
     private Environment env;

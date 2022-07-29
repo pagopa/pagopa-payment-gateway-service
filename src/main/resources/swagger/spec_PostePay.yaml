@@ -127,8 +127,8 @@ paths:
   /api/v1/user/onboarding:
     post:
       tags:
-        - Payment Manager Controller
-      summary: Onboarding di un nuovo strumento postepay
+        - User
+      summary: Servizio per la richiesta di conferma di onboarding
       description: ""
       parameters:
         - in: header
@@ -140,22 +140,91 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreatePaymentRequest'
+              $ref: '#/components/schemas/OnboardingRequest'
       responses:
         "200":
-          description: OK
+          description: ""
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatePaymentResponse'
-        default:
-          description: Errore
+                $ref: '#/components/schemas/OnboardingResponse'
+        "4XX":
+          description: classe errori 400
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                description: Errore richiesta
+                type: object
+                properties:
+                  errorCode:
+                    description: Codice di errore
+                    type: string
+                  description:
+                    description: Descrizione tecnica dell'errore
+                    type: string
+                  message:
+                    description: Messaggio utente
+                    type: string
+        "5XX":
+          description: classe errori 500
+          content:
+            application/json:
+              schema:
+                description: Errore interno
+                type: object
+                properties:
+                  errorCode:
+                    description: Codice di errore
+                    type: string
+                  description:
+                    description: Descrizione tecnica dell'errore
+                    type: string
+                  message:
+                    description: Messaggio utente
+                    type: string
 components:
   schemas:
+    OnboardingRequest:
+      description: ""
+      required:
+        - merchantId
+        - shopId
+        - onboardingTransactionId
+        - paymentChannel
+        - responseURLs
+      type: object
+      properties:
+        merchantId:
+          description: identificativo del merchant
+          type: string
+        shopId:
+          description: identificativo del negozio
+          type: string
+        onboardingTransactionId:
+          description: identificativo dell'oprazione lato merchant
+          type: string
+        paymentChannel:
+          allOf:
+            - $ref: '#/components/schemas/PaymentChannel'
+            - description: "canale di pagamento, puo essere valorizzato con APP/WEB"
+        responseURLs:
+          allOf:
+            - $ref: '#/components/schemas/ResponseURLs'
+            - description: URL di ritorno
+    OnboardingResponse:
+      description: ""
+      required:
+        - onboardingID
+        - userRedirectURL
+      type: object
+      properties:
+        onboardingID:
+          description: identificativo dell'operazione
+          type: string
+        userRedirectURL:
+          description: URL verso cui redirigere l'utente per portare a compimento
+            il flusso
+          type: string
     Error:
       description: ""
       type: object

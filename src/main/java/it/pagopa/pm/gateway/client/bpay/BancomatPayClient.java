@@ -6,12 +6,8 @@ import it.pagopa.pm.gateway.dto.BPayRefundRequest;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.utils.ClientUtils;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -45,19 +41,18 @@ public class BancomatPayClient {
     private Map<String, String> configValues;
 
     @PostConstruct
-    private void initConfigValues() throws RestApiException
-    {
+    private void initConfigValues() throws RestApiException {
         if (StringUtils.isEmpty(BANCOMAT_CLIENT_CONFIG)) {
             log.error("Error while retrieving 'bancomatPay.client.config' environment variable. Value is blank");
-             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
         List<String> listConfig = Arrays.asList(BANCOMAT_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
-        configValues=new HashMap<>();
+        configValues = new HashMap<>();
         configValues.put(GROUP_CODE, listConfig.get(0));
         configValues.put(INSTITUTE_CODE, listConfig.get(1));
         configValues.put(TAG, listConfig.get(2));
         configValues.put(TOKEN, listConfig.get(3));
-     }
+    }
 
     public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) throws RestApiException {
         log.info("START sendPaymentRequest");

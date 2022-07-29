@@ -4,22 +4,39 @@ import it.pagopa.pm.gateway.beans.*;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.config.ClientConfig;
+import it.pagopa.pm.gateway.controller.PostePayPaymentTransactionsController;
 import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
+import it.pagopa.pm.gateway.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.junit.Before;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.mockito.*;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.springframework.ws.client.core.WebServiceTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
+
 
 import javax.xml.bind.*;
 
 import java.lang.Exception;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+
 
 @Slf4j
 @SpringBootTest
@@ -35,8 +52,23 @@ class BPayClientTests {
     @Mock
     WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
 
+    @MockBean
+    ClientConfig clientConfig;
+
+    @MockBean
+    Environment environment;
+
     @Test
-    void testBpayClient() {
+    void testBpayClient() throws RestApiException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        ReflectionTestUtils.setField(client, "BANCOMAT_CLIENT_CONFIG",
+                "groupCode|instituteCode|tag|token|http://bancomatPay:7954/bpay|5000");
+        ReflectionTestUtils.setField(clientConfig, "BANCOMAT_CLIENT_CONFIG",
+                "groupCode|instituteCode|tag|token|http://bancomatPay:7954/bpay|5000");
+
+        Method postConstruct = BancomatPayClient.class.getDeclaredMethod("initConfigValues",null);
+        postConstruct.setAccessible(true);
+        postConstruct.invoke(client);
+
         InserimentoRichiestaPagamentoPagoPaResponse response = new InserimentoRichiestaPagamentoPagoPaResponse();
         JAXBElement<InserimentoRichiestaPagamentoPagoPaResponse> jaxbResponse = objectFactory.createInserimentoRichiestaPagamentoPagoPaResponse(response);
         BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();

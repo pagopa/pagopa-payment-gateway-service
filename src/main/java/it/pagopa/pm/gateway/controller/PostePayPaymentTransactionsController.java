@@ -254,7 +254,7 @@ public class PostePayPaymentTransactionsController {
         }
 
         try {
-            executePostePayOnboardingAuthorizationCall(postePayOnboardingRequest, clientId, paymentRequestEntity);
+            executePostePayOnboardingCall(postePayOnboardingRequest, clientId, paymentRequestEntity);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + onboardingTransactionId, e);
             return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + onboardingTransactionId, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
@@ -327,7 +327,7 @@ public class PostePayPaymentTransactionsController {
     }
 
     @Async
-    private void executePostePayOnboardingAuthorizationCall(PostePayOnboardingRequest postePayOnboardingRequest, String clientId, PaymentRequestEntity paymentRequestEntity) throws RestApiException {
+    private void executePostePayOnboardingCall(PostePayOnboardingRequest postePayOnboardingRequest, String clientId, PaymentRequestEntity paymentRequestEntity) throws RestApiException {
         String onboardingTransactionId = postePayOnboardingRequest.getOnboardingTransactionId();
         log.info("START - execute PostePay onboarding authorization request for transaction " + onboardingTransactionId);
         String correlationId;
@@ -383,19 +383,14 @@ public class PostePayPaymentTransactionsController {
     }
 
     private OnboardingRequest createOnboardingRequest(PostePayOnboardingRequest postePayOnboardingRequest, String clientId) {
-
         String clientConfig = getCustomEnvironmentProperty(POSTEPAY_CLIENT_ID_PROPERTY, clientId);
         Map<String, String> configsMap = getConfigValues(clientConfig);
-
         OnboardingRequest onboardingRequest = new OnboardingRequest();
-
-        onboardingRequest.setMerhantId(configsMap.get(MERCHANT_ID_CONFIG));
+        onboardingRequest.setMerchantId(configsMap.get(MERCHANT_ID_CONFIG));
         onboardingRequest.setShopId(configsMap.get(SHOP_ID_CONFIG));
         onboardingRequest.setOnboardingTransactionId(postePayOnboardingRequest.getOnboardingTransactionId());
         onboardingRequest.setPaymentChannel(PaymentChannel.valueOf(configsMap.get(PAYMENT_CHANNEL_CONFIG)));
-
         ResponseURLs responseURLs = createResponseUrls(clientId, configsMap.get(NOTIFICATION_URL_CONFIG));
-
         onboardingRequest.setResponseURLs(responseURLs);
         return onboardingRequest;
     }

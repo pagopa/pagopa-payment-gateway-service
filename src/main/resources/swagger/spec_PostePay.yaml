@@ -187,14 +187,14 @@ components:
     OnboardingRequest:
       description: ""
       required:
-        - merhantId
+        - merchantId
         - shopId
         - onboardingTransactionId
         - paymentChannel
         - responseURLs
       type: object
       properties:
-        merhantId:
+        merchantId:
           description: identificativo del merchant
           type: string
         shopId:

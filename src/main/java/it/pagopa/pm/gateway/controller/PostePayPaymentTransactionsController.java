@@ -289,10 +289,7 @@ public class PostePayPaymentTransactionsController {
         try {
             CreatePaymentRequest createPaymentRequest = createPaymentAuthorizationRequest(postePayAuthRequest, clientId);
             String bearerToken = acquireBearerToken();
-            CreatePaymentResponse createPaymentResponse;
-
-            createPaymentResponse = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
-
+            CreatePaymentResponse createPaymentResponse = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
             if (Objects.isNull(createPaymentResponse)) {
                 log.error("/createPayment response from PostePay is null");
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);

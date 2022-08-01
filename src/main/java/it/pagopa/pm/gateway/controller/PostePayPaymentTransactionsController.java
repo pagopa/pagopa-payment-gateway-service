@@ -164,7 +164,7 @@ public class PostePayPaymentTransactionsController {
     public ResponseEntity<PostePayAuthResponse> requestPaymentsPostepay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                         @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                         @RequestBody PostePayAuthRequest postePayAuthRequest,
-                                                                        @RequestParam(required = false, value = IS_ONBOARDING_PARAM) boolean isOnboarding) {
+                                                                        @RequestParam(required = false, value = IS_ONBOARDING_PARAM) Boolean isOnboarding) {
         log.info("START - " + REQUEST_PAYMENTS_POSTEPAY);
         setMdcFields(mdcFields);
 
@@ -184,14 +184,14 @@ public class PostePayPaymentTransactionsController {
             return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null, null);
         }
 
-        ResponseEntity<PostePayAuthResponse> response = isOnboarding ?
+        ResponseEntity<PostePayAuthResponse> response = BooleanUtils.toBoolean(isOnboarding) ?
                 createOnboardingPostePay(clientId, mdcFields, new PostePayOnboardingRequest(idTransaction)) :
                 createPaymentPostePay(clientId, mdcFields, postePayAuthRequest);
         log.info(String.format("END - %s for idTransaction %s", REQUEST_PAYMENTS_POSTEPAY, idTransaction));
         return response;
     }
 
-    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, String idTransaction, Boolean isOnboarding) {
+    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, String idTransaction, boolean isOnboarding) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
@@ -202,11 +202,8 @@ public class PostePayPaymentTransactionsController {
         return paymentRequestEntity;
     }
 
-    private ResponseEntity<PostePayAuthResponse> createPaymentPostePay(String clientId,
-                                                                       String mdcFields,
-                                                                       PostePayAuthRequest postePayAuthRequest) {
+    private ResponseEntity<PostePayAuthResponse> createPaymentPostePay(String clientId, String mdcFields, PostePayAuthRequest postePayAuthRequest) {
         log.info("START - PostePay Request Payment");
-
         String idTransaction = postePayAuthRequest.getIdTransaction();
 
         log.info(String.format("Requesting authorization from %s channel for transaction %s", clientId, idTransaction));

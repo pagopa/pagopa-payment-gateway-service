@@ -289,6 +289,13 @@ paths:
         - payment-transactions-controller
       operationId: auth-request
       parameters:
+        - in: query
+          name: isOnboarding
+          description: used for onboarding, if true
+          example: true
+          schema:
+            type: boolean
+          required: false
         - in: header
           name: X-Client-ID
           description: channel origin (APP/Web)

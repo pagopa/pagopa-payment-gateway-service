@@ -18,10 +18,10 @@ import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.openapitools.client.ApiException;
-import org.apache.commons.lang3.ObjectUtils;
 
 import org.openapitools.client.model.OnboardingResponse;
 import org.openapitools.client.api.UserApi;
@@ -49,12 +49,12 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.util.*;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.*;
+import static it.pagopa.pm.gateway.constant.ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_POSTEPAY;
 import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
-import static it.pagopa.pm.gateway.constant.ClientConfigs.NOTIFICATION_URL_CONFIG;
 import static it.pagopa.pm.gateway.constant.Headers.*;
-import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Messages.*;
+import static it.pagopa.pm.gateway.constant.Params.IS_ONBOARDING_PARAM;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
@@ -163,8 +163,9 @@ public class PostePayPaymentTransactionsController {
     @PostMapping(REQUEST_PAYMENTS_POSTEPAY)
     public ResponseEntity<PostePayAuthResponse> requestPaymentsPostepay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                         @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                                        @RequestBody PostePayAuthRequest postePayAuthRequest) {
-        log.info("START - requesting PostePay payment authorization");
+                                                                        @RequestBody PostePayAuthRequest postePayAuthRequest,
+                                                                        @RequestParam(required = false, value = IS_ONBOARDING_PARAM) Boolean isOnboarding) {
+        log.info("START - " + REQUEST_PAYMENTS_POSTEPAY);
         setMdcFields(mdcFields);
 
         if (ObjectUtils.anyNull(postePayAuthRequest, postePayAuthRequest.getIdTransaction()) || postePayAuthRequest.getGrandTotal() == 0) {
@@ -182,6 +183,28 @@ public class PostePayPaymentTransactionsController {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
             return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null, null);
         }
+
+        ResponseEntity<PostePayAuthResponse> response = BooleanUtils.toBoolean(isOnboarding) ?
+                createOnboardingPostePay(clientId, mdcFields, new PostePayOnboardingRequest(idTransaction)) :
+                createPaymentPostePay(clientId, mdcFields, postePayAuthRequest);
+        log.info(String.format("END - %s for idTransaction %s", REQUEST_PAYMENTS_POSTEPAY, idTransaction));
+        return response;
+    }
+
+    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, String idTransaction, boolean isOnboarding) {
+        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
+        paymentRequestEntity.setClientId(clientId);
+        paymentRequestEntity.setGuid(UUID.randomUUID().toString());
+        paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_POSTEPAY);
+        paymentRequestEntity.setIdTransaction(idTransaction);
+        paymentRequestEntity.setMdcInfo(mdcFields);
+        paymentRequestEntity.setIsOnboarding(BooleanUtils.toBoolean(isOnboarding));
+        return paymentRequestEntity;
+    }
+
+    private ResponseEntity<PostePayAuthResponse> createPaymentPostePay(String clientId, String mdcFields, PostePayAuthRequest postePayAuthRequest) {
+        log.info("START - PostePay Request Payment");
+        String idTransaction = postePayAuthRequest.getIdTransaction();
 
         log.info(String.format("Requesting authorization from %s channel for transaction %s", clientId, idTransaction));
         PaymentRequestEntity paymentRequestEntity;
@@ -202,45 +225,13 @@ public class PostePayPaymentTransactionsController {
             return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + idTransaction, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
         }
 
-        log.info("END - POST request-payments/postepay for idTransaction: " + idTransaction);
+        log.info("END - PostePay Request Payment ");
         return createPostePayAuthResponse(clientId, StringUtils.EMPTY, HttpStatus.OK, paymentRequestEntity.getGuid(), paymentRequestEntity.getCorrelationId());
     }
 
-    private PaymentRequestEntity generateRequestEntity(String clientId, String mdcFields, String idTransaction, Boolean isOnboarding) {
-        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
-        paymentRequestEntity.setClientId(clientId);
-        paymentRequestEntity.setGuid(UUID.randomUUID().toString());
-        paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_POSTEPAY);
-        paymentRequestEntity.setIdTransaction(idTransaction);
-        paymentRequestEntity.setMdcInfo(mdcFields);
-        paymentRequestEntity.setIsOnboarding(BooleanUtils.toBoolean(isOnboarding));
-        return paymentRequestEntity;
-    }
-
-    @Transactional
-    @PostMapping(POSTEPAY_ONBOARDING)
-    public ResponseEntity<PostePayAuthResponse> requestPostePayOnboarding(@RequestHeader(value = X_CLIENT_ID) String clientId,
-                                                          @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                          @RequestBody PostePayOnboardingRequest postePayOnboardingRequest) {
-        log.info("START - requesting PostePay Onboarding");
-        setMdcFields(mdcFields);
-
-        if (ObjectUtils.anyNull(postePayOnboardingRequest, postePayOnboardingRequest.getOnboardingTransactionId())) {
-            log.error("Error: mandatory request parameters are missing");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null, null);
-        }
-
-        if (!VALID_CLIENT_ID.contains(clientId)) {
-            log.error("Client id " + clientId + " is not valid");
-            return createPostePayAuthResponse(clientId, BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null, null);
-        }
-
+    private ResponseEntity<PostePayAuthResponse> createOnboardingPostePay(String clientId, String mdcFields, PostePayOnboardingRequest postePayOnboardingRequest) {
+        log.info("START - PostePay Onboarding");
         String onboardingTransactionId = postePayOnboardingRequest.getOnboardingTransactionId();
-        if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(onboardingTransactionId))) {
-            log.warn("Transaction " + onboardingTransactionId + " has already been processed previously");
-            return createPostePayAuthResponse(clientId, TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null, null);
-        }
-
         log.info(String.format("Requesting authorization from %s channel for transaction %s", clientId, onboardingTransactionId));
         PaymentRequestEntity paymentRequestEntity;
         try {
@@ -260,7 +251,7 @@ public class PostePayPaymentTransactionsController {
             return createPostePayAuthResponse(clientId, GENERIC_ERROR_MSG + onboardingTransactionId, HttpStatus.INTERNAL_SERVER_ERROR, null, null);
         }
 
-        log.info("END - POST request-payments/postepay/onboarindg for onboardingTransactionId: " + onboardingTransactionId);
+        log.info("END - PostePay Onboarding");
         return createPostePayAuthResponse(clientId, StringUtils.EMPTY, HttpStatus.OK, paymentRequestEntity.getGuid(), paymentRequestEntity.getCorrelationId());
     }
 
@@ -298,10 +289,7 @@ public class PostePayPaymentTransactionsController {
         try {
             CreatePaymentRequest createPaymentRequest = createPaymentAuthorizationRequest(postePayAuthRequest, clientId);
             String bearerToken = acquireBearerToken();
-            CreatePaymentResponse createPaymentResponse;
-
-            createPaymentResponse = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
-
+            CreatePaymentResponse createPaymentResponse = postePayControllerApi.apiV1PaymentCreatePost(bearerToken, createPaymentRequest);
             if (Objects.isNull(createPaymentResponse)) {
                 log.error("/createPayment response from PostePay is null");
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
@@ -329,7 +317,7 @@ public class PostePayPaymentTransactionsController {
     @Async
     private void executePostePayOnboardingCall(PostePayOnboardingRequest postePayOnboardingRequest, String clientId, PaymentRequestEntity paymentRequestEntity) throws RestApiException {
         String onboardingTransactionId = postePayOnboardingRequest.getOnboardingTransactionId();
-        log.info("START - execute PostePay onboarding authorization request for transaction " + onboardingTransactionId);
+        log.info("START - execute PostePay onboarding for transaction " + onboardingTransactionId);
         String correlationId;
         String authorizationUrl;
         try {
@@ -337,7 +325,7 @@ public class PostePayPaymentTransactionsController {
             String bearerToken = acquireBearerToken();
             OnboardingResponse onboardingResponse = userApi.apiV1UserOnboardingPost(bearerToken, onboardingRequest);
 
-           if (Objects.isNull(onboardingResponse)) {
+            if (Objects.isNull(onboardingResponse)) {
                 log.error("/onboarding response from PostePay is null");
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }

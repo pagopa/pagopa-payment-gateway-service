@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.*;
 import javax.transaction.Transactional;
 import java.lang.Exception;
 import java.net.SocketTimeoutException;
@@ -25,7 +24,6 @@ import java.util.UUID;
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
-import static it.pagopa.pm.gateway.constant.Params.ID_PAGOPA;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
@@ -35,7 +33,6 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 public class BancomatPayPaymentTransactionsController {
 
     private static final String INQUIRY_RESPONSE_EFF = "EFF";
-    private static final String INQUIRY_RESPONSE_ERR = "ERR";
     @Autowired
     private BancomatPayClient bancomatPayClient;
 
@@ -44,15 +41,6 @@ public class BancomatPayPaymentTransactionsController {
 
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
-
-    @GetMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayPaymentResponseEntity getBPayPaymentResponse(@RequestParam(ID_PAGOPA) Long idPagoPa) throws RestApiException {
-        try {
-            return bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
-        } catch (NoResultException e) {
-            throw new RestApiException(ExceptionsEnum.PAYMENT_RESPONSE_NOT_FOUND);
-        }
-    }
     
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
@@ -67,7 +55,7 @@ public class BancomatPayPaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
             }
         }
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null);
+        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null, alreadySaved.getErrorCode());
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
@@ -183,7 +171,7 @@ public class BancomatPayPaymentTransactionsController {
         BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid, mdcInfo);
         bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         try {
-            TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null);
+            TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null, bPayPaymentResponseEntity.getErrorCode());
             restapiCdClient.callTransactionUpdate(idPagoPa, transactionUpdate);
         } catch (FeignException e) {
             log.error("Exception calling RestapiCD transaction update", e);

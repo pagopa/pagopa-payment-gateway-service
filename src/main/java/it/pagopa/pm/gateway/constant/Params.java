@@ -5,6 +5,4 @@ public class Params {
 
     public static final String IS_ONBOARDING_PARAM = "isOnboarding";
 
-    public static final String ID_PAGOPA = "idPagoPa";
-
 }

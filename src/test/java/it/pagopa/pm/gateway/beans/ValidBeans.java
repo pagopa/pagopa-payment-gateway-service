@@ -19,6 +19,8 @@ import org.openapitools.client.model.RefundPaymentResponse;
 import org.openapitools.client.model.RefundPaymentRequest;
 import org.openapitools.client.model.EsitoStorno;
 import org.openapitools.client.model.DetailsPaymentRequest;
+import  org.openapitools.client.model.OnboardingRequest;
+import org.openapitools.client.model.OnboardingResponse;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -180,6 +182,23 @@ public class ValidBeans {
         return createPaymentRequest;
     }
 
+    public static OnboardingRequest createOnboardingRequest(PaymentChannel paymentChannel) {
+        ResponseURLs responseUrls = new ResponseURLs();
+        String urlOkKo = paymentChannel.equals(PaymentChannel.APP) ? StringUtils.EMPTY : RESPONSE_URL_OK_KO;
+        responseUrls.setResponseUrlKo(urlOkKo);
+        responseUrls.setResponseUrlOk(urlOkKo);
+        responseUrls.setServerNotificationUrl(NOTIFICATION_URL);
+
+        OnboardingRequest onboardingRequest = new OnboardingRequest();
+        onboardingRequest.setOnboardingTransactionId("1");
+        onboardingRequest.setMerchantId("merchantId");
+        onboardingRequest.setPaymentChannel(paymentChannel);
+        onboardingRequest.setShopId("shopIdTmp_APP");
+        onboardingRequest.setResponseURLs(responseUrls);
+
+        return onboardingRequest;
+    }
+
 
     public static PostePayAuthRequest postePayAuthRequest(boolean isValid) {
         PostePayAuthRequest postePayAuthRequest = new PostePayAuthRequest();
@@ -221,6 +240,13 @@ public class ValidBeans {
         return inlineResponse200;
     }
 
+    public static OnboardingResponse getOKResponseForOnboarding() {
+        OnboardingResponse response = new OnboardingResponse();
+        response.setOnboardingID("1234");
+        response.setUserRedirectURL("www.userRedirectUrl.com");
+        return response;
+    }
+
 
     public static PaymentRequestEntity paymentRequestEntity(PostePayAuthRequest postePayAuthRequest, Boolean authorizationOutcome, String clientId) {
         String authRequestJson = null;
@@ -251,6 +277,36 @@ public class ValidBeans {
         paymentRequestEntity.setIsOnboarding(false);
         return paymentRequestEntity;
  }
+
+    public static PaymentRequestEntity paymentRequestEntityOnboarding(PostePayOnboardingRequest postePayOnboardingRequest, Boolean authorizationOutcome, String clientId) {
+        String authRequestJson = null;
+
+
+        if (Objects.nonNull(postePayOnboardingRequest)) {
+            try {
+                authRequestJson = OBJECT_MAPPER.writeValueAsString(postePayOnboardingRequest);
+            } catch (JsonProcessingException jspe) {
+                jspe.printStackTrace();
+            }
+        }
+        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
+        paymentRequestEntity.setJsonRequest(authRequestJson);
+        paymentRequestEntity.setAuthorizationUrl("www.userRedirectUrl.com");
+        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
+        paymentRequestEntity.setIsProcessed(false);
+        paymentRequestEntity.setCorrelationId("1234");
+        paymentRequestEntity.setAuthorizationCode(null);
+        paymentRequestEntity.setIdTransaction("1");
+        paymentRequestEntity.setGuid("8d8b30e3-de52-4f1c-a71c-9905a8043dac");
+        paymentRequestEntity.setId(null);
+        paymentRequestEntity.setClientId(clientId);
+        paymentRequestEntity.setMdcInfo(null);
+        paymentRequestEntity.setResourcePath(null);
+        paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
+        paymentRequestEntity.setResourcePath("${postepay.logo.url}");
+        paymentRequestEntity.setIsOnboarding(true);
+        return paymentRequestEntity;
+    }
 
     public static PaymentRequestEntity paymentRequestEntityOnboardingFalse(PostePayAuthRequest postePayAuthRequest, Boolean authorizationOutcome, String clientId) {
         PaymentRequestEntity  paymentRequestEntity = paymentRequestEntity(postePayAuthRequest, authorizationOutcome, clientId);
@@ -356,12 +412,12 @@ public class ValidBeans {
    }
 
 
+    public static PostePayOnboardingRequest createPostePayOnboardingRequest(String onboardingTransactionId) {
+        PostePayOnboardingRequest postePayOnboardingRequest = new PostePayOnboardingRequest();
 
-
-
-
-
-
+        postePayOnboardingRequest.setOnboardingTransactionId(onboardingTransactionId);
+        return postePayOnboardingRequest;
+    }
 }
 
 

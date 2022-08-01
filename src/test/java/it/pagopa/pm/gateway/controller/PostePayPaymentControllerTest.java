@@ -9,10 +9,7 @@ import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.ApiPaths;
 import it.pagopa.pm.gateway.constant.Headers;
-import it.pagopa.pm.gateway.dto.ACKMessage;
-import it.pagopa.pm.gateway.dto.AuthMessage;
-import it.pagopa.pm.gateway.dto.PostePayAuthRequest;
-import it.pagopa.pm.gateway.dto.PostePayPatchRequest;
+import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
@@ -34,7 +31,10 @@ import org.openapitools.client.model.DetailsPaymentRequest;
 import org.openapitools.client.model.RefundPaymentRequest;
 import org.openapitools.client.model.RefundPaymentResponse;
 import org.openapitools.client.model.DetailsPaymentResponse;
+import  org.openapitools.client.model.OnboardingRequest;
+import org.openapitools.client.model.OnboardingResponse;
 
+import static it.pagopa.pm.gateway.constant.Params.IS_ONBOARDING_PARAM;
 import static org.openapitools.client.model.Esito.APPROVED;
 import static org.openapitools.client.model.Esito.DECLINED;
 import static org.openapitools.client.model.EsitoStorno.OK;
@@ -128,6 +128,39 @@ public class PostePayPaymentControllerTest {
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse(PaymentChannel.APP.getValue(), false, null))));
             verify(paymentRequestRepository).findByIdTransaction("1");
             verify(paymentRequestRepository).save(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, PaymentChannel.APP.getValue()));
+        }
+    }
+
+    @Test
+    public void givenPostePayPaymentRequestApp_isOnboarding_True_returnPostePayAuthResponse() throws Exception {
+        try (MockedStatic<UUID> mockedUuid = Mockito.mockStatic(UUID.class)) {
+            mockedUuid.when(UUID::randomUUID).thenReturn(uuid);
+            when(uuid.toString()).thenReturn(UUID_SAMPLE);
+
+            PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
+            MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
+            String bearerToken = "Bearer " + azureLoginResponse.getAccess_token();
+            OnboardingRequest onboardingRequest = ValidBeans.createOnboardingRequest(PaymentChannel.APP);
+            OnboardingResponse onboardingResponse = ValidBeans.getOKResponseForOnboarding();
+
+            given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
+            given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
+            given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
+            given(userApi.apiV1UserOnboardingPost(bearerToken, onboardingRequest)).willReturn(onboardingResponse);
+
+            mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
+                            .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                            .content(mapper.writeValueAsString(postePayAuthRequest))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .queryParam(IS_ONBOARDING_PARAM, "true"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse(PaymentChannel.APP.getValue(), false, null))));
+            verify(paymentRequestRepository).findByIdTransaction("1");
+
+            PostePayOnboardingRequest postePayOnboardingRequest = ValidBeans.createPostePayOnboardingRequest("1");
+
+            PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboarding(postePayOnboardingRequest, null, PaymentChannel.APP.getValue());
+            verify(paymentRequestRepository).save(paymentRequestEntity);
         }
     }
 

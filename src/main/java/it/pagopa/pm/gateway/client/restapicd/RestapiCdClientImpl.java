@@ -25,7 +25,7 @@ public class RestapiCdClientImpl {
     @Value("${HOSTNAME_PM}")
     public String hostnamePm;
 
-    @Value("${APIM_PGS_UPDATES_KEY}")
+    @Value("${PAGOPA_APIM_PGS_UPDATES_KEY}")
     public String apimUpdateSubscriptionKey;
 
     @PostConstruct

@@ -21,12 +21,20 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 @Component
 public class RestapiCdClientImpl {
 
+    private static final String OCP_APIM_SUBSCRIPTION_KEY_NAME = "Ocp-Apim-Subscription-Key";
     @Value("${HOSTNAME_PM}")
     public String hostnamePm;
 
+    @Value("${APIM_PGS_UPDATES_KEY}")
+    public String apimUpdateSubscriptionKey;
+
     @PostConstruct
     public void init() {
-        restapiCdClient = Feign.builder().client(new OkHttpClient()).encoder(new JacksonEncoder()).decoder(new JacksonDecoder()).target(RestapiCdClient.class, hostnamePm);
+        restapiCdClient = Feign.builder()
+                .client(new OkHttpClient())
+                .encoder(new JacksonEncoder())
+                .decoder(new JacksonDecoder())
+                .target(RestapiCdClient.class, hostnamePm);
     }
 
     private RestapiCdClient restapiCdClient;
@@ -40,6 +48,7 @@ public class RestapiCdClientImpl {
     public String callUpdatePostePayTransaction(Long id, PostePayPatchRequest postePayPatchRequest) {
         log.info("Calling Payment Manager's updatePostePayTransaction for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
+        headerMap.put(OCP_APIM_SUBSCRIPTION_KEY_NAME, apimUpdateSubscriptionKey);
         return restapiCdClient.updatePostePayTransaction(id, headerMap, new PostePayPatchRequestData(postePayPatchRequest));
     }
 

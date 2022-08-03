@@ -449,7 +449,7 @@ public class PostePayPaymentTransactionsController {
         } else {
             String clientResponseUrl = BooleanUtils.isTrue(entity.getIsOnboarding()) ?
                     environment.getProperty(PGS_CLIENT_RESPONSE_URL_ONBOARDING) :
-                    getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId());
+                    String.format(getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId()), requestId);
             response.setClientResponseUrl(clientResponseUrl);
             response.setLogoResourcePath(entity.getResourcePath());
             response.setError(StringUtils.EMPTY);

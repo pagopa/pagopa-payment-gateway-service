@@ -13,4 +13,6 @@ public class TransactionUpdateRequest {
 
     private Long accountingStatus;
 
+    private String pgsOutcome;
+
 }

@@ -26,14 +26,14 @@ jobs:
       # AGID_USER (PM)
       - template: ../liquibase-rollback.yml
         parameters:
-          url: $(pt-db-pgs-url-simple)
-          username: $(pt-db-pgs-username)
-          password: $(pt-db-pgs-password)
+          url: $(prf-db-pgs-url-simple)
+          username: $(prf-db-pgs-username)
+          password: $(prf-db-pgs-password)
           classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-          liquibaseSchemaName: $(pt-db-pgs-schema)
-          defaultSchemaName: $(pt-db-pgs-schema)
-          schema: $(pt-db-pgs-schema)
-          liquibaseTablespaceName: $(pt-db-pgs-tablespace)
+          liquibaseSchemaName: $(prf-db-pgs-schema)
+          defaultSchemaName: $(prf-db-pgs-schema)
+          schema: $(prf-db-pgs-schema)
+          liquibaseTablespaceName: $(prf-db-pgs-tablespace)
           title: "Rollback DB AGID_USER - PT"
           databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
           databaseChangelogTableName: "DATABASECHANGELOG_PGS"

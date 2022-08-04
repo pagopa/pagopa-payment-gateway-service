@@ -13,9 +13,9 @@ parameters:
 
 variables:
   vmImageNameDefault: 'ubuntu-latest'
-  poolNamePT: 'pm-agent-pool-pt'
-  azureSubscriptionPT: 'Pm-Subscription-pt'
-  KeyVaultNamePT: 'u87-kmn-pm-pt-pci'
+  poolNamePT: 'pm-agent-pool-uat'
+  azureSubscriptionPT: 'Pm-Subscription-uat'
+  KeyVaultNamePT: 'u87-kmn-pm-uat-pci'
   definitionId: 113
 
 stages:
@@ -53,7 +53,7 @@ stages:
     dependsOn:
       - stage_check_prerequisites
       - stage_deploy_PT_liquibase
-      condition: and(succeeded('stage_check_prerequisites'), succeeded('stage_deploy_PT_liquibase'))
+    condition: and(succeeded('stage_check_prerequisites'), succeeded('stage_deploy_PT_liquibase'))
     pool:
       name: $(poolNamePT)
     jobs:
@@ -89,11 +89,11 @@ stages:
                     moduleName: 'PTG'
                     artifactType: 'WAR'
                     azureSubscription: $(azureSubscriptionPT)
-                    webAppName: '$(payment-gateway-appsrv-pt)'
+                    webAppName: '$(payment-gateway-appsrv-prf)'
                     workingDir: '$(Pipeline.Workspace)'
                     fileName: 'pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
                     deployToSlotOrASE: true
-                    resourceGroupName: U87-PM-AppServices-pci-pt
+                    resourceGroupName: U87-PM-AppServices-pci-prf
                     slotName: release
                 - task: PublishBuildArtifacts@1
                   displayName: Publish Artifact

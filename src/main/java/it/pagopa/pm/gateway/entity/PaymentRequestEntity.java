@@ -41,7 +41,7 @@ public class PaymentRequestEntity {
     private Boolean authorizationOutcome;
 
     @Column(name = "ID_TRANSACTION", nullable = false)
-    private Long idTransaction;
+    private String idTransaction;
 
     @Column(name = "IS_PROCESSED")
     private Boolean isProcessed = false;

@@ -13,6 +13,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.HttpHost;
 import org.openapitools.client.ApiClient;
 import org.openapitools.client.api.PaymentManagerControllerApi;
+import org.openapitools.client.api.UserApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,12 +77,24 @@ public class ClientConfig {
 
     @Bean
     public PaymentManagerControllerApi postePayControllerApi() {
-  log.info("START postePayControllerApi()");
-        ApiClient apiClient = addProxyToApiClient(new ApiClient()
+        log.info("START postePayControllerApi()");
+        ApiClient apiClient = createApiClient();
+        log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
+        return new PaymentManagerControllerApi(apiClient);
+    }
+
+    @Bean
+    public UserApi postePayUserApi() {
+        log.info("START postePayUserApi()");
+        ApiClient apiClient = createApiClient();
+        log.info("END - postePayUserApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
+        return new UserApi(apiClient);
+    }
+
+    private ApiClient createApiClient() {
+        return addProxyToApiClient(new ApiClient()
                 .setBasePath(POSTEPAY_CLIENT_URL)
                 .setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
-       log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
-        return new PaymentManagerControllerApi(apiClient);
     }
 
     @Bean

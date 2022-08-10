@@ -1,9 +1,10 @@
 package it.pagopa.pm.gateway.config;
 
+import it.pagopa.pm.gateway.constant.Profiles;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.jndi.JndiTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -17,13 +18,13 @@ import java.util.HashMap;
 import java.util.Objects;
 
 @Configuration
+@Profile(Profiles.ON_PREMISE)
 public class CoreDataSourceConfiguration {
 
     @Autowired
     private Environment env;
 
     @Bean
-    @ConditionalOnProperty(name="pagopa.datasource.oracle.enabled", havingValue="true")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(productDataSource());
@@ -39,7 +40,6 @@ public class CoreDataSourceConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(name="pagopa.datasource.oracle.enabled", havingValue="true")
     public PlatformTransactionManager transactionManager() throws NamingException {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
@@ -48,7 +48,6 @@ public class CoreDataSourceConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(name="pagopa.datasource.oracle.enabled", havingValue="true")
     public DataSource productDataSource() throws NamingException {
         return (DataSource) new JndiTemplate().lookup(Objects.requireNonNull(
                 env.getProperty("pagopa.datasource.jndi.name")));

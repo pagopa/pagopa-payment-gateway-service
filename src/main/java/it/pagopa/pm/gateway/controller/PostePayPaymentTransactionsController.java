@@ -74,7 +74,7 @@ public class PostePayPaymentTransactionsController {
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
     private static final String PIPE_SPLIT_CHAR = "\\|";
 
-    @Value("${postepay.pgs.response.urlredirect}")
+    @Value("${pgs.postepay.response.urlredirect}")
     private String PGS_RESPONSE_URL_REDIRECT;
 
     @Value("${postepay.notificationURL}")

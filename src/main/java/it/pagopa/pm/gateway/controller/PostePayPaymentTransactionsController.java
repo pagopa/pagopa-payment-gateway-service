@@ -77,10 +77,10 @@ public class PostePayPaymentTransactionsController {
     @Value("${pgs.postepay.response.urlredirect}")
     private String PGS_RESPONSE_URL_REDIRECT;
 
-    @Value("${postepay.notificationURL}")
+    @Value("${pgs.postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
 
-    @Value("${postepay.logo.url}")
+    @Value("${pgs.postepay.logo.url}")
     private String POSTEPAY_LOGO_URL;
 
     @Autowired

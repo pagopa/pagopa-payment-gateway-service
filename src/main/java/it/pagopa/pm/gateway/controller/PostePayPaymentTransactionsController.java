@@ -7,10 +7,7 @@ import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.Scopes;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
-import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
-import it.pagopa.pm.gateway.dto.enums.StatusErrorCodeOutcomeEnum;
-import it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum;
+import it.pagopa.pm.gateway.dto.enums.*;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
@@ -125,6 +122,7 @@ public class PostePayPaymentTransactionsController {
             requestEntity.setIsProcessed(true);
             requestEntity.setAuthorizationOutcome(isAuthOutcomeOk);
             requestEntity.setAuthorizationCode(authCode);
+            requestEntity.setStatus(PaymentRequestStatusEnum.PROCESSED.getId());
             paymentRequestRepository.save(requestEntity);
         } catch (FeignException fe) {
             log.error("A feign exception occurred while calling restapi-cd updateTransaction PATCH API", fe);
@@ -199,6 +197,7 @@ public class PostePayPaymentTransactionsController {
         paymentRequestEntity.setIdTransaction(idTransaction);
         paymentRequestEntity.setMdcInfo(mdcFields);
         paymentRequestEntity.setIsOnboarding(BooleanUtils.toBoolean(isOnboarding));
+        paymentRequestEntity.setStatus(PaymentRequestStatusEnum.CREATED.getId());
         return paymentRequestEntity;
     }
 
@@ -549,6 +548,8 @@ public class PostePayPaymentTransactionsController {
 
         RefundPaymentResponse response;
         EsitoStorno refundOutcome;
+        boolean isEsitoStornoOk = false;
+
         try {
             response = postePayControllerApi.apiV1PaymentRefundPost(bearerToken, refundPaymentRequest);
 
@@ -563,8 +564,8 @@ public class PostePayPaymentTransactionsController {
                 }
             }
 
-            requestEntity.setIsRefunded(refundOutcome.equals(EsitoStorno.OK));
-            paymentRequestRepository.save(requestEntity);
+            isEsitoStornoOk = refundOutcome.equals(EsitoStorno.OK);
+            requestEntity.setIsRefunded(isEsitoStornoOk);
             return createPostePayRefundResponse(requestId, correlationId, refundOutcome.getValue(), null);
         } catch (ApiException e) {
             log.error("Error while calling PostePay's /refund API. HTTP Status is: " + e.getCode());
@@ -574,7 +575,11 @@ public class PostePayPaymentTransactionsController {
         } catch (Exception e) {
             log.error("An exception occurred while requesting PostePay payment refund", e);
             return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.GENERIC_ERROR);
+        } finally {
+            requestEntity.setStatus(isEsitoStornoOk? PaymentRequestStatusEnum.REFUNDED.getId(): PaymentRequestStatusEnum.NOT_REFUNDABLE.getId());
+            paymentRequestRepository.save(requestEntity);
         }
+
     }
 
     private boolean checkDetailStatus(String bearerToken, DetailsPaymentRequest detailsPaymentRequest) throws Exception {

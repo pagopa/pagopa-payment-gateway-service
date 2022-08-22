@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class Profiles {
-    public static final String ON_PREMISE = "onprem";
-    public static final String ON_CLOUD = "cloud";
+    public static final String JBOSS_ORACLE = "jboss-oracle";
+    public static final String SPRINGBOOT_POSTGRES = "springboot-postgres";
 }

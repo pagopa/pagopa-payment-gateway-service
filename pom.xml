@@ -309,12 +309,12 @@
 
     <profiles>
         <profile>
-            <id>onprem</id>
+            <id>jboss-oracle</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <activatedProperties>onprem</activatedProperties>
+                <activatedProperties>jboss-oracle</activatedProperties>
                 <java.version>1.8</java.version>
                 <packaging.type>war</packaging.type>
                 <datasource.enable>true</datasource.enable>
@@ -340,9 +340,9 @@
             </dependencies>
         </profile>
         <profile>
-            <id>cloud</id>
+            <id>springboot-postgres</id>
             <properties>
-                <activatedProperties>cloud</activatedProperties>
+                <activatedProperties>springboot-postgres</activatedProperties>
                 <java.version>17</java.version>
                 <packaging.type>jar</packaging.type>
                 <datasource.enable>false</datasource.enable>

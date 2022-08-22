@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
- 
   pagopa-payment-transactions-gateway:
     container_name: pagopa-payment-transactions-gateway
     env_file: .env.local

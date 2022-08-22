@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Objects;
 
 @Configuration
-@Profile(Profiles.ON_PREMISE)
+@Profile(Profiles.JBOSS_ORACLE)
 public class CoreDataSourceConfiguration {
 
     @Autowired

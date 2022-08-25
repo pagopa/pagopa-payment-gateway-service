@@ -16,7 +16,8 @@ public enum ExceptionsEnum {
     REFUND_NOT_AUTHORIZED("Transaction is not refundable: authorization has not been approved by PostePay or has been refunded already", HttpStatus.OK),
     PAYMENT_REQUEST_NOT_FOUND("Payment request not found", HttpStatus.NOT_FOUND),
     EMPTY_RESPONSE("Call to API returned an empty response object", HttpStatus.NO_CONTENT),
-    PAYMENT_RESPONSE_NOT_FOUND("Payment response not found", HttpStatus.NOT_FOUND);
+    PAYMENT_RESPONSE_NOT_FOUND("Payment response not found", HttpStatus.NOT_FOUND),
+    PAYMENT_REQUEST_STATUS_ENUM_NOT_FOUND("Payment request status enum not found", HttpStatus.BAD_REQUEST);
 
     @Getter
     private final String description;

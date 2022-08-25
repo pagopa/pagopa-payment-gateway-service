@@ -59,7 +59,7 @@ public class PaymentRequestEntity {
     private Boolean isOnboarding;
 
     @Column(name = "STATUS")
-    private Long status;
+    private String status;
 
 
 }

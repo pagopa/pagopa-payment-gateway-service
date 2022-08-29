@@ -5,7 +5,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BPayOutcomeResponse {
+public class BPayPaymentOutcomeResponse {
 
     private boolean outcome;
 

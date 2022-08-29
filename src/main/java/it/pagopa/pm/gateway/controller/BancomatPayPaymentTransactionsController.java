@@ -74,7 +74,7 @@ public class BancomatPayPaymentTransactionsController {
 
     @Transactional
     @PostMapping(REQUEST_PAYMENTS_BPAY)
-    public BPayOutcomeResponse requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+    public BPayPaymentOutcomeResponse requestPaymentToBancomatPay(@RequestBody BPayPaymentRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         BPayPaymentResponseEntity alreadySaved = bPayPaymentResponseRepository.findByIdPagoPa(idPagoPa);
@@ -84,12 +84,12 @@ public class BancomatPayPaymentTransactionsController {
         log.info("START requestPaymentToBancomatPay " + idPagoPa);
         executePaymentRequest(request, mdcFields);
         log.info("END requestPaymentToBancomatPay " + idPagoPa);
-        return new BPayOutcomeResponse(true);
+        return new BPayPaymentOutcomeResponse(true);
     }
 
     @Transactional
     @PostMapping(REQUEST_REFUNDS_BPAY)
-    public BPayOutcomeResponse requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
+    public BPayRefundOutcomeResponse requestRefundToBancomatPay(@RequestBody BPayRefundRequest request, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) throws Exception {
         setMdcFields(mdcFields);
         Long idPagoPa = request.getIdPagoPa();
         log.info("START requestRefundToBancomatPay " + idPagoPa);
@@ -99,12 +99,13 @@ public class BancomatPayPaymentTransactionsController {
         }
         String inquiryResponse = inquiryTransactionToBancomatPay(request);
         log.info("Inquiry response for idPagopa " + idPagoPa + ": " + inquiryResponse);
-        if (INQUIRY_RESPONSE_EFF.equals(inquiryResponse)) {
-            executeRefundRequest(request);
+        boolean needsRefund = INQUIRY_RESPONSE_EFF.equals(inquiryResponse);
+        boolean refunded = false;
+        if (needsRefund) {
+            refunded = executeRefundRequest(request);
         }
-        return new BPayOutcomeResponse(true);
+        return new BPayRefundOutcomeResponse(needsRefund, refunded);
     }
-
 
     private String inquiryTransactionToBancomatPay(BPayRefundRequest request) throws Exception {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse;
@@ -123,29 +124,25 @@ public class BancomatPayPaymentTransactionsController {
 
     }
 
-
-    @Async
-    public void executeRefundRequest(BPayRefundRequest request) throws RestApiException {
+    public boolean executeRefundRequest(BPayRefundRequest request) throws RestApiException {
+        boolean refunded = false;
         StornoPagamentoResponse response;
         Long idPagoPa = request.getIdPagoPa();
         String guid = UUID.randomUUID().toString();
-
         log.info("START executeRefundRequest for transaction " + idPagoPa + " with guid: " + guid);
         try {
             response = bancomatPayClient.sendRefundRequest(request, guid);
-            if (response == null || response.getReturn().getEsito() == null) {
-                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
-            }
             EsitoVO esitoVO = response.getReturn().getEsito();
             log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
-            if (Boolean.FALSE.equals(esitoVO.isEsito())) {
-                throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
+            if (Boolean.TRUE.equals(esitoVO.isEsito())) {
+                refunded = true;
             }
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
         log.info("END executeRefundRequest " + idPagoPa);
+        return refunded;
     }
 
     @Async

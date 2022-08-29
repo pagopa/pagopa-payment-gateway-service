@@ -82,7 +82,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/BPayOutcomeResponse'
+                $ref: '#/components/schemas/BPayPaymentOutcomeResponse'
         "400":
           description: Bad Request mandatory parameters missing
           content:
@@ -130,7 +130,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/BPayOutcomeResponse'
+                $ref: '#/components/schemas/BPayRefundOutcomeResponse'
         "400":
           description: Bad Request
           content:
@@ -423,10 +423,17 @@ components:
           type: string
         language:
           type: string
-    BPayOutcomeResponse:
+    BPayPaymentOutcomeResponse:
       type: object
       properties:
         outcome:
+          type: boolean
+    BPayRefundOutcomeResponse:
+      type: object
+      properties:
+        needsRefund:
+          type: boolean
+        refunded:
           type: boolean
     PollingResponseEntity:
       type: object
@@ -539,8 +546,11 @@ components:
           type: string
         error:
           type: string
+        needsRefund:
+          type: boolean
       required:
         - transactionId
         - paymentId
         - refundOutcome
         - error
+        - needsRefund

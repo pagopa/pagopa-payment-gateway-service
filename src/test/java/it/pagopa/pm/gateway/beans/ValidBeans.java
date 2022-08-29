@@ -62,8 +62,8 @@ public class ValidBeans {
         return response;
     }
 
-    public static BPayOutcomeResponse bPayPaymentOutcomeResponseToReturn() {
-        BPayOutcomeResponse response = new BPayOutcomeResponse();
+    public static BPayPaymentOutcomeResponse bPayPaymentOutcomeResponseToReturn() {
+        BPayPaymentOutcomeResponse response = new BPayPaymentOutcomeResponse();
         response.setOutcome(true);
         return response;
     }

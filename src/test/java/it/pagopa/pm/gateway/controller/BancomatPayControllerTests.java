@@ -8,8 +8,7 @@ import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.ObjectFactory;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.ApiPaths;
-import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
-import it.pagopa.pm.gateway.dto.BPayRefundRequest;
+import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
@@ -208,7 +207,7 @@ public class BancomatPayControllerTests {
     public void givenBPayRefundRequestWithNoReturn_shouldReturnGenericError() throws Exception {
         thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
         given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
-        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(false));
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(false, "EFF"));
 
         try {
             mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
@@ -224,7 +223,7 @@ public class BancomatPayControllerTests {
     public void givenStornoPagamentoResponseWithNoReturn_shouldReturnGenericError() throws Exception {
         thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
         given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
-        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true));
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true, "EFF"));
         given(client.sendRefundRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.stornoPagamentoResponse(false, true));
 
         try {
@@ -238,21 +237,38 @@ public class BancomatPayControllerTests {
 
 
     @Test
-    public void givenStornoPagamentoResponseWithFalseEsito_shouldReturnGenericError() throws Exception {
-        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.GENERIC_ERROR)));
+    public void givenStornoPagamentoResponseWithFalseEsito_shouldReturnNotRefunded() throws Exception {
         given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
-        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true));
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true, "EFF"));
         given(client.sendRefundRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.stornoPagamentoResponse(true, false));
-
-        try {
-            mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
-                    .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
-                    .contentType(MediaType.APPLICATION_JSON));
-        } catch (NestedServletException | JsonProcessingException e) {
-            throw (Exception) e.getCause();
-        }
+        mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(new BPayRefundOutcomeResponse(true, false))));
     }
 
+    @Test
+    public void givenStornoPagamentoResponseWithTrueEsito_shouldReturnRefunded() throws Exception {
+        given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true, "EFF"));
+        given(client.sendRefundRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.stornoPagamentoResponse(true, true));
+        mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                        .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(new BPayRefundOutcomeResponse(true, true))));
+    }
 
+    @Test
+    public void givenInquiryResponseNotEFF_shouldReturnNoNeedToRefund() throws Exception {
+        given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(ValidBeans.bPayPaymentResponseEntityToSave());
+        given(client.sendInquiryRequest(any(BPayRefundRequest.class), anyString())).willReturn(ValidBeans.inquiryTransactionStatusResponse(true, ""));
+        mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                        .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(new BPayRefundOutcomeResponse(false, false))));
+    }
 
 }

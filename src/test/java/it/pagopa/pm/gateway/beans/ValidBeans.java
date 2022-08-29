@@ -22,9 +22,6 @@ import org.openapitools.client.model.DetailsPaymentRequest;
 import  org.openapitools.client.model.OnboardingRequest;
 import org.openapitools.client.model.OnboardingResponse;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
 import java.util.Objects;
 
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
@@ -135,10 +132,10 @@ public class ValidBeans {
 
     }
 
-    public static InquiryTransactionStatusResponse inquiryTransactionStatusResponse(boolean hasReturn) {
+    public static InquiryTransactionStatusResponse inquiryTransactionStatusResponse(boolean hasReturn, String esito) {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse = new InquiryTransactionStatusResponse();
         ResponseInquiryTransactionStatusVO responseInquiryTransactionStatusVO = new ResponseInquiryTransactionStatusVO();
-        responseInquiryTransactionStatusVO.setEsitoPagamento("EFF");
+        responseInquiryTransactionStatusVO.setEsitoPagamento(esito);
         if (hasReturn)
             inquiryTransactionStatusResponse.setReturn(responseInquiryTransactionStatusVO);
 
@@ -314,16 +311,16 @@ public class ValidBeans {
         return paymentRequestEntity;
     }
 
-        public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
-        PaymentRequestEntity paymentRequestEntity = paymentRequestEntity(null, true, clientId);
-        paymentRequestEntity.setAuthorizationCode(authorizationCode);
-        paymentRequestEntity.setIsRefunded(isRefunded);
-        if (changeRequestEndPoint){
-            paymentRequestEntity.setRequestEndpoint("/invalidEndpoint");
-        }
-        return paymentRequestEntity;
-
+    public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
+    PaymentRequestEntity paymentRequestEntity = paymentRequestEntity(null, true, clientId);
+    paymentRequestEntity.setAuthorizationCode(authorizationCode);
+    paymentRequestEntity.setIsRefunded(isRefunded);
+    if (changeRequestEndPoint){
+        paymentRequestEntity.setRequestEndpoint("/invalidEndpoint");
     }
+    return paymentRequestEntity;
+
+}
 
     public static PostePayPollingResponse postePayPollingResponse() {
         PostePayPollingResponse postePayPollingResponse = new PostePayPollingResponse();
@@ -347,24 +344,13 @@ public class ValidBeans {
         return postePayPollingResponse;
     }
 
-
-    public static ResponseEntity<PostePayRefundResponse> postePayRefundResponseResponseEntity(String requestId, String paymentId, String refundOutcome){
-
-        PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
-        postePayRefundResponse.setRequestId(requestId);
-        postePayRefundResponse.setPaymentId(paymentId);
-        postePayRefundResponse.setRefundOutcome(refundOutcome);
-
-        return ResponseEntity.status(HttpStatus.OK).body(postePayRefundResponse);
-
-    }
-
-    public static PostePayRefundResponse postePayRefundResponse(String requestId, String paymentId, String refundOutcome, String error){
+    public static PostePayRefundResponse postePayRefundResponse(String requestId, String paymentId, String refundOutcome, String error, boolean needsRefund){
         PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
         postePayRefundResponse.setRequestId(requestId);
         postePayRefundResponse.setPaymentId(paymentId);
         postePayRefundResponse.setRefundOutcome(refundOutcome);
         postePayRefundResponse.setError(error);
+        postePayRefundResponse.setNeedsRefund(needsRefund);
 
         return postePayRefundResponse;
 
@@ -406,11 +392,8 @@ public class ValidBeans {
    }
 
    public static PostePayPatchRequest postePayPatchRequest(){
-        PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, "authCode", "correlation-ID");
-        return postePayPatchRequest;
-
+       return new PostePayPatchRequest(21L, "authCode", "correlation-ID");
    }
-
 
     public static PostePayOnboardingRequest createPostePayOnboardingRequest(String onboardingTransactionId) {
         PostePayOnboardingRequest postePayOnboardingRequest = new PostePayOnboardingRequest();
@@ -418,6 +401,7 @@ public class ValidBeans {
         postePayOnboardingRequest.setOnboardingTransactionId(onboardingTransactionId);
         return postePayOnboardingRequest;
     }
+
 }
 
 

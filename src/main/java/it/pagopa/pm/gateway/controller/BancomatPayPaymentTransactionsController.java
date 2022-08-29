@@ -136,6 +136,8 @@ public class BancomatPayPaymentTransactionsController {
             log.info("Response from BPay sendRefundRequest - idPagopa: " + idPagoPa + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
             if (Boolean.TRUE.equals(esitoVO.isEsito())) {
                 refunded = true;
+            } else {
+                log.error("Could not revert transaction with idPagoPa " + idPagoPa);
             }
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);

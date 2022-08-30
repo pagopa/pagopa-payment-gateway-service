@@ -28,7 +28,7 @@ public enum PaymentRequestStatusEnum {
         this.description = description;
     }
 
-    public static PaymentRequestStatusEnum of(String name) {
+    public static PaymentRequestStatusEnum of(String name) throws IllegalArgumentException{
         PaymentRequestStatusEnum result = map.get(name);
         if (result == null) {
             throw new IllegalArgumentException("Invalid status: " + name);

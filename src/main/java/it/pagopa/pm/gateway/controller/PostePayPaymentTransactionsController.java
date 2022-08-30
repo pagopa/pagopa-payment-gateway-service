@@ -439,8 +439,14 @@ public class PostePayPaymentTransactionsController {
         response.setCorrelationId(entity.getCorrelationId());
         response.setIsOnboarding(entity.getIsOnboarding());
         if (ObjectUtils.isNotEmpty(entity.getStatus())){
-            PaymentRequestStatusEnum paymentRequestStatusEnum = PaymentRequestStatusEnum.of(entity.getStatus());
-            response.setPaymentRequestStatus(paymentRequestStatusEnum);
+            PaymentRequestStatusEnum paymentRequestStatusEnum;
+            try {
+                paymentRequestStatusEnum = PaymentRequestStatusEnum.of(entity.getStatus());
+                response.setPaymentRequestStatus(paymentRequestStatusEnum);
+            } catch (IllegalArgumentException iae){
+                log.warn("PaymentRequestEntity has an invalid PaymentRequestStatusEnum with value " + entity.getStatus());
+                response.setError("No authorization outcome has been received yet");
+            }
         }
         if (Objects.isNull(authorizationOutcome)) {
             log.warn("No authorization outcome has been received yet for requestId " + requestId);

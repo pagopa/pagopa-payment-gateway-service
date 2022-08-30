@@ -7,9 +7,9 @@ import java.util.Map;
 
 public enum PaymentRequestStatusEnum {
 
-    CREATED (1L, "Creata"),
-    AUTHORIZED (2L, "Autorizzazione concessa"),
-    DENIED (3L, "Autorizzazione negata"),
+    CREATED(1L, "Creata"),
+    AUTHORIZED(2L, "Autorizzazione concessa"),
+    DENIED(3L, "Autorizzazione negata"),
     CANCELLED(4L, "Cancellata");
 
     private static final Map<String, PaymentRequestStatusEnum> map = new HashMap<>(values().length, 1);
@@ -28,7 +28,7 @@ public enum PaymentRequestStatusEnum {
         this.description = description;
     }
 
-    public static PaymentRequestStatusEnum of(String name) throws IllegalArgumentException{
+    public static PaymentRequestStatusEnum getEnumValueFromString(String name) throws IllegalArgumentException {
         PaymentRequestStatusEnum result = map.get(name);
         if (result == null) {
             throw new IllegalArgumentException("Invalid status: " + name);

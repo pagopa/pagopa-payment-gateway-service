@@ -573,10 +573,11 @@ public class PostePayPaymentTransactionsController {
                 }
             }
 
-            requestEntity.setIsRefunded(refundOutcome.equals(EsitoStorno.OK));
-            if (requestEntity.getIsRefunded()){
+            boolean isRefunded = refundOutcome.equals(EsitoStorno.OK);
+            if (isRefunded) {
                 requestEntity.setStatus(PaymentRequestStatusEnum.CANCELLED.name());
             }
+            requestEntity.setIsRefunded(isRefunded);
             paymentRequestRepository.save(requestEntity);
             return createPostePayRefundResponse(requestId, correlationId, refundOutcome.getValue(), null);
         } catch (ApiException e) {

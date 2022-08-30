@@ -275,6 +275,7 @@ public class ValidBeans {
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
         paymentRequestEntity.setResourcePath("${postepay.logo.url}");
         paymentRequestEntity.setIsOnboarding(false);
+        paymentRequestEntity.setStatus("CREATED");
         return paymentRequestEntity;
  }
 
@@ -305,6 +306,7 @@ public class ValidBeans {
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
         paymentRequestEntity.setResourcePath("${postepay.logo.url}");
         paymentRequestEntity.setIsOnboarding(true);
+        paymentRequestEntity.setStatus("CREATED");
         return paymentRequestEntity;
     }
 

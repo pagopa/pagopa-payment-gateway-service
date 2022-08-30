@@ -58,6 +58,8 @@ public class PaymentRequestEntity {
     @Column(name = "IS_ONBOARDING")
     private Boolean isOnboarding;
 
+    @Column(name = "STATUS")
+    private String status;
 
 
 }

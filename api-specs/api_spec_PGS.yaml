@@ -163,7 +163,7 @@ paths:
             type: string
             format: uuid
           required: true
-          description: PGS-generated GUID getEnumValueFromString the request to retrieve
+          description: PGS-generated GUID of the request to retrieve
           example: 77e1c83b-7bb0-437b-bc50-a7a58e5660ac
       responses:
         "200":
@@ -208,7 +208,7 @@ paths:
             type: string
             format: uuid
           required: true
-          description: PGS-generated GUID getEnumValueFromString the request to retrieve
+          description: PGS-generated GUID of the request to retrieve
           example: 77e1c83b-7bb0-437b-bc50-a7a58e5660ac
       responses:
         "200":

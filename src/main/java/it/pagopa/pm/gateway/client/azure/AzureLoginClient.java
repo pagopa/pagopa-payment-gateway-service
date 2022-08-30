@@ -1,6 +1,7 @@
 package it.pagopa.pm.gateway.client.azure;
 
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
+import it.pagopa.pm.gateway.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +15,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ClientConfigs.*;
@@ -30,10 +32,12 @@ public class AzureLoginClient {
     @Autowired
     private Environment environment;
 
-    private final Map<String, String> configValues;
-    private final Map<String, String> postepayConfigValues;
+    private Map<String, String> configValues;
+    private Map<String, String> postepayConfigValues;
 
-    public AzureLoginClient() throws Exception {
+
+    @PostConstruct
+    private void initConfigValues() throws Exception {
         postepayConfigValues = getPostepayConfigValues();
         configValues = getConfigValues();
     }
@@ -46,7 +50,8 @@ public class AzureLoginClient {
 
         List<String> listConfig = Arrays.asList(AZURE_AUTH_CLIENT_CONFIG.split(PIPE_SPLIT_CHAR));
         Map<String, String> configsMap = new HashMap<>();
-        configsMap.put(IS_AZURE_AUTH_ENABLED, Objects.nonNull(listConfig.get(0)) ? listConfig.get(0) : "true");
+        String enabled = Objects.nonNull(listConfig.get(0)) ? listConfig.get(0) : "true";
+        configsMap.put(IS_AZURE_AUTH_ENABLED, enabled);
         return configsMap;
     }
 

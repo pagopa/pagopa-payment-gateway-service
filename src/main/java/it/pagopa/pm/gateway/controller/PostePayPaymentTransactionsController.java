@@ -72,13 +72,13 @@ public class PostePayPaymentTransactionsController {
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
     private static final String PIPE_SPLIT_CHAR = "\\|";
 
-    @Value("${postepay.pgs.response.urlredirect}")
+    @Value("${pgs.postepay.response.urlredirect}")
     private String PGS_RESPONSE_URL_REDIRECT;
 
-    @Value("${postepay.notificationURL}")
+    @Value("${pgs.postepay.notificationURL}")
     private String POSTEPAY_NOTIFICATION_URL;
 
-    @Value("${postepay.logo.url}")
+    @Value("${pgs.postepay.logo.url}")
     private String POSTEPAY_LOGO_URL;
 
     @Autowired

@@ -2,6 +2,7 @@ package it.pagopa.pm.gateway.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.enums.StatusErrorCodeOutcomeEnum;
 import lombok.*;
 
@@ -19,5 +20,6 @@ public class PostePayPollingResponse {
     String requestId;
     String correlationId;
     Boolean isOnboarding;
+    PaymentRequestStatusEnum paymentRequestStatus;
 
 }

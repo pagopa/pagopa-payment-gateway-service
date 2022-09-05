@@ -6,6 +6,7 @@ Payment transactions gateway  for the Payment Manager
 
 ### Profile jboss-oracle
 - ```mvn clean package``` or ```mvn clean package -Pjboss-oracle```
+- ```docker-compose -f docker-compose-oracle.yaml up```
 - `deploy it on Jboss`
 #### Stack
 * JAVA 8

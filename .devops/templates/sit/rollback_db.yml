@@ -15,29 +15,33 @@ jobs:
       - script: echo Rolling back to version ${{ parameters.version }}
         displayName: Echo Rollback Version
 
-  - job: job_rollback_rtd
+  - deployment: job_rollback_agid
     displayName: AGID_USER Rollback Execution
     pool:
       name: ${{ parameters.poolName }}
     dependsOn: job_rollback_prep
-    steps:
-      - checkout: none
+    environment: 'SIT'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - checkout: none
 
-      # AGID_USER (PM)
-      - template: ../liquibase-rollback.yml
-        parameters:
-          url: $(sit-db-pgs-url-simple)
-          username: $(sit-db-pgs-username)
-          password: $(sit-db-pgs-password)
-          classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-          liquibaseSchemaName: $(sit-db-pgs-schema)
-          defaultSchemaName: $(sit-db-pgs-schema)
-          schema: $(sit-db-pgs-schema)
-          liquibaseTablespaceName: $(sit-db-pgs-tablespace)
-          title: "Rollback DB AGID_USER - SIT"
-          databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
-          databaseChangelogTableName: "DATABASECHANGELOG_PGS"
-          version: ${{ parameters.version }}
-          contexts: "tag,baseline,incremental,insert-sit"
-          azureSubscription: ${{ parameters.azureSubscription }}
-          KeyVaultName: ${{ parameters.KeyVaultName }}
+              # AGID_USER (PM)
+              - template: ../liquibase-rollback.yml
+                parameters:
+                  url: $(sit-db-pgs-url-simple)
+                  username: $(sit-db-pgs-username)
+                  password: $(sit-db-pgs-password)
+                  classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
+                  liquibaseSchemaName: $(sit-db-pgs-schema)
+                  defaultSchemaName: $(sit-db-pgs-schema)
+                  schema: $(sit-db-pgs-schema)
+                  liquibaseTablespaceName: $(sit-db-pgs-tablespace)
+                  title: "Rollback DB AGID_USER - SIT"
+                  databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+                  databaseChangelogTableName: "DATABASECHANGELOG_PGS"
+                  version: ${{ parameters.version }}
+                  contexts: "tag,baseline,incremental,insert-sit"
+                  azureSubscription: ${{ parameters.azureSubscription }}
+                  KeyVaultName: ${{ parameters.KeyVaultName }}

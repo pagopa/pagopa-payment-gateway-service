@@ -21,27 +21,27 @@ jobs:
       name: ${{ parameters.poolName }}
     dependsOn: job_rollback_prep
     environment: 'PT'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-              - checkout: none
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: none
 
-              # AGID_USER (PM)
-              - template: ../liquibase-rollback.yml
-                parameters:
-                  url: $(prf-db-pgs-url-simple)
-                  username: $(prf-db-pgs-username)
-                  password: $(prf-db-pgs-password)
-                  classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-                  liquibaseSchemaName: $(prf-db-pgs-schema)
-                  defaultSchemaName: $(prf-db-pgs-schema)
-                  schema: $(prf-db-pgs-schema)
-                  liquibaseTablespaceName: $(prf-db-pgs-tablespace)
-                  title: "Rollback DB AGID_USER - PT"
-                  databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
-                  databaseChangelogTableName: "DATABASECHANGELOG_PGS"
-                  version: ${{ parameters.version }}
-                  contexts: "tag,baseline,incremental,insert-pt"
-                  azureSubscription: ${{ parameters.azureSubscription }}
-                  KeyVaultName: ${{ parameters.KeyVaultName }}
+            # AGID_USER (PM)
+            - template: ../liquibase-rollback.yml
+              parameters:
+                url: $(prf-db-pgs-url-simple)
+                username: $(prf-db-pgs-username)
+                password: $(prf-db-pgs-password)
+                classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
+                liquibaseSchemaName: $(prf-db-pgs-schema)
+                defaultSchemaName: $(prf-db-pgs-schema)
+                schema: $(prf-db-pgs-schema)
+                liquibaseTablespaceName: $(prf-db-pgs-tablespace)
+                title: "Rollback DB AGID_USER - PT"
+                databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+                databaseChangelogTableName: "DATABASECHANGELOG_PGS"
+                version: ${{ parameters.version }}
+                contexts: "tag,baseline,incremental,insert-pt"
+                azureSubscription: ${{ parameters.azureSubscription }}
+                KeyVaultName: ${{ parameters.KeyVaultName }}

@@ -15,29 +15,33 @@ jobs:
       - script: echo Rolling back to version ${{ parameters.version }}
         displayName: Echo Rollback Version
 
-  - job: job_rollback_agid
+  - deployment: job_rollback_agid
     displayName: AGID_USER Rollback Execution
     pool:
       name: ${{ parameters.poolName }}
     dependsOn: job_rollback_prep
-    steps:
-      - checkout: none
+    environment: 'PROD'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: none
 
-      # AGID_USER (PM)
-      - template: ../liquibase-rollback.yml
-        parameters:
-          url: $(prod-db-pgs-url-simple)
-          username: $(prod-db-pgs-username)
-          password: $(prod-db-pgs-password)
-          classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-          liquibaseSchemaName: $(prod-db-pgs-schema)
-          defaultSchemaName: $(prod-db-pgs-schema)
-          schema: $(prod-db-pgs-schema)
-          liquibaseTablespaceName: $(prod-db-pgs-tablespace)
-          title: "Rollback DB AGID_USER - PROD"
-          databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
-          databaseChangelogTableName: "DATABASECHANGELOG_PGS"
-          version: ${{ parameters.version }}
-          contexts: "tag,insert-prod,incremental-prod"
-          azureSubscription: ${{ parameters.azureSubscription }}
-          KeyVaultName: ${{ parameters.KeyVaultName }}
+            # AGID_USER (PM)
+            - template: ../liquibase-rollback.yml
+              parameters:
+                url: $(prod-db-pgs-url-simple)
+                username: $(prod-db-pgs-username)
+                password: $(prod-db-pgs-password)
+                classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
+                liquibaseSchemaName: $(prod-db-pgs-schema)
+                defaultSchemaName: $(prod-db-pgs-schema)
+                schema: $(prod-db-pgs-schema)
+                liquibaseTablespaceName: $(prod-db-pgs-tablespace)
+                title: "Rollback DB AGID_USER - PROD"
+                databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+                databaseChangelogTableName: "DATABASECHANGELOG_PGS"
+                version: ${{ parameters.version }}
+                contexts: "tag,insert-prod,incremental-prod"
+                azureSubscription: ${{ parameters.azureSubscription }}
+                KeyVaultName: ${{ parameters.KeyVaultName }}

@@ -33,7 +33,10 @@ public class ValidBeans {
     private static final String EURO_ISO_CODE = "978";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String RESPONSE_URL_OK_KO = "https://portal.test.pagopa.gov.it/pmmockserviceapi/home";
-    public static final String NOTIFICATION_URL = "${postepay.notificationURL}";
+    public static final String NOTIFICATION_URL = "http://bancomatPay:7954/payment-transactions-gateway/v1/request-payments/postepay";
+    public static final String POSTEPAY_URL_REDIRECT = "https://urlRedirect?requestId=%s&amp;scope=%s";
+    public static final String POSTEPAY_LOGO_URL = "v1/assets/img/postepay/postepay.png";
+    public static final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 
     public static BPayPaymentRequest bPayPaymentRequest() {
         BPayPaymentRequest request = new BPayPaymentRequest();
@@ -226,7 +229,7 @@ public class ValidBeans {
         if (isError) {
             postePayAuthResponse.setError(errorMessage);
         } else {
-            postePayAuthResponse.setUrlRedirect("${postepay.pgs.response.urlredirect}");
+            postePayAuthResponse.setUrlRedirect("https://urlRedirect?requestId=" + UUID_SAMPLE + "&amp;scope=postepay");
         }
 
         return postePayAuthResponse;
@@ -273,7 +276,7 @@ public class ValidBeans {
         paymentRequestEntity.setMdcInfo(null);
         paymentRequestEntity.setResourcePath(null);
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
-        paymentRequestEntity.setResourcePath("${postepay.logo.url}");
+        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_URL);
         paymentRequestEntity.setIsOnboarding(false);
         paymentRequestEntity.setStatus("CREATED");
         return paymentRequestEntity;
@@ -304,7 +307,7 @@ public class ValidBeans {
         paymentRequestEntity.setMdcInfo(null);
         paymentRequestEntity.setResourcePath(null);
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
-        paymentRequestEntity.setResourcePath("${postepay.logo.url}");
+        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_URL);
         paymentRequestEntity.setIsOnboarding(true);
         paymentRequestEntity.setStatus("CREATED");
         return paymentRequestEntity;
@@ -334,7 +337,7 @@ public class ValidBeans {
         postePayPollingResponse.setAuthOutcome(OutcomeEnum.OK);
         postePayPollingResponse.setClientResponseUrl("www.clientResponseUrl.com");
         postePayPollingResponse.setError(StringUtils.EMPTY);
-        postePayPollingResponse.setLogoResourcePath("${postepay.logo.url}");
+        postePayPollingResponse.setLogoResourcePath(POSTEPAY_LOGO_URL);
         return postePayPollingResponse;
     }
 

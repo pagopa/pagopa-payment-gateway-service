@@ -3,28 +3,26 @@ package it.pagopa.pm.gateway.client.bpay;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.utils.ClientUtils;
+import it.pagopa.pm.gateway.constant.Configurations;
+import it.pagopa.pm.gateway.utils.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
 import javax.xml.bind.*;
 import java.math.BigDecimal;
 
 @Slf4j
+@Component
 public class BancomatPayClient {
 
     @Autowired
     private WebServiceTemplate webServiceTemplate;
 
-    @Value("${bancomatPay.client.group.code}")
-    public String GROUP_CODE;
-    @Value("${bancomatPay.client.institute.code}")
-    public String INSTITUTE_CODE;
-    @Value("${bancomatPay.client.tag}")
-    public String TAG;
-    @Value("${bancomatPay.client.token}")
-    public String TOKEN;
+    @Autowired
+    private Config config;
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
@@ -39,7 +37,7 @@ public class BancomatPayClient {
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(request.getAmount()));
         richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getEncryptedTelephoneNumber());
         richiestaPagamentoPagoPaVO.setCausale(request.getSubject());
-        richiestaPagamentoPagoPaVO.setTag(TAG);
+        richiestaPagamentoPagoPaVO.setTag(config.getConfig(Configurations.BANCOMATPAY_CLIENT_TAG));
         requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
         log.info("Payment request to be sent to BPay: " + inserimentoRichiestaPagamentoPagoPa);
@@ -71,12 +69,12 @@ public class BancomatPayClient {
     private ContestoVO createContesto(String guid, String language) {
         ContestoVO contestoVO = new ContestoVO();
         contestoVO.setGuid(guid);
-        contestoVO.setToken(TOKEN);
+        contestoVO.setToken(config.getConfig(Configurations.BANCOMATPAY_CLIENT_TOKEN));
         contestoVO.setLingua(LinguaEnum.fromValue(ClientUtils.getLanguageCode(language)));
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();
         utenteVO.setCodUtente(null);
-        utenteVO.setCodGruppo(GROUP_CODE);
-        utenteVO.setCodIstituto(INSTITUTE_CODE);
+        utenteVO.setCodGruppo(config.getConfig(Configurations.BANCOMATPAY_CLIENT_GROUP_CODE));
+        utenteVO.setCodIstituto(config.getConfig(Configurations.BANCOMATPAY_CLIENT_INSTITUTE_CODE));
         contestoVO.setUtenteAttivo(utenteVO);
         return contestoVO;
     }

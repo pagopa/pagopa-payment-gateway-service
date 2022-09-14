@@ -1,11 +1,12 @@
 package it.pagopa.pm.gateway.client.azure;
 
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
+import it.pagopa.pm.gateway.constant.Configurations;
+import it.pagopa.pm.gateway.utils.Config;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,28 +23,16 @@ public class AzureLoginClient {
     private static final String GRANT_TYPE_PARAMETER = "grant_type";
     private static final String SCOPE_PARAMETER = "scope";
 
-    @Value("${azureAuth.client.postepay.url}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_URL;
-
-    @Value("${azureAuth.client.postepay.client_id}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID;
-
-    @Value("${azureAuth.client.postepay.client_secret}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET;
-
-    @Value("${azureAuth.client.postepay.scope}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE;
-
-    @Value("${azureAuth.client.postepay.enabled:true}")
-    private Boolean MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED;
+    @Autowired
+    private Config config;
 
     @Autowired
     private RestTemplate microsoftAzureRestTemplate;
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
-        if (BooleanUtils.isTrue(MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED)) {
-            MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
-            return requestMicrosoftAzureLogin(loginRequest, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
+        if (BooleanUtils.isTrue(BooleanUtils.toBoolean(config.getConfig(Configurations.AZUREAUTH_CLIENT_POSTEPAY_ENABLED)))) {
+            MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(config.getConfig(Configurations.AZUREAUTH_CLIENT_POSTEPAY_CLIENT_ID), config.getConfig(Configurations.AZUREAUTH_CLIENT_POSTEPAY_CLIENT_SECRET), config.getConfig(Configurations.AZUREAUTH_CLIENT_POSTEPAY_SCOPE));
+            return requestMicrosoftAzureLogin(loginRequest, config.getConfig(Configurations.AZUREAUTH_CLIENT_POSTEPAY_URL));
         } else {
             // this is to avoid call to AZURE login if not needed, for local environment
             log.warn("Azure authentication phase bypassed");

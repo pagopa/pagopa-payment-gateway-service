@@ -1,20 +1,22 @@
 package it.pagopa.pm.gateway.config;
 
-import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
+import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
+import it.pagopa.pm.gateway.constant.Configurations;
+import it.pagopa.pm.gateway.utils.Config;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.HttpHost;
 import org.openapitools.client.ApiClient;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.openapitools.client.api.UserApi;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -25,6 +27,7 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.transport.WebServiceMessageSender;
 import org.springframework.ws.transport.http.HttpUrlConnectionMessageSender;
 
+import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.time.Duration;
@@ -35,28 +38,17 @@ import java.util.Objects;
 @EnableAsync
 public class ClientConfig {
 
-    private static final String HTTPS_PROXY_HOST_PROPERTY = "https.proxyHost";
-    private static final String HTTPS_PROXY_PORT_PROPERTY = "https.proxyPort";
-    @Value("${bancomatPay.client.url}")
-    private String BPAY_CLIENT_URL;
+    private static String PROXY_HOST;
+    private static String PROXY_PORT;
 
-    @Value("${bancomatPay.client.timeout.ms:5000}")
-    private int BPAY_CLIENT_TIMEOUT_MS;
+    @PostConstruct
+    protected void init() {
+        PROXY_HOST = config.getConfig(Configurations.HTTPS_PROXYHOST);
+        PROXY_PORT = config.getConfig(Configurations.HTTPS_PROXYPORT);
+    }
 
-    @Value("${azureAuth.client.maxTotal:100}")
-    private int AZURE_CLIENT_MAX_TOTAL;
-
-    @Value("${azureAuth.client.maxPerRoute:100}")
-    private int AZURE_CLIENT_MAX_PER_ROUTE;
-
-    @Value("${azureAuth.client.timeout.ms:5000}")
-    private int AZURE_CLIENT_TIMEOUT;
-
-    @Value("${postepay.client.url}")
-    private String POSTEPAY_CLIENT_URL;
-
-    @Value("${postepay.client.timeout.ms:5000}")
-    private int POSTEPAY_CLIENT_TIMEOUT;
+    @Autowired
+    private Config config;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -79,7 +71,7 @@ public class ClientConfig {
     public PaymentManagerControllerApi postePayControllerApi() {
         log.info("START postePayControllerApi()");
         ApiClient apiClient = createApiClient();
-        log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
+        log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + config.getConfig(Configurations.POSTEPAY_CLIENT_URL));
         return new PaymentManagerControllerApi(apiClient);
     }
 
@@ -87,14 +79,14 @@ public class ClientConfig {
     public UserApi postePayUserApi() {
         log.info("START postePayUserApi()");
         ApiClient apiClient = createApiClient();
-        log.info("END - postePayUserApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
+        log.info("END - postePayUserApi()- POSTEPAY_CLIENT_URL: " + config.getConfig(Configurations.POSTEPAY_CLIENT_URL));
         return new UserApi(apiClient);
     }
 
     private ApiClient createApiClient() {
         return addProxyToApiClient(new ApiClient()
-                .setBasePath(POSTEPAY_CLIENT_URL)
-                .setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
+                .setBasePath(config.getConfig(Configurations.POSTEPAY_CLIENT_URL))
+                .setConnectTimeout(Integer.parseInt(config.getConfig(Configurations.POSTEPAY_CLIENT_TIMEOUT_MS))));
     }
 
     @Bean
@@ -102,15 +94,15 @@ public class ClientConfig {
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
-        webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
+        webServiceTemplate.setDefaultUri(config.getConfig(Configurations.BANCOMATPAY_CLIENT_URL));
         for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders()) {
-            Duration durationTimeout = Duration.ofMillis(BPAY_CLIENT_TIMEOUT_MS);
+            Duration durationTimeout = Duration.ofMillis(Long.parseLong(config.getConfig(Configurations.BANCOMATPAY_CLIENT_TIMEOUT_MS)));
             if (sender instanceof HttpUrlConnectionMessageSender) {
                 ((HttpUrlConnectionMessageSender) sender).setConnectionTimeout(durationTimeout);
                 ((HttpUrlConnectionMessageSender) sender).setReadTimeout(durationTimeout);
             }
         }
-        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BPAY_CLIENT_URL);
+        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + config.getConfig(Configurations.BANCOMATPAY_CLIENT_URL));
         return webServiceTemplate;
     }
 
@@ -122,10 +114,10 @@ public class ClientConfig {
                 HttpClientBuilder.create()
                         .setProxy(createProxy(this.getClass().getName()))
                         .setConnectionManager(createConnectionManager(
-                                AZURE_CLIENT_MAX_TOTAL,
-                                AZURE_CLIENT_MAX_PER_ROUTE))
+                                Integer.parseInt(config.getConfig(Configurations.AZUREAUTH_CLIENT_MAXTOTAL)),
+                                Integer.parseInt(config.getConfig(Configurations.AZUREAUTH_CLIENT_MAXPERROUTE))))
                         .setDefaultRequestConfig(createRequestConfig(
-                                AZURE_CLIENT_TIMEOUT))
+                                Integer.parseInt(config.getConfig(Configurations.AZUREAUTH_CLIENT_TIMEOUT_MS))))
                         .build());
         return new RestTemplate(httpComponentsClientHttpRequestFactory);
     }
@@ -146,12 +138,10 @@ public class ClientConfig {
     }
 
     public static HttpHost createProxy(String className) {
-        String proxyHost = System.getProperty(HTTPS_PROXY_HOST_PROPERTY);
-        String proxyPort = System.getProperty(HTTPS_PROXY_PORT_PROPERTY);
         HttpHost proxy = null;
-        if (StringUtils.isNoneBlank(proxyHost, proxyPort) && NumberUtils.isParsable(proxyPort)) {
-            log.info(String.format("%s uses proxy: %s:%s", className, proxyHost, proxyPort));
-            proxy = new HttpHost(proxyHost, Integer.parseInt(proxyPort));
+        if (StringUtils.isNoneBlank(PROXY_HOST, PROXY_PORT) && NumberUtils.isParsable(PROXY_PORT)) {
+            log.info(String.format("%s uses proxy: %s:%s", className, PROXY_HOST, PROXY_PORT));
+            proxy = new HttpHost(PROXY_HOST, Integer.parseInt(PROXY_PORT));
         } else {
             log.info(String.format("%s client does not use proxy", className));
         }

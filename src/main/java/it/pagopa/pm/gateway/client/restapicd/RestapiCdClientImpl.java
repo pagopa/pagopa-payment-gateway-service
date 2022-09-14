@@ -8,7 +8,10 @@ import it.pagopa.pm.gateway.dto.PostePayPatchRequest;
 import it.pagopa.pm.gateway.dto.PostePayPatchRequestData;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequestData;
+import it.pagopa.pm.gateway.constant.Configurations;
+import it.pagopa.pm.gateway.utils.Config;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,8 +25,9 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.buildMdcHeader;
 public class RestapiCdClientImpl {
 
     private static final String OCP_APIM_SUBSCRIPTION_KEY_NAME = "Ocp-Apim-Subscription-Key";
-    @Value("${HOSTNAME_PM}")
-    public String hostnamePm;
+
+    @Autowired
+    private Config config;
 
     @Value("${APIM_PGS_UPDATES_KEY}")
     public String apimUpdateSubscriptionKey;
@@ -34,7 +38,7 @@ public class RestapiCdClientImpl {
                 .client(new OkHttpClient())
                 .encoder(new JacksonEncoder())
                 .decoder(new JacksonDecoder())
-                .target(RestapiCdClient.class, hostnamePm);
+                .target(RestapiCdClient.class, config.getConfig(Configurations.HOSTNAME_PM));
     }
 
     private RestapiCdClient restapiCdClient;

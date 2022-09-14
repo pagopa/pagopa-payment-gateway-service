@@ -13,6 +13,8 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.constant.Configurations;
+import it.pagopa.pm.gateway.utils.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -36,8 +38,6 @@ import org.openapitools.client.model.RefundPaymentRequest;
 import org.openapitools.client.model.RefundPaymentResponse;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -61,25 +61,18 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Slf4j
 public class PostePayPaymentTransactionsController {
 
+    @Autowired
+    private Config config;
+
     private static final String APP_ORIGIN = "APP";
     private static final String WEB_ORIGIN = "WEB";
     private static final String EURO_ISO_CODE = "978";
     private static final String POSTEPAY_CLIENT_ID_PROPERTY = "postepay.clientId.%s.config";
     private static final String PGS_CLIENT_RESPONSE_URL = "postepay.pgs.response.%s.clientResponseUrl.payment";
-    private static final String PGS_CLIENT_RESPONSE_URL_ONBOARDING = "postepay.pgs.response.clientResponseUrl.onboarding";
     private static final String BEARER_TOKEN_PREFIX = "Bearer ";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
     private static final String PIPE_SPLIT_CHAR = "\\|";
-
-    @Value("${pgs.postepay.response.urlredirect}")
-    private String PGS_RESPONSE_URL_REDIRECT;
-
-    @Value("${pgs.postepay.notificationURL}")
-    private String POSTEPAY_NOTIFICATION_URL;
-
-    @Value("${pgs.postepay.logo.url}")
-    private String POSTEPAY_LOGO_URL;
 
     @Autowired
     private AzureLoginClient azureLoginClient;
@@ -95,9 +88,6 @@ public class PostePayPaymentTransactionsController {
 
     @Autowired
     private UserApi userApi;
-
-    @Autowired
-    private Environment environment;
 
     @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
     public ResponseEntity<ACKMessage> updatePostePayTransaction(@RequestBody AuthMessage authMessage,
@@ -309,7 +299,7 @@ public class PostePayPaymentTransactionsController {
         }
         paymentRequestEntity.setCorrelationId(correlationId);
         paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
-        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_URL);
+        paymentRequestEntity.setResourcePath(config.getConfig(Configurations.POSTEPAY_LOGO_URL));
         paymentRequestRepository.save(paymentRequestEntity);
         log.info("END - execute PostePay payment authorization request for transaction " + idTransaction);
     }
@@ -344,7 +334,7 @@ public class PostePayPaymentTransactionsController {
         }
         paymentRequestEntity.setCorrelationId(correlationId);
         paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
-        paymentRequestEntity.setResourcePath(POSTEPAY_LOGO_URL);
+        paymentRequestEntity.setResourcePath(config.getConfig(Configurations.POSTEPAY_LOGO_URL));
         paymentRequestRepository.save(paymentRequestEntity);
         log.info("END - execute PostePay onboarding authorization request for transaction " + onboardingTransactionId);
     }
@@ -389,12 +379,12 @@ public class PostePayPaymentTransactionsController {
             case APP_ORIGIN:
                 responseURLs.setResponseUrlOk(StringUtils.EMPTY);
                 responseURLs.setResponseUrlKo(StringUtils.EMPTY);
-                responseURLs.setServerNotificationUrl(POSTEPAY_NOTIFICATION_URL);
+                responseURLs.setServerNotificationUrl(config.getConfig(Configurations.POSTEPAY_NOTIFICATIONURL));
                 return responseURLs;
             case WEB_ORIGIN:
                 responseURLs.setResponseUrlOk(responseUrl);
                 responseURLs.setResponseUrlKo(responseUrl);
-                responseURLs.setServerNotificationUrl(POSTEPAY_NOTIFICATION_URL);
+                responseURLs.setServerNotificationUrl(config.getConfig(Configurations.POSTEPAY_NOTIFICATIONURL));
                 return responseURLs;
             default:
                 log.info("ClientId " + clientId + " case is not managed. Returning empty responseUrls");
@@ -419,7 +409,7 @@ public class PostePayPaymentTransactionsController {
         postePayAuthResponse.setRequestId(requestId);
         postePayAuthResponse.setCorrelationId(correlationId);
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = String.format(PGS_RESPONSE_URL_REDIRECT, requestId, Scopes.POSTEPAY_SCOPE);
+            String urlRedirect = String.format(config.getConfig(Configurations.POSTEPAY_PGS_RESPONSE_URLREDIRECT), requestId, Scopes.POSTEPAY_SCOPE);
             postePayAuthResponse.setUrlRedirect(urlRedirect);
         } else {
             postePayAuthResponse.setError(errorMessage);
@@ -459,7 +449,7 @@ public class PostePayPaymentTransactionsController {
             response.setStatusErrorCodeOutcome(StatusErrorCodeOutcomeEnum.getEnum(ExceptionsEnum.GENERIC_ERROR));
         } else {
             String clientResponseUrl = BooleanUtils.isTrue(entity.getIsOnboarding()) ?
-                    environment.getProperty(PGS_CLIENT_RESPONSE_URL_ONBOARDING) :
+                    config.getConfig(Configurations.POSTEPAY_PGS_RESPONSE_CLIENTRESPONSEURL_ONBOARDING) :
                     String.format(getCustomEnvironmentProperty(PGS_CLIENT_RESPONSE_URL, entity.getClientId()), requestId);
             response.setClientResponseUrl(clientResponseUrl);
             response.setLogoResourcePath(entity.getResourcePath());
@@ -489,15 +479,15 @@ public class PostePayPaymentTransactionsController {
     private String getCustomEnvironmentProperty(String parameterizedPropertyName, String clientId) throws NullPointerException {
         String propertyToSearch = String.format(parameterizedPropertyName, clientId);
         if (StringUtils.isNotBlank(propertyToSearch)) {
-            String property = environment.getProperty(propertyToSearch);
+            String property = config.getConfig(propertyToSearch);
             if (StringUtils.isNotBlank(property)) {
                 return property;
             } else {
-                log.error("Environment property " + propertyToSearch + " is blank or does not exist");
+                log.error("DB property " + propertyToSearch + " is blank or does not exist");
                 throw new NullPointerException();
             }
         } else {
-            log.error("Environment property to search is blank");
+            log.error("DB property to search is blank");
             throw new NullPointerException();
         }
 

@@ -469,12 +469,12 @@ public class PostePayPaymentTransactionsController {
         return response;
     }
 
-    private ResponseEntity<PostePayRefundResponse> createPostePayRefundResponse(String requestId, String paymentId, String refundOutcome,
-                                                                                ExceptionsEnum exceptionsEnum) {
+    private ResponseEntity<PostePayRefundResponse> createPostePayRefundResponse(String requestId, String paymentId, String refundOutcome, ExceptionsEnum exceptionsEnum, boolean needsRefund) {
         PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
         postePayRefundResponse.setRequestId(requestId);
         postePayRefundResponse.setPaymentId(paymentId);
         postePayRefundResponse.setRefundOutcome(refundOutcome);
+        postePayRefundResponse.setNeedsRefund(needsRefund);
         if (Objects.nonNull(exceptionsEnum)) {
             String errorDescription = exceptionsEnum.getDescription();
             log.warn("Transaction has not been refunded. Reason: " + errorDescription);
@@ -513,7 +513,7 @@ public class PostePayPaymentTransactionsController {
 
         if (Objects.isNull(requestEntity) || !REQUEST_PAYMENTS_POSTEPAY.equals(requestEntity.getRequestEndpoint())) {
             log.error("No PostePay request entity object has been found with guid " + requestId);
-            return createPostePayRefundResponse(requestId, null, null, ExceptionsEnum.PAYMENT_REQUEST_NOT_FOUND);
+            return createPostePayRefundResponse(requestId, null, null, ExceptionsEnum.PAYMENT_REQUEST_NOT_FOUND, false);
         }
 
         String correlationId = requestEntity.getCorrelationId();
@@ -521,7 +521,7 @@ public class PostePayPaymentTransactionsController {
 
         if (requestEntity.getIsRefunded()) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
-            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_REQUEST_ALREADY_PROCESSED);
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_REQUEST_ALREADY_PROCESSED, false);
         }
 
         String bearerToken;
@@ -529,7 +529,7 @@ public class PostePayPaymentTransactionsController {
             bearerToken = acquireBearerToken();
         } catch (RestApiException e) {
             log.error("Error while acquiring the bearer token");
-            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION, false);
         }
 
         if (!isAuthorizationApproved) {
@@ -546,7 +546,7 @@ public class PostePayPaymentTransactionsController {
         }
 
         if (!isAuthorizationApproved) {
-            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_NOT_AUTHORIZED);
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_NOT_AUTHORIZED, false);
         } else {
             RefundPaymentRequest refundPaymentRequest = createRefundRequest(requestEntity);
             return executeRefundRequest(bearerToken, refundPaymentRequest, requestEntity);
@@ -566,12 +566,12 @@ public class PostePayPaymentTransactionsController {
 
             if (ObjectUtils.isEmpty(response)) {
                 log.error("Response to PostePay /refund API is null or empty");
-                return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+                return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION, true);
             } else {
                 refundOutcome = response.getTransactionResult();
                 log.info(String.format("Refund outcome for request id %s is: %s", requestId, refundOutcome));
                 if (ObjectUtils.isEmpty(refundOutcome)) {
-                    return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+                    return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION, true);
                 }
             }
 
@@ -581,15 +581,15 @@ public class PostePayPaymentTransactionsController {
             }
             requestEntity.setIsRefunded(isRefunded);
             paymentRequestRepository.save(requestEntity);
-            return createPostePayRefundResponse(requestId, correlationId, refundOutcome.getValue(), null);
+            return createPostePayRefundResponse(requestId, correlationId, refundOutcome.getValue(), null, true);
         } catch (ApiException e) {
             log.error("Error while calling PostePay's /refund API. HTTP Status is: " + e.getCode());
             log.error("Response body: " + e.getResponseBody());
             log.error("Complete exception: ", e);
-            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION);
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.POSTEPAY_SERVICE_EXCEPTION, true);
         } catch (Exception e) {
             log.error("An exception occurred while requesting PostePay payment refund", e);
-            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.GENERIC_ERROR);
+            return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.GENERIC_ERROR, true);
         }
     }
 

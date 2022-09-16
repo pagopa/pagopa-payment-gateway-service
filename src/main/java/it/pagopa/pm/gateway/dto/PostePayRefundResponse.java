@@ -7,9 +7,10 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostePayRefundResponse {
 
-        String requestId;
-        String paymentId;
-        String refundOutcome;
-        String error;
+        private String requestId;
+        private String paymentId;
+        private String refundOutcome;
+        private String error;
+        private boolean needsRefund;
 
 }

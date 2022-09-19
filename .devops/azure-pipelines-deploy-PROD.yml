@@ -16,7 +16,8 @@ variables:
   poolName: 'pm-agent-pool-prod'
   azureSubscription: 'Pm-Subscription-prod'
   KeyVaultName: 'u87-kmn-pm-prod-pci'
-  definitionId: 113
+  definitionIdLiquibase: 113
+  definitionIdArtifact: 134
 
 stages:
 
@@ -46,7 +47,7 @@ stages:
           poolName: $(poolName)
           azureSubscription: $(azureSubscription)
           KeyVaultName: $(KeyVaultName)
-          definitionId: $(definitionId)
+          definitionId: $(definitionIdLiquibase)
 
   - stage: stage_deploy_PROD
     displayName: Execute Deploy PROD
@@ -68,11 +69,11 @@ stages:
                   inputs:
                     source: 'specific'
                     project: 'PaymentManager'
-                    pipeline: $(definitionId)
+                    pipeline: $(definitionIdArtifact)
                     runVersion: 'latestFromBranch'
                     runBranch: 'refs/heads/releases/${{parameters.buildVersion}}'
                     allowPartiallySucceededBuilds: true
-                    artifact: 'Build PTG ${{parameters.buildVersion}}'
+                    artifact: 'UAT - Deployed PTG ${{parameters.buildVersion}}'
                     path: '$(Pipeline.Workspace)'
                 - template: 'templates/check-files.yml'
                   parameters:

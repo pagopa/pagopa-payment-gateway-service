@@ -16,8 +16,7 @@ variables:
   poolName: 'pm-agent-pool-prod'
   azureSubscription: 'Pm-Subscription-prod'
   KeyVaultName: 'u87-kmn-pm-prod-pci'
-  definitionIdLiquibase: 113
-  definitionIdArtifact: 134
+  definitionId: 134
 
 stages:
 
@@ -47,7 +46,7 @@ stages:
           poolName: $(poolName)
           azureSubscription: $(azureSubscription)
           KeyVaultName: $(KeyVaultName)
-          definitionId: $(definitionIdLiquibase)
+          definitionId: $(definitionId)
 
   - stage: stage_deploy_PROD
     displayName: Execute Deploy PROD
@@ -69,7 +68,7 @@ stages:
                   inputs:
                     source: 'specific'
                     project: 'PaymentManager'
-                    pipeline: $(definitionIdArtifact)
+                    pipeline: $(definitionId)
                     runVersion: 'latestFromBranch'
                     runBranch: 'refs/heads/releases/${{parameters.buildVersion}}'
                     allowPartiallySucceededBuilds: true

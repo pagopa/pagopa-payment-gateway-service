@@ -17,81 +17,81 @@ jobs:
       dependsOn: ${{ parameters.dependsOn }}
     condition: succeeded()
     environment: 'PT'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-              - checkout: none
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: none
 
-              - script: echo ${{ parameters.version }}
-                displayName: Branch Version
+            - script: echo ${{ parameters.version }}
+              displayName: Branch Version
 
-              - script: |
-                  ls -la $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script
-                  rm -rf $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script
-                displayName: "Clean old cached files ${{ parameters.version }}-liquibase-script"
+            - script: |
+                ls -la $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script
+                rm -rf $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script
+              displayName: "Clean old cached files ${{ parameters.version }}-liquibase-script"
 
-              - task: DownloadPipelineArtifact@2
-                displayName: Download Artifact
-                inputs:
-                  source: 'specific'
-                  project: 'PaymentManager'
-                  pipeline: ${{ parameters.definitionId }}
-                  runVersion: 'latestFromBranch'
-                  runBranch: 'refs/heads/releases/${{parameters.version}}'
-                  allowPartiallySucceededBuilds: true
-                  artifact: '${{parameters.version}}-liquibase-script'
-                  path: '$(Pipeline.Workspace)/${{parameters.version}}-liquibase-script'
+            - task: DownloadPipelineArtifact@2
+              displayName: Download Artifact
+              inputs:
+                source: 'specific'
+                project: 'PaymentManager'
+                pipeline: ${{ parameters.definitionId }}
+                runVersion: 'latestFromBranch'
+                runBranch: 'refs/heads/releases/${{parameters.version}}'
+                allowPartiallySucceededBuilds: true
+                artifact: '${{parameters.version}}-liquibase-script'
+                path: '$(Pipeline.Workspace)/${{parameters.version}}-liquibase-script'
 
-              - script: |
-                  apt-get update
-                  apt-get -y install wget
-                  wget -h
-                  cd $(Pipeline.Workspace)
-                  mkdir java-11
-                  cd java-11
-                  wget -c https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
-                displayName: "Download JAVA 11"
+            - script: |
+                apt-get update
+                apt-get -y install wget
+                wget -h
+                cd $(Pipeline.Workspace)
+                mkdir java-11
+                cd java-11
+                wget -c https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
+              displayName: "Download JAVA 11"
 
-              - task: AzureKeyVault@2
-                inputs:
-                  azureSubscription: ${{ parameters.azureSubscription }}
-                  KeyVaultName: ${{ parameters.KeyVaultName }}
-                  SecretsFilter: '*'
-                  RunAsPreJob: false
+            - task: AzureKeyVault@2
+              inputs:
+                azureSubscription: ${{ parameters.azureSubscription }}
+                KeyVaultName: ${{ parameters.KeyVaultName }}
+                SecretsFilter: '*'
+                RunAsPreJob: false
 
-              - task: JavaToolInstaller@0
-                inputs:
-                  versionSpec: "11"
-                  jdkArchitectureOption: x64
-                  jdkSourceOption: LocalDirectory
-                  jdkFile: "$(Pipeline.Workspace)/java-11/openjdk-11.0.2_linux-x64_bin.tar.gz"
-                  jdkDestinationDirectory: "$(Pipeline.Workspace)/java-11/extract"
-                  cleanDestinationDirectory: true
-                displayName: "Installing JAVA 11"
+            - task: JavaToolInstaller@0
+              inputs:
+                versionSpec: "11"
+                jdkArchitectureOption: x64
+                jdkSourceOption: LocalDirectory
+                jdkFile: "$(Pipeline.Workspace)/java-11/openjdk-11.0.2_linux-x64_bin.tar.gz"
+                jdkDestinationDirectory: "$(Pipeline.Workspace)/java-11/extract"
+                cleanDestinationDirectory: true
+              displayName: "Installing JAVA 11"
 
-              - script: |
-                  cd $(Pipeline.Workspace)
-                  mkdir liquibase-app
-                  wget -c https://github.com/liquibase/liquibase/releases/download/v4.8.0/liquibase-4.8.0.tar.gz
-                  tar -xzf liquibase-4.8.0.tar.gz -C liquibase-app
-                  rm -rf liquibase-4.8.0.tar.gz
-                  echo "##vso[task.prependpath]$(Pipeline.Workspace)/liquibase-app"
-                displayName: "Install Liquibase"
+            - script: |
+                cd $(Pipeline.Workspace)
+                mkdir liquibase-app
+                wget -c https://github.com/liquibase/liquibase/releases/download/v4.8.0/liquibase-4.8.0.tar.gz
+                tar -xzf liquibase-4.8.0.tar.gz -C liquibase-app
+                rm -rf liquibase-4.8.0.tar.gz
+                echo "##vso[task.prependpath]$(Pipeline.Workspace)/liquibase-app"
+              displayName: "Install Liquibase"
 
-              # AGID_USER (PM)
-              - template: ../liquibase-update.yml
-                parameters:
-                  url: $(prf-db-pgs-url-simple)
-                  username: $(prf-db-pgs-username)
-                  password: $(prf-db-pgs-password)
-                  classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-                  liquibaseSchemaName: $(prf-db-pgs-schema)
-                  defaultSchemaName: $(prf-db-pgs-schema)
-                  schema: $(prf-db-pgs-schema)
-                  args: "-Dversion=${{ parameters.version }}"
-                  liquibaseTablespaceName: $(prf-db-pgs-tablespace)
-                  title: "Update DB AGID_USER - PT"
-                  databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
-                  databaseChangelogTableName: "DATABASECHANGELOG_PGS"
-                  contexts: "tag,baseline,incremental,insert-pt"
+            # AGID_USER (PM)
+            - template: ../liquibase-update.yml
+              parameters:
+                url: $(prf-db-pgs-url-simple)
+                username: $(prf-db-pgs-username)
+                password: $(prf-db-pgs-password)
+                classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
+                liquibaseSchemaName: $(prf-db-pgs-schema)
+                defaultSchemaName: $(prf-db-pgs-schema)
+                schema: $(prf-db-pgs-schema)
+                args: "-Dversion=${{ parameters.version }}"
+                liquibaseTablespaceName: $(prf-db-pgs-tablespace)
+                title: "Update DB AGID_USER - PT"
+                databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+                databaseChangelogTableName: "DATABASECHANGELOG_PGS"
+                contexts: "tag,baseline,incremental,insert-pt"

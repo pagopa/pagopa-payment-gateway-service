@@ -1,0 +1,39 @@
+parameters:
+  - name: url
+  - name: username
+  - name: password
+  - name: classpath
+  - name: changeLogFile
+    default: 'master-changelog.xml'
+  - name: liquibaseSchemaName
+  - name: defaultSchemaName
+  - name: contexts
+  - name: logLevel
+    default: 'debug'
+  - name: schema
+  - name: title
+  - name: args
+  - name: liquibaseTablespaceName
+  - name: databaseChangelogLockTableName
+  - name: databaseChangelogTableName
+steps:
+  - script: echo performing ${{ parameters.title }}
+    displayName: Performing Liquibase update
+
+  - script: |
+      liquibase \
+        --driver=oracle.jdbc.driver.OracleDriver \
+        --url="${{ parameters.url }}" \
+        --username="${{ parameters.username }}" \
+        --password=${{ parameters.password }} \
+        --classpath=${{ parameters.classpath }} \
+        --changeLogFile=${{ parameters.changeLogFile }} \
+        --liquibaseSchemaName=${{ parameters.liquibaseSchemaName }} \
+        --defaultSchemaName=${{ parameters.defaultSchemaName }} \
+        --contexts=${{ parameters.contexts }} \
+        --log-level=${{ parameters.logLevel }} \
+        --liquibase-tablespace-name=${{ parameters.liquibaseTablespaceName }} \
+        --database-changelog-lock-table-name=${{ parameters.databaseChangelogLockTableName }} \
+        --database-changelog-table-name=${{ parameters.databaseChangelogTableName }} \
+        update ${{ parameters.args }}
+    displayName: ${{ parameters.title }}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+    <changeSet id="V6_PM_917_CHANGE_ID_TRANSACTION_TYPE_TO_VARCHAR" author="liquibase" failOnError="true" context="incremental">
+        <sqlFile path="../scripts/table-creation/V6_PM_917_CHANGE_ID_TRANSACTION_TYPE_TO_VARCHAR.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+    </changeSet>
+</databaseChangeLog>

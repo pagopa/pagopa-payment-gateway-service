@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+    <changeSet id="V9__PM_1102_ADD_COLUMN_REQUEST_TIMESTAMP" author="liquibase" failOnError="true" context="incremental">
+        <sqlFile path="../scripts/table-creation/V9__PM_1102_ADD_COLUMN_REQUEST_TIMESTAMP.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+    </changeSet>
+	<changeSet id="V10__PM_1102_ADD_COLUMN_XPAY_NONCE" author="liquibase" failOnError="true" context="incremental">
+        <sqlFile path="../scripts/table-creation/V10__PM_1102_ADD_COLUMN_XPAY_NONCE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+    </changeSet>
+	<changeSet id="V11__PM_1102_ADD_COLUMN_XPAY_HTML" author="liquibase" failOnError="true" context="incremental">
+        <sqlFile path="../scripts/table-creation/V11__PM_1102_ADD_COLUMN_XPAY_HTML.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+    </changeSet>
+</databaseChangeLog>

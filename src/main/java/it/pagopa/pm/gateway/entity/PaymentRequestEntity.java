@@ -61,5 +61,14 @@ public class PaymentRequestEntity {
     @Column(name = "STATUS")
     private String status;
 
+    @Column(name = "REQUEST_TIMESTAMP")
+    private String timeStamp;
+
+    @Column(name = "XPAY_NONCE")
+    private String xpayNonce;
+
+    @Column(name = "XPAY_HTML")
+    private String xpayHtml;
+
 
 }

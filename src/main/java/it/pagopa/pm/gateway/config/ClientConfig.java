@@ -37,6 +37,10 @@ public class ClientConfig {
 
     private static final String HTTPS_PROXY_HOST_PROPERTY = "https.proxyHost";
     private static final String HTTPS_PROXY_PORT_PROPERTY = "https.proxyPort";
+    private static final int XPAY_DEFAULT_TIMEOUT = 10000;
+    private static final int XPAY_DEFAULT_MAX_TOTAL = 100;
+    private static final int XPAY_DEFAULT_MAX_PER_ROUTE = 50;
+
     @Value("${bancomatPay.client.url}")
     private String BPAY_CLIENT_URL;
 
@@ -57,6 +61,15 @@ public class ClientConfig {
 
     @Value("${postepay.client.timeout.ms:5000}")
     private int POSTEPAY_CLIENT_TIMEOUT;
+
+    @Value("${xpay.client.maxPerRoute}")
+    private String XPAY_MAX_PER_ROUTE;
+
+    @Value("${xpay.client.maxTotal}")
+    private String XPAY_MAX_CONNECTION;
+
+    @Value("${xpay.client.timeOut}")
+    private String XPAY_CLIENT_TIMEOUT;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -130,6 +143,25 @@ public class ClientConfig {
         return new RestTemplate(httpComponentsClientHttpRequestFactory);
     }
 
+    @Bean
+    public RestTemplate xpayRestTemplate() {
+        int maxTotal = getValueIfParsable(XPAY_MAX_CONNECTION, XPAY_DEFAULT_MAX_TOTAL);
+        int maxPerRoute = getValueIfParsable(XPAY_MAX_PER_ROUTE, XPAY_DEFAULT_MAX_PER_ROUTE);
+        int timeout = getValueIfParsable(XPAY_CLIENT_TIMEOUT, XPAY_DEFAULT_TIMEOUT);
+
+        HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
+                new HttpComponentsClientHttpRequestFactory();
+        httpComponentsClientHttpRequestFactory.setHttpClient(
+                HttpClientBuilder.create()
+                    .setProxy(createProxy(this.getClass().getName()))
+                    .setConnectionManager(createConnectionManager(
+                            maxTotal,
+                            maxPerRoute))
+                    .setDefaultRequestConfig(createRequestConfig(timeout))
+                    .build());
+        return new RestTemplate(httpComponentsClientHttpRequestFactory);
+    }
+
     private HttpClientConnectionManager createConnectionManager(int maxTotalPro, int maxPerRoutePro) {
         PoolingHttpClientConnectionManager result = new PoolingHttpClientConnectionManager();
         result.setMaxTotal(maxTotalPro);
@@ -143,6 +175,13 @@ public class ClientConfig {
                 .setConnectTimeout(reqTimeout)
                 .setSocketTimeout(reqTimeout)
                 .build();
+    }
+
+    private static int getValueIfParsable(String value, int defaulValue) {
+        if (StringUtils.isNotBlank(value) && NumberUtils.isParsable(value)) {
+            return Integer.parseInt(value);
+        }
+        return defaulValue;
     }
 
     public static HttpHost createProxy(String className) {

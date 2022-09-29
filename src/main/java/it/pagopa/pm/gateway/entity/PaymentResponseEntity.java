@@ -28,7 +28,7 @@ public class PaymentResponseEntity {
     private String html;
 
     @Column(name = "ERROR_CODE")
-    private String errorCode;
+    private Long errorCode;
 
     @Column(name = "ERROR_MESSAGE")
     private String errorMessage;

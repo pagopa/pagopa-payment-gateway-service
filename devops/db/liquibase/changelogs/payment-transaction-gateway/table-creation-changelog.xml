@@ -8,4 +8,7 @@
   <changeSet id="V2__PM_739_PP_PGS_REQUEST_INFO_DEFINITION" author="liquibase" failOnError="true" context="incremental">
     <sqlFile path="./scripts/table-creation/V2__PM_739_PP_PGS_REQUEST_INFO_DEFINITION.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
   </changeSet>
+  <changeSet id="V8__PM_1102_PP_PGS_RESPONSE_INFO_DEFINITION" author="liquibase" failOnError="true" context="incremental">
+    <sqlFile path="./scripts/table-creation/V8__PM_1102_PP_PGS_RESPONSE_INFO_DEFINITION.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+  </changeSet>
 </databaseChangeLog>

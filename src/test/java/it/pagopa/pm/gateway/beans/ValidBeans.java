@@ -408,7 +408,7 @@ public class ValidBeans {
    }
 
    public static PostePayPatchRequest postePayPatchRequest(){
-        PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, "authCode", "correlation-ID");
+        PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, true, "authCode", "correlation-ID");
         return postePayPatchRequest;
 
    }

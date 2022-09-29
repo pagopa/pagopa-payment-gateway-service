@@ -7,6 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class PostePayPatchRequest {
     private Long status;
+    private boolean isAuthorized;
     private String authCode;
     private String rrn;
 }

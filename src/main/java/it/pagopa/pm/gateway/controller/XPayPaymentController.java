@@ -10,6 +10,7 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.entity.PaymentResponseEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.repository.PaymentResponseRepository;
+import it.pagopa.pm.gateway.service.XpayService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,7 +21,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -62,17 +62,14 @@ public class XPayPaymentController {
     @Value("${pgs.xpay.secretKey}")
     private String SECRET_KEY;
 
-    @Value("${pgs.xpay.authenticationUrl}")
-    private String XPAY_AUTH_URL;
-
     @Autowired
     private PaymentRequestRepository paymentRequestRepository;
 
     @Autowired
-    private RestTemplate xpayRestTemplate;
+    private PaymentResponseRepository paymentResponseRepository;
 
     @Autowired
-    private PaymentResponseRepository paymentResponseRepository;
+    private XpayService service;
 
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
@@ -105,7 +102,7 @@ public class XPayPaymentController {
         XPayAuthResponse respone = new XPayAuthResponse();
         respone.setRequestId(requestId);
         if(StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = String.format(PGS_RESPONSE_URL_REDIRECT, requestId);
+            String urlRedirect = StringUtils.join(PGS_RESPONSE_URL_REDIRECT, requestId);
             respone.setUrlRedirect(urlRedirect);
         } else {
             respone.setError(errorMessage);
@@ -124,6 +121,7 @@ public class XPayPaymentController {
             String authRequestJson = OBJECT_MAPPER.writeValueAsString(xPayRequest);
             generateRequestEntity(clientId, mdcFields, transactionId, paymentRequestEntity, xPayRequest.getTimeStamp());
             paymentRequestEntity.setJsonRequest(authRequestJson);
+            xPayRequest.setUrlRisposta(String.format(XPAY_RESPONSE_URL, paymentRequestEntity.getGuid()));
         } catch (JsonProcessingException e) {
             log.error(SERIALIZATION_ERROR_MSG, e);
             return  createxPayAuthResponse(GENERIC_ERROR_MSG + transactionId, HttpStatus.INTERNAL_SERVER_ERROR, null);
@@ -145,10 +143,7 @@ public class XPayPaymentController {
         AuthPaymentXPayResponse response;
         PaymentResponseEntity paymentResponseEntity = new PaymentResponseEntity();
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
-            response = xpayRestTemplate.postForObject(XPAY_AUTH_URL, entity, AuthPaymentXPayResponse.class);
+            response = service.postForObject(xPayRequest);
         } catch (ResourceAccessException e) {
             log.warn("Timeout exception for xpay api request call");
             throw e;
@@ -182,7 +177,6 @@ public class XPayPaymentController {
         xPayRequest.setScadenza(pgsRequest.getExpiryDate());
         xPayRequest.setTimeStamp(timeStamp);
         xPayRequest.setCodiceTransazione(codTrans);
-        xPayRequest.setUrlRisposta(XPAY_RESPONSE_URL);
         return xPayRequest;
     }
 

@@ -6,6 +6,9 @@ import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
+import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
+import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
+import it.pagopa.pm.gateway.dto.xpay.EsitoXpay;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.StringUtils;
@@ -25,8 +28,15 @@ import org.openapitools.client.model.OnboardingResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+import java.util.UUID;
 
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
@@ -419,6 +429,93 @@ public class ValidBeans {
 
         postePayOnboardingRequest.setOnboardingTransactionId(onboardingTransactionId);
         return postePayOnboardingRequest;
+    }
+
+    public static XPayAuthRequest createXPayAuthRequest(boolean isValid) {
+        XPayAuthRequest xPayAuthRequest = new XPayAuthRequest();
+        xPayAuthRequest.setIdTransaction("2");
+        xPayAuthRequest.setCvv("123");
+        xPayAuthRequest.setPan("1548965265");
+        xPayAuthRequest.setExpiryDate("202302");
+        xPayAuthRequest.setGrandTotal(isValid ? BigInteger.valueOf(1234) : BigInteger.valueOf(0));
+        return xPayAuthRequest;
+    }
+
+    public static XPayAuthResponse xPayAuthResponse(boolean isError, String errorMessage, String requestId) {
+        XPayAuthResponse xPayAuthResponse = new XPayAuthResponse();
+        xPayAuthResponse.setRequestId(requestId);
+        if (isError) {
+            xPayAuthResponse.setError(errorMessage);
+        } else {
+            xPayAuthResponse.setUrlRedirect("http://localhost/example.com");
+        }
+        return xPayAuthResponse;
+    }
+
+    public static PaymentRequestEntity paymentRequestEntityxPay(XPayAuthRequest XPayAuthRequest, String clientId) {
+        String authRequestJson = null;
+
+
+        if (Objects.nonNull(XPayAuthRequest)) {
+            try {
+                authRequestJson = OBJECT_MAPPER.writeValueAsString(XPayAuthRequest);
+            } catch (JsonProcessingException jspe) {
+                jspe.printStackTrace();
+            }
+        }
+        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
+        paymentRequestEntity.setClientId(clientId);
+        paymentRequestEntity.setGuid(UUID.randomUUID().toString());
+        paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_XPAY);
+        paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
+        paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
+        paymentRequestEntity.setStatus(CREATED.name());
+        return paymentRequestEntity;
+    }
+
+    public static AuthPaymentXPayRequest createAuthPaymentRequest(XPayAuthRequest xPayAuthRequest) throws NoSuchAlgorithmException {
+        AuthPaymentXPayRequest authPaymentXPayRequest = new AuthPaymentXPayRequest();
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        authPaymentXPayRequest.setApiKey("ExampleApiKey");
+        authPaymentXPayRequest.setPan(xPayAuthRequest.getPan());
+        authPaymentXPayRequest.setScadenza(xPayAuthRequest.getExpiryDate());
+        authPaymentXPayRequest.setCodiceTransazione(xPayAuthRequest.getIdTransaction());
+        authPaymentXPayRequest.setImporto(xPayAuthRequest.getGrandTotal());
+        authPaymentXPayRequest.setCvv(xPayAuthRequest.getCvv());
+        authPaymentXPayRequest.setUrlRisposta("localhost");
+        authPaymentXPayRequest.setDivisa("978");
+        authPaymentXPayRequest.setTimeStamp(timeStamp);
+        authPaymentXPayRequest.setMac(createMac(xPayAuthRequest.getIdTransaction(), xPayAuthRequest.getGrandTotal(), timeStamp));
+        return authPaymentXPayRequest;
+    }
+
+    public static AuthPaymentXPayResponse createXPayAuthResponse(AuthPaymentXPayRequest authPaymentXPayRequest) {
+        AuthPaymentXPayResponse authPaymentXPayResponse = new AuthPaymentXPayResponse();
+        authPaymentXPayResponse.setHtml("<html><body></body></html>");
+        authPaymentXPayResponse.setEsito(EsitoXpay.OK);
+        authPaymentXPayResponse.setTimeStamp(System.currentTimeMillis());
+        authPaymentXPayResponse.setMac(authPaymentXPayRequest.getMac());
+        return authPaymentXPayResponse;
+    }
+
+    private static String createMac(String codTrans, BigInteger importo, String timeStamp) throws NoSuchAlgorithmException {
+        String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s",
+                "apiKey", codTrans, "978", importo, timeStamp, "chiavesegreta");
+        return hashMac(macString);
+    }
+
+    private static String hashMac(String macString) throws NoSuchAlgorithmException {
+        String hash = StringUtils.EMPTY;
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        byte[] in = digest.digest(macString.getBytes(StandardCharsets.UTF_8));
+
+        final StringBuilder builder = new StringBuilder();
+        for (byte b : in) {
+            builder.append(String.format("%02x", b));
+        }
+        hash = builder.toString();
+
+        return hash;
     }
 }
 

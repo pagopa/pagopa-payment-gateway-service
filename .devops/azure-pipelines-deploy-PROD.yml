@@ -1,8 +1,3 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
 trigger: none
 pr: none
 
@@ -14,8 +9,8 @@ parameters:
 variables:
   vmImageNameDefault: 'ubuntu-latest'
   poolName: 'pm-agent-pool-prod'
-  azureSubscription: 'Pm-Subscription-prod'
-  KeyVaultName: 'u87-kmn-pm-prod-pci'
+  azureSubscription: 'U87-PAGOPA-PCI'
+  KeyVaultName: 'U87-KMN-PM-pci-prod'
   definitionId: 134
 
 stages:

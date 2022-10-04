@@ -64,10 +64,10 @@ public class PaymentRequestEntity {
     @Column(name = "REQUEST_TIMESTAMP")
     private String timeStamp;
 
-    @Column(name = "XPAY_NONCE")
+    @Column(name = "NONCE")
     private String xpayNonce;
 
-    @Column(name = "XPAY_HTML")
+    @Column(name = "HTML")
     private String xpayHtml;
 
 

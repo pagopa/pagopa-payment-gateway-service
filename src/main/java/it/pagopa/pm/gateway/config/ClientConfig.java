@@ -62,13 +62,13 @@ public class ClientConfig {
     @Value("${postepay.client.timeout.ms:5000}")
     private int POSTEPAY_CLIENT_TIMEOUT;
 
-    @Value("${xpay.client.maxPerRoute:50}")
+    @Value("${pgs.xpay.client.maxPerRoute}")
     private String XPAY_MAX_PER_ROUTE;
 
-    @Value("${xpay.client.maxTotal:100}")
+    @Value("${pgs.xpay.client.maxTotal}")
     private String XPAY_MAX_CONNECTION;
 
-    @Value("${xpay.client.timeOut:10000}")
+    @Value("${pgs.xpay.client.timeOut}")
     private String XPAY_CLIENT_TIMEOUT;
 
     @Bean

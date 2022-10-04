@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PaymentResponseRepository extends JpaRepository<PaymentResponseEntity, Long> {
+
+    PaymentResponseEntity findByRequestId(String requestId);
 }

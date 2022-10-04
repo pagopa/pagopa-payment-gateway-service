@@ -110,7 +110,7 @@ public class XPayPaymentController {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
         if(Objects.isNull(entity) || !entity.getRequestEndpoint().equals(REQUEST_PAYMENTS_XPAY)){
             log.error("No xPay request entity has been found for requestId: " + requestId);
-            XPayPollingResponseError error = new XPayPollingResponseError("404", NOT_FOUND_MSG);
+            XPayPollingResponseError error = new XPayPollingResponseError(404L, NOT_FOUND_MSG);
             return createXPayAuthPollingResponse(HttpStatus.NOT_FOUND, error, null);
         }
         return  createXPayAuthPollingResponse(HttpStatus.OK, null, entity);
@@ -229,7 +229,7 @@ public class XPayPaymentController {
             String errorMsg = "HTML not received from XPay for requestId: " + requestId;
             log.error(errorMsg);
             response.setAuthOutcome(XPayOutcomeEnum.KO);
-            error.setCode("0");
+            error.setCode(0L);
             error.setMessage(errorMsg);
             response.setError(error);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

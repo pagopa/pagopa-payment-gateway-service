@@ -13,18 +13,17 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class XpayService {
 
-    @Value("${pgs.xpay.authenticationUrl}")
+    @Value("${xpay.authenticationUrl}")
     private String XPAY_AUTH_URL;
 
     @Autowired
     RestTemplate xpayRestTemplate;
 
     public AuthPaymentXPayResponse postForObject(AuthPaymentXPayRequest xPayRequest) {
-        AuthPaymentXPayResponse response;
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
-        response = xpayRestTemplate.postForObject(XPAY_AUTH_URL, entity, AuthPaymentXPayResponse.class);
-        return  response;
+        return xpayRestTemplate.postForObject(XPAY_AUTH_URL, entity, AuthPaymentXPayResponse.class);
+
     }
 }

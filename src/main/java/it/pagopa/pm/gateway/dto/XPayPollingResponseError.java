@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class XPayPollingResponseError {
 
-    private String code;
+    private Long code;
     private String message;
 }

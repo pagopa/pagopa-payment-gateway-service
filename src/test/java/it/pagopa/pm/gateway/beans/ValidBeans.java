@@ -10,9 +10,9 @@ import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginRespons
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
 import it.pagopa.pm.gateway.dto.xpay.EsitoXpay;
+import it.pagopa.pm.gateway.dto.xpay.XpayError;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
-import it.pagopa.pm.gateway.entity.PaymentResponseEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.CreatePaymentRequest;
 import org.openapitools.client.model.CreatePaymentResponse;
@@ -39,6 +39,7 @@ import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
@@ -274,7 +275,6 @@ public class ValidBeans {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setJsonRequest(authRequestJson);
         paymentRequestEntity.setAuthorizationUrl("www.userRedirectUrl.com");
-        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
         paymentRequestEntity.setIsProcessed(false);
         paymentRequestEntity.setCorrelationId("1234");
         paymentRequestEntity.setAuthorizationCode(null);
@@ -287,7 +287,7 @@ public class ValidBeans {
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
         paymentRequestEntity.setResourcePath("${postepay.logo.url}");
         paymentRequestEntity.setIsOnboarding(false);
-        paymentRequestEntity.setStatus("CREATED");
+        paymentRequestEntity.setStatus(CREATED.name());
         return paymentRequestEntity;
  }
 
@@ -443,18 +443,22 @@ public class ValidBeans {
         return xPayAuthRequest;
     }
 
-    public static XPayAuthResponse xPayAuthResponse(boolean isError, String errorMessage, String requestId) {
+    public static XPayAuthResponse xPayAuthResponse(boolean isError, String errorMessage, String requestId, boolean isDenied) {
         XPayAuthResponse xPayAuthResponse = new XPayAuthResponse();
         xPayAuthResponse.setRequestId(requestId);
         if (isError) {
             xPayAuthResponse.setError(errorMessage);
+        } else if (isDenied) {
+            xPayAuthResponse.setStatus("DENIED");
+            xPayAuthResponse.setUrlRedirect("${pgs.xpay.response.urlredirect}" + requestId);
         } else {
-            xPayAuthResponse.setUrlRedirect("http://localhost/example.com");
+            xPayAuthResponse.setStatus("CREATED");
+            xPayAuthResponse.setUrlRedirect("${pgs.xpay.response.urlredirect}" + requestId);
         }
         return xPayAuthResponse;
     }
 
-    public static PaymentRequestEntity paymentRequestEntityxPay(XPayAuthRequest XPayAuthRequest, String clientId, Boolean authorizationOutcome) {
+    public static PaymentRequestEntity paymentRequestEntityxPay(XPayAuthRequest XPayAuthRequest, String clientId, Boolean isValid) {
         String authRequestJson = null;
 
 
@@ -472,14 +476,13 @@ public class ValidBeans {
         paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
         paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         paymentRequestEntity.setStatus(CREATED.name());
-        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
-        if(Objects.nonNull(authorizationOutcome) && authorizationOutcome) {
+        if(Objects.nonNull(isValid) && isValid) {
             paymentRequestEntity.setXpayHtml("<html><body></body></html>");
         }
         return paymentRequestEntity;
     }
 
-    public static  PaymentRequestEntity paymentRequestEntityxPayWithoutHtml(XPayAuthRequest XPayAuthRequest, String clientId, Boolean authorizationOutcome) {
+    public static  PaymentRequestEntity paymentRequestEntityxPayWithoutHtml(XPayAuthRequest XPayAuthRequest, String clientId) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
@@ -487,9 +490,33 @@ public class ValidBeans {
         paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
         paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         paymentRequestEntity.setStatus(CREATED.name());
-        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
         return paymentRequestEntity;
     }
+
+    public static  PaymentRequestEntity paymentRequestEntityXpayDenied(XPayAuthRequest XPayAuthRequest, String clientId) {
+        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
+        paymentRequestEntity.setClientId(clientId);
+        paymentRequestEntity.setGuid(UUID.randomUUID().toString());
+        paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_XPAY);
+        paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
+        paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
+        paymentRequestEntity.setStatus(DENIED.name());
+        return paymentRequestEntity;
+    }
+
+    public static  PaymentRequestEntity paymentRequestEntityxPayWithError(XPayAuthRequest XPayAuthRequest, String clientId) {
+        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
+        paymentRequestEntity.setClientId(clientId);
+        paymentRequestEntity.setGuid(UUID.randomUUID().toString());
+        paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_XPAY);
+        paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
+        paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
+        paymentRequestEntity.setStatus(DENIED.name());
+        paymentRequestEntity.setErrorMessage("Error message Test");
+        paymentRequestEntity.setErrorCode(String.valueOf(1L));
+        return paymentRequestEntity;
+    }
+
 
     public static AuthPaymentXPayRequest createAuthPaymentRequest(XPayAuthRequest xPayAuthRequest) throws NoSuchAlgorithmException {
         AuthPaymentXPayRequest authPaymentXPayRequest = new AuthPaymentXPayRequest();
@@ -516,26 +543,32 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayAuthPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error) {
+    public static AuthPaymentXPayResponse createXPayAuthResponseError(AuthPaymentXPayRequest authPaymentXPayRequest) {
+        AuthPaymentXPayResponse authPaymentXPayResponse = new AuthPaymentXPayResponse();
+        authPaymentXPayResponse.setEsito(EsitoXpay.KO);
+        authPaymentXPayResponse.setTimeStamp(System.currentTimeMillis());
+        authPaymentXPayResponse.setMac(authPaymentXPayRequest.getMac());
+        XpayError error = new XpayError();
+        error.setMessaggio("erroreTest");
+        error.setCodice(22L);
+        authPaymentXPayResponse.setErrore(error);
+        return authPaymentXPayResponse;
+    }
+
+    public static XPayAuthPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
         XPayAuthPollingResponse response = new XPayAuthPollingResponse();
         if (isOk) {
             response.setHtml("<html><body></body></html>");
-            response.setAuthOutcome(XPayOutcomeEnum.OK);
+            response.setStatus(CREATED.name());
         } else if(Objects.nonNull(error)){
-            response.setAuthOutcome(XPayOutcomeEnum.KO);
+            response.setStatus(DENIED.name());
             response.setError(error);
-        } else {
-            response.setAuthOutcome(XPayOutcomeEnum.PENDING);
+        } else if (isPending){
+            response.setStatus(CREATED.name());
         }
         return response;
     }
 
-    public static PaymentResponseEntity paymentResponseEntityError(XPayPollingResponseError error) {
-        PaymentResponseEntity entity = new PaymentResponseEntity();
-        entity.setErrorMessage(error.getMessage());
-        entity.setErrorCode(error.getCode());
-        return entity;
-    }
 
     private static String createMac(String codTrans, BigInteger importo, String timeStamp) throws NoSuchAlgorithmException {
         String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s",

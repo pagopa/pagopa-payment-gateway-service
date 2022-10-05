@@ -70,5 +70,10 @@ public class PaymentRequestEntity {
     @Column(name = "HTML")
     private String xpayHtml;
 
+    @Column(name = "ERROR_CODE")
+    private String errorCode;
+
+    @Column(name = "ERROR_MESSAGE")
+    private String errorMessage;
 
 }

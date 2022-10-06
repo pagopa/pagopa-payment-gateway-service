@@ -10,7 +10,7 @@ public class Messages {
     public static final String SERIALIZATION_ERROR_MSG = "Error while creating json from PostePayAuthRequest object";
     public static final String GENERIC_ERROR_MSG = "Error while requesting authorization for idTransaction: ";
     public static final String BAD_REQUEST_MSG_POSTEPAY_REFUND = "Bad Request - PostePay transaction check not pass - refund not executed";
-    public static final String NOT_FOUND_MSG = "RequestId not Found";
+    public static final String REQUEST_ID_NOT_FOUND_MSG = "RequestId not Found";
 
 
 }

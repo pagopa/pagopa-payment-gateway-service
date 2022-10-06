@@ -21,16 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.*;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.XPAY_AUTH;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -113,19 +113,6 @@ public class XPayPaymentControllerTest {
     public void xPay_givenGoodRequest_shouldThrowResourceAccessException() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(service.postForObject(any())).thenThrow(ResourceAccessException.class);
-
-        mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
-                        .content(mapper.writeValueAsString(xPayAuthRequest))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
-    public void xPay_givenGoodRequest_shouldThrowHttpServerErrorException() throws Exception {
-        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-
-        when(service.postForObject(any())).thenThrow(HttpServerErrorException.class);
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)

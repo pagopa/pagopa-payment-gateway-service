@@ -25,8 +25,7 @@ public class XpayService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
-        log.info("Calling [POST] ../xpay/ecomm/api/paga/autenticazione3DS ");
+        log.info("Calling POST - " + XPAY_AUTH_URL);
         return xpayRestTemplate.postForObject(XPAY_AUTH_URL, entity, AuthPaymentXPayResponse.class);
-
     }
 }

@@ -169,7 +169,7 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isOk());
     }
 
     @Test

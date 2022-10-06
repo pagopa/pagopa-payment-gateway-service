@@ -21,7 +21,7 @@ public class XpayService {
     @Autowired
     RestTemplate xpayRestTemplate;
 
-    public AuthPaymentXPayResponse postForObject(AuthPaymentXPayRequest xPayRequest) {
+    public AuthPaymentXPayResponse callAutenticazione3DS(AuthPaymentXPayRequest xPayRequest) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);

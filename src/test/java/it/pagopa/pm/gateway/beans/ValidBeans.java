@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
-import it.pagopa.pm.gateway.dto.enums.XPayOutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
@@ -14,19 +13,7 @@ import it.pagopa.pm.gateway.dto.xpay.XpayError;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.StringUtils;
-import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.CreatePaymentResponse;
-import org.openapitools.client.model.Esito;
-import org.openapitools.client.model.PaymentChannel;
-import org.openapitools.client.model.ResponseURLs;
-import org.openapitools.client.model.DetailsPaymentResponse;
-import org.openapitools.client.model.RefundPaymentResponse;
-import org.openapitools.client.model.RefundPaymentRequest;
-import org.openapitools.client.model.EsitoStorno;
-import org.openapitools.client.model.DetailsPaymentRequest;
-import  org.openapitools.client.model.OnboardingRequest;
-import org.openapitools.client.model.OnboardingResponse;
-
+import org.openapitools.client.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -275,6 +262,7 @@ public class ValidBeans {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setJsonRequest(authRequestJson);
         paymentRequestEntity.setAuthorizationUrl("www.userRedirectUrl.com");
+        paymentRequestEntity.setAuthorizationOutcome(authorizationOutcome);
         paymentRequestEntity.setIsProcessed(false);
         paymentRequestEntity.setCorrelationId("1234");
         paymentRequestEntity.setAuthorizationCode(null);
@@ -287,9 +275,9 @@ public class ValidBeans {
         paymentRequestEntity.setRequestEndpoint("/request-payments/postepay");
         paymentRequestEntity.setResourcePath("${postepay.logo.url}");
         paymentRequestEntity.setIsOnboarding(false);
-        paymentRequestEntity.setStatus(CREATED.name());
+        paymentRequestEntity.setStatus("CREATED");
         return paymentRequestEntity;
- }
+    }
 
     public static PaymentRequestEntity paymentRequestEntityOnboarding(PostePayOnboardingRequest postePayOnboardingRequest, Boolean authorizationOutcome, String clientId) {
         String authRequestJson = null;
@@ -323,16 +311,16 @@ public class ValidBeans {
     }
 
     public static PaymentRequestEntity paymentRequestEntityOnboardingFalse(PostePayAuthRequest postePayAuthRequest, Boolean authorizationOutcome, String clientId) {
-        PaymentRequestEntity  paymentRequestEntity = paymentRequestEntity(postePayAuthRequest, authorizationOutcome, clientId);
+        PaymentRequestEntity paymentRequestEntity = paymentRequestEntity(postePayAuthRequest, authorizationOutcome, clientId);
         paymentRequestEntity.setIsOnboarding(false);
         return paymentRequestEntity;
     }
 
-        public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
+    public static PaymentRequestEntity paymentRequestEntityWithRefundData(String clientId, String authorizationCode, Boolean isRefunded, Boolean changeRequestEndPoint) {
         PaymentRequestEntity paymentRequestEntity = paymentRequestEntity(null, true, clientId);
         paymentRequestEntity.setAuthorizationCode(authorizationCode);
         paymentRequestEntity.setIsRefunded(isRefunded);
-        if (changeRequestEndPoint){
+        if (changeRequestEndPoint) {
             paymentRequestEntity.setRequestEndpoint("/invalidEndpoint");
         }
         return paymentRequestEntity;
@@ -362,7 +350,7 @@ public class ValidBeans {
     }
 
 
-    public static ResponseEntity<PostePayRefundResponse> postePayRefundResponseResponseEntity(String requestId, String paymentId, String refundOutcome){
+    public static ResponseEntity<PostePayRefundResponse> postePayRefundResponseResponseEntity(String requestId, String paymentId, String refundOutcome) {
 
         PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
         postePayRefundResponse.setRequestId(requestId);
@@ -373,7 +361,7 @@ public class ValidBeans {
 
     }
 
-    public static PostePayRefundResponse postePayRefundResponse(String requestId, String paymentId, String refundOutcome, String error){
+    public static PostePayRefundResponse postePayRefundResponse(String requestId, String paymentId, String refundOutcome, String error) {
         PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
         postePayRefundResponse.setRequestId(requestId);
         postePayRefundResponse.setPaymentId(paymentId);
@@ -384,20 +372,20 @@ public class ValidBeans {
 
     }
 
-    public static DetailsPaymentResponse detailsPaymentResponse(Esito esito){
+    public static DetailsPaymentResponse detailsPaymentResponse(Esito esito) {
         DetailsPaymentResponse detailsPaymentResponse = new DetailsPaymentResponse();
         detailsPaymentResponse.setStatus(esito);
         return detailsPaymentResponse;
 
     }
 
-    public static RefundPaymentResponse refundPaymentResponse(EsitoStorno esitoStorno){
+    public static RefundPaymentResponse refundPaymentResponse(EsitoStorno esitoStorno) {
         RefundPaymentResponse refundPaymentResponse = new RefundPaymentResponse();
         refundPaymentResponse.setTransactionResult(esitoStorno);
         return refundPaymentResponse;
     }
 
-    public static RefundPaymentRequest refundPaymentRequest(String authNumber){
+    public static RefundPaymentRequest refundPaymentRequest(String authNumber) {
         RefundPaymentRequest refundPaymentRequest = new RefundPaymentRequest();
         refundPaymentRequest.setMerchantId("merchantId");
         refundPaymentRequest.setShopId("shopIdTmp_APP");
@@ -410,20 +398,20 @@ public class ValidBeans {
     }
 
 
-    public static DetailsPaymentRequest detailsPaymentRequest(){
+    public static DetailsPaymentRequest detailsPaymentRequest() {
         DetailsPaymentRequest detailsPaymentRequest = new DetailsPaymentRequest();
         detailsPaymentRequest.setPaymentID("1234");
         detailsPaymentRequest.setShopTransactionId("1");
         detailsPaymentRequest.setShopId("shopIdTmp_APP");
 
         return detailsPaymentRequest;
-   }
+    }
 
-   public static PostePayPatchRequest postePayPatchRequest(){
+    public static PostePayPatchRequest postePayPatchRequest() {
         PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, "authCode", "correlation-ID");
         return postePayPatchRequest;
 
-   }
+    }
 
 
     public static PostePayOnboardingRequest createPostePayOnboardingRequest(String onboardingTransactionId) {
@@ -475,14 +463,15 @@ public class ValidBeans {
         paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_XPAY);
         paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
         paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
+        paymentRequestEntity.setJsonRequest(authRequestJson);
         paymentRequestEntity.setStatus(CREATED.name());
-        if(Objects.nonNull(isValid) && isValid) {
+        if (Objects.nonNull(isValid) && isValid) {
             paymentRequestEntity.setXpayHtml("<html><body></body></html>");
         }
         return paymentRequestEntity;
     }
 
-    public static  PaymentRequestEntity paymentRequestEntityxPayWithoutHtml(XPayAuthRequest XPayAuthRequest, String clientId) {
+    public static PaymentRequestEntity paymentRequestEntityxPayWithoutHtml(XPayAuthRequest XPayAuthRequest, String clientId) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
@@ -493,7 +482,7 @@ public class ValidBeans {
         return paymentRequestEntity;
     }
 
-    public static  PaymentRequestEntity paymentRequestEntityXpayDenied(XPayAuthRequest XPayAuthRequest, String clientId) {
+    public static PaymentRequestEntity paymentRequestEntityXpayDenied(XPayAuthRequest XPayAuthRequest, String clientId) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
@@ -504,7 +493,7 @@ public class ValidBeans {
         return paymentRequestEntity;
     }
 
-    public static  PaymentRequestEntity paymentRequestEntityxPayWithError(XPayAuthRequest XPayAuthRequest, String clientId) {
+    public static PaymentRequestEntity paymentRequestEntityxPayWithError(XPayAuthRequest XPayAuthRequest, String clientId) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
@@ -560,10 +549,10 @@ public class ValidBeans {
         if (isOk) {
             response.setHtml("<html><body></body></html>");
             response.setStatus(CREATED.name());
-        } else if(Objects.nonNull(error)){
+        } else if (Objects.nonNull(error)) {
             response.setStatus(DENIED.name());
             response.setError(error);
-        } else if (isPending){
+        } else if (isPending) {
             response.setStatus(CREATED.name());
         }
         return response;

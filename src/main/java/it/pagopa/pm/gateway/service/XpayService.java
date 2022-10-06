@@ -2,6 +2,7 @@ package it.pagopa.pm.gateway.service;
 
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
+@Slf4j
 public class XpayService {
 
     @Value("${xpay.authenticationUrl}")
@@ -23,6 +25,7 @@ public class XpayService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
+        log.info("Calling [POST] ../xpay/ecomm/api/paga/autenticazione3DS ");
         return xpayRestTemplate.postForObject(XPAY_AUTH_URL, entity, AuthPaymentXPayResponse.class);
 
     }

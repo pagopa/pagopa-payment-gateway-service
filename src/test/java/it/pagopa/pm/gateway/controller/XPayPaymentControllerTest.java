@@ -52,12 +52,13 @@ public class XPayPaymentControllerTest {
     @MockBean
     private PaymentRequestRepository paymentRequestRepository;
     @MockBean
-    private XpayService service;
+    private XpayService xpayService;
 
     @Autowired
     private MockMvc mvc;
 
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+
     @Mock
     final UUID uuid = UUID.fromString(UUID_SAMPLE);
 
@@ -70,20 +71,20 @@ public class XPayPaymentControllerTest {
         AuthPaymentXPayRequest xPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         AuthPaymentXPayResponse xPayResponse = ValidBeans.createXPayAuthResponse(xPayRequest);
 
-        when(service.postForObject(any())).thenReturn(xPayResponse);
+        when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true));
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                .header(Headers.X_CLIENT_ID, APP_ORIGIN)
-                .content(mapper.writeValueAsString(xPayAuthRequest))
-                .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .content(mapper.writeValueAsString(xPayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
     public void xPay_ReceivingErrorFromXPay_shouldReturnOkResponseAndStatusDenied() throws Exception {
-        try (MockedStatic< UUID > mockedUuid = Mockito.mockStatic(UUID.class)) {
+        try (MockedStatic<UUID> mockedUuid = Mockito.mockStatic(UUID.class)) {
 
             mockedUuid.when(UUID::randomUUID).thenReturn(uuid);
             when(uuid.toString()).thenReturn(UUID_SAMPLE);
@@ -98,7 +99,7 @@ public class XPayPaymentControllerTest {
             when(paymentRequestRepository.findByGuid(any())).
                     thenReturn(entity);
 
-            when(service.postForObject(any())).thenReturn(xPayResponse);
+            when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
 
             mvc.perform(post(REQUEST_PAYMENTS_XPAY)
                             .header(Headers.X_CLIENT_ID, APP_ORIGIN)
@@ -112,7 +113,7 @@ public class XPayPaymentControllerTest {
     @Test
     public void xPay_givenGoodRequest_shouldThrowResourceAccessException() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        when(service.postForObject(any())).thenThrow(ResourceAccessException.class);
+        when(xpayService.callAutenticazione3DS(any())).thenThrow(ResourceAccessException.class);
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
@@ -162,7 +163,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenResponseNull_shouldThrowException() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
 
-        when(service.postForObject(any())).thenReturn(null);
+        when(xpayService.callAutenticazione3DS(any())).thenReturn(null);
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
@@ -178,12 +179,12 @@ public class XPayPaymentControllerTest {
                 .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true));
 
         String url = REQUEST_PAYMENTS_XPAY + XPAY_AUTH;
-        mvc.perform(get(url, UUID_SAMPLE ))
+        mvc.perform(get(url, UUID_SAMPLE))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(true, null, false))));
     }
 
     @Test
-    public void xPay_shouldReturnAuthPollingResponseKO() throws  Exception {
+    public void xPay_shouldReturnAuthPollingResponseKO() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         PaymentRequestEntity requestEntity = ValidBeans.paymentRequestEntityxPayWithError(xPayAuthRequest, APP_ORIGIN);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))

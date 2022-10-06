@@ -713,14 +713,9 @@ components:
     XPayAuthPollingResponseEntity:
       type: object
       required:
-        - authOutcome
         - html
         - status
       properties:
-        authOutcome:
-          type: string
-          enum: [OK, KO, PENDING]
-          description: outcome of the authorization
         html:
           type: string
           description: HTML received in response from XPay

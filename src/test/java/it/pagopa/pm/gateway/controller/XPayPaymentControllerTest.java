@@ -162,7 +162,6 @@ public class XPayPaymentControllerTest {
     @Test
     public void xPay_givenResponseNull_shouldThrowException() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-
         when(xpayService.callAutenticazione3DS(any())).thenReturn(null);
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)

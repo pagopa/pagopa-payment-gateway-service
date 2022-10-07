@@ -1,8 +1,13 @@
 package it.pagopa.pm.gateway.constant;
 
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data(staticConstructor = "of")
+@Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Messages {
     public static final String BAD_REQUEST_MSG = "Bad Request - mandatory parameters missing";
     public static final String BAD_REQUEST_MSG_CLIENT_ID = "Bad Request - client id is not valid";

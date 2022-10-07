@@ -429,8 +429,7 @@ public class PostePayPaymentTransactionsController {
         OutcomeEnum authorizationOutcome;
         if (Objects.isNull(outcome)) {
             authorizationOutcome = null;
-        }
-        else {
+        } else {
             authorizationOutcome = outcome ? OK : KO;
         }
         response.setUrlRedirect(urlRedirect);

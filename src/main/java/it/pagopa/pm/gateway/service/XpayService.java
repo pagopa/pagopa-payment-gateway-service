@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 public class XpayService {
 
     @Value("${xpay.authenticationUrl}")
-    private String XPAY_AUTH_URL;
+    private String xpayAuthUrl;
 
     @Autowired
     RestTemplate xpayRestTemplate;
@@ -25,7 +25,7 @@ public class XpayService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
-        log.info("Calling POST - " + XPAY_AUTH_URL);
-        return xpayRestTemplate.postForObject(XPAY_AUTH_URL, entity, AuthPaymentXPayResponse.class);
+        log.info("Calling POST - " + xpayAuthUrl);
+        return xpayRestTemplate.postForObject(xpayAuthUrl, entity, AuthPaymentXPayResponse.class);
     }
 }

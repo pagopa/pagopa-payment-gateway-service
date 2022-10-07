@@ -16,34 +16,34 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class AzureLoginClient {
 
-    private final static String MICROSOFT_AZURE_LOGIN_GRANT_TYPE = "client_credentials";
+    private static final String MICROSOFT_AZURE_LOGIN_GRANT_TYPE = "client_credentials";
     private static final String CLIENT_ID_PARAMETER = "client_id";
     private static final String CLIENT_SECRET_PARAMETER = "client_secret";
     private static final String GRANT_TYPE_PARAMETER = "grant_type";
     private static final String SCOPE_PARAMETER = "scope";
 
     @Value("${azureAuth.client.postepay.url}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_URL;
+    private String microsoftAzureLoginPostepayUrl;
 
     @Value("${azureAuth.client.postepay.client_id}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID;
+    private String microsoftAzureLoginPostepayClientId;
 
     @Value("${azureAuth.client.postepay.client_secret}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET;
+    private String microsoftAzureLoginPostepayClientSecret;
 
     @Value("${azureAuth.client.postepay.scope}")
-    private String MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE;
+    private String microsoftAzureLoginPostepayScope;
 
     @Value("${azureAuth.client.postepay.enabled:true}")
-    private Boolean MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED;
+    private Boolean microsoftAzureLoginPostepayEnabled;
 
     @Autowired
     private RestTemplate microsoftAzureRestTemplate;
 
     public MicrosoftAzureLoginResponse requestMicrosoftAzureLoginPostepay() {
-        if (BooleanUtils.isTrue(MICROSOFT_AZURE_LOGIN_POSTEPAY_ENABLED)) {
-            MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_ID, MICROSOFT_AZURE_LOGIN_POSTEPAY_CLIENT_SECRET, MICROSOFT_AZURE_LOGIN_POSTEPAY_SCOPE);
-            return requestMicrosoftAzureLogin(loginRequest, MICROSOFT_AZURE_LOGIN_POSTEPAY_URL);
+        if (BooleanUtils.isTrue(microsoftAzureLoginPostepayEnabled)) {
+            MultiValueMap<String, String> loginRequest = createMicrosoftAzureLoginRequest(microsoftAzureLoginPostepayClientId, microsoftAzureLoginPostepayClientSecret, microsoftAzureLoginPostepayScope);
+            return requestMicrosoftAzureLogin(loginRequest, microsoftAzureLoginPostepayUrl);
         } else {
             // this is to avoid call to AZURE login if not needed, for local environment
             log.warn("Azure authentication phase bypassed");

@@ -292,8 +292,7 @@ public class PostePayPaymentTransactionsController {
                     "correlationId = %s - authorizationUrl = %s", idTransaction, correlationId, authorizationUrl));
         } catch (ApiException e) {
             log.error("Error while calling PostePay's /createPayment API. HTTP Status is: " + e.getCode());
-            log.error(RESPONSE_BODY_MSG + e.getResponseBody());
-            log.error(COMPLETE_EXCEPTION_MSG, e);
+            logException(e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } catch (Exception e) {
             log.error("An exception occurred while executing PostePay authorization call", e);
@@ -327,8 +326,7 @@ public class PostePayPaymentTransactionsController {
                     "correlationId = %s - authorizationUrl = %s", onboardingTransactionId, correlationId, authorizationUrl));
         } catch (ApiException e) {
             log.error("Error while calling PostePay's /onboarding API. HTTP Status is: " + e.getCode());
-            log.error(RESPONSE_BODY_MSG + e.getResponseBody());
-            log.error(COMPLETE_EXCEPTION_MSG, e);
+            logException(e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         } catch (Exception e) {
             log.error("An exception occurred while executing PostePay onboarding authorization call", e);
@@ -430,7 +428,7 @@ public class PostePayPaymentTransactionsController {
         if (Objects.isNull(outcome)) {
             authorizationOutcome = null;
         } else {
-            authorizationOutcome = outcome ? OK : KO;
+            authorizationOutcome = BooleanUtils.isTrue(outcome) ? OK :KO;
         }
         response.setUrlRedirect(urlRedirect);
         response.setAuthOutcome(authorizationOutcome);
@@ -647,5 +645,9 @@ public class PostePayPaymentTransactionsController {
         return refundPaymentRequest;
     }
 
+    private void logException(ApiException e) {
+        log.error(RESPONSE_BODY_MSG + e.getResponseBody());
+        log.error(COMPLETE_EXCEPTION_MSG, e);
+    }
 
 }

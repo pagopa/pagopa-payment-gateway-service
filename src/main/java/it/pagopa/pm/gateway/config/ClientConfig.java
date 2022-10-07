@@ -42,34 +42,34 @@ public class ClientConfig {
     private static final int XPAY_DEFAULT_MAX_PER_ROUTE = 50;
 
     @Value("${bancomatPay.client.url}")
-    private String BPAY_CLIENT_URL;
+    private String bpayClientUrl;
 
     @Value("${bancomatPay.client.timeout.ms:5000}")
-    private int BPAY_CLIENT_TIMEOUT_MS;
+    private int bpayClientTimeoutMs;
 
     @Value("${azureAuth.client.maxTotal:100}")
-    private int AZURE_CLIENT_MAX_TOTAL;
+    private int azureClientMaxTotal;
 
     @Value("${azureAuth.client.maxPerRoute:100}")
-    private int AZURE_CLIENT_MAX_PER_ROUTE;
+    private int azureClientMaxPerRoute;
 
     @Value("${azureAuth.client.timeout.ms:5000}")
-    private int AZURE_CLIENT_TIMEOUT;
+    private int azureClientTimeout;
 
     @Value("${postepay.client.url}")
-    private String POSTEPAY_CLIENT_URL;
+    private String postepayClientUrl;
 
     @Value("${postepay.client.timeout.ms:5000}")
-    private int POSTEPAY_CLIENT_TIMEOUT;
+    private int postepayClientTimeout;
 
     @Value("${pgs.xpay.client.maxPerRoute}")
-    private String XPAY_MAX_PER_ROUTE;
+    private String xpayMaxPerRoute;
 
     @Value("${pgs.xpay.client.maxTotal}")
-    private String XPAY_MAX_CONNECTION;
+    private String xpayMaxConnection;
 
     @Value("${pgs.xpay.client.timeOut}")
-    private String XPAY_CLIENT_TIMEOUT;
+    private String xpayClientTimeout;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -92,7 +92,7 @@ public class ClientConfig {
     public PaymentManagerControllerApi postePayControllerApi() {
         log.info("START postePayControllerApi()");
         ApiClient apiClient = createApiClient();
-        log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
+        log.info("END - postePayControllerApi()- POSTEPAY_CLIENT_URL: " + postepayClientUrl);
         return new PaymentManagerControllerApi(apiClient);
     }
 
@@ -100,14 +100,14 @@ public class ClientConfig {
     public UserApi postePayUserApi() {
         log.info("START postePayUserApi()");
         ApiClient apiClient = createApiClient();
-        log.info("END - postePayUserApi()- POSTEPAY_CLIENT_URL: " + POSTEPAY_CLIENT_URL);
+        log.info("END - postePayUserApi()- POSTEPAY_CLIENT_URL: " + postepayClientUrl);
         return new UserApi(apiClient);
     }
 
     private ApiClient createApiClient() {
         return addProxyToApiClient(new ApiClient()
-                .setBasePath(POSTEPAY_CLIENT_URL)
-                .setConnectTimeout(POSTEPAY_CLIENT_TIMEOUT));
+                .setBasePath(postepayClientUrl)
+                .setConnectTimeout(postepayClientTimeout));
     }
 
     @Bean
@@ -115,15 +115,15 @@ public class ClientConfig {
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
-        webServiceTemplate.setDefaultUri(BPAY_CLIENT_URL);
+        webServiceTemplate.setDefaultUri(bpayClientUrl);
         for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders()) {
-            Duration durationTimeout = Duration.ofMillis(BPAY_CLIENT_TIMEOUT_MS);
+            Duration durationTimeout = Duration.ofMillis(bpayClientTimeoutMs);
             if (sender instanceof HttpUrlConnectionMessageSender) {
                 ((HttpUrlConnectionMessageSender) sender).setConnectionTimeout(durationTimeout);
                 ((HttpUrlConnectionMessageSender) sender).setReadTimeout(durationTimeout);
             }
         }
-        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + BPAY_CLIENT_URL);
+        log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + bpayClientUrl);
         return webServiceTemplate;
     }
 
@@ -135,19 +135,19 @@ public class ClientConfig {
                 HttpClientBuilder.create()
                         .setProxy(createProxy(this.getClass().getName()))
                         .setConnectionManager(createConnectionManager(
-                                AZURE_CLIENT_MAX_TOTAL,
-                                AZURE_CLIENT_MAX_PER_ROUTE))
+                                azureClientMaxTotal,
+                                azureClientMaxPerRoute))
                         .setDefaultRequestConfig(createRequestConfig(
-                                AZURE_CLIENT_TIMEOUT))
+                                azureClientTimeout))
                         .build());
         return new RestTemplate(httpComponentsClientHttpRequestFactory);
     }
 
     @Bean
     public RestTemplate xpayRestTemplate() {
-        int maxTotal = getValueIfParsable(XPAY_MAX_CONNECTION, XPAY_DEFAULT_MAX_TOTAL);
-        int maxPerRoute = getValueIfParsable(XPAY_MAX_PER_ROUTE, XPAY_DEFAULT_MAX_PER_ROUTE);
-        int timeout = getValueIfParsable(XPAY_CLIENT_TIMEOUT, XPAY_DEFAULT_TIMEOUT);
+        int maxTotal = getValueIfParsable(xpayMaxConnection, XPAY_DEFAULT_MAX_TOTAL);
+        int maxPerRoute = getValueIfParsable(xpayMaxPerRoute, XPAY_DEFAULT_MAX_PER_ROUTE);
+        int timeout = getValueIfParsable(xpayClientTimeout, XPAY_DEFAULT_TIMEOUT);
 
         HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory =
                 new HttpComponentsClientHttpRequestFactory();

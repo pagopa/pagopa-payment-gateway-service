@@ -2,7 +2,7 @@ package it.pagopa.pm.gateway.constant;
 
 import lombok.Data;
 
-@Data
+@Data(staticConstructor = "of")
 public class Messages {
     public static final String BAD_REQUEST_MSG = "Bad Request - mandatory parameters missing";
     public static final String BAD_REQUEST_MSG_CLIENT_ID = "Bad Request - client id is not valid";

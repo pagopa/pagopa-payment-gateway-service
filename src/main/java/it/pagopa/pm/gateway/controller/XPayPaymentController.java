@@ -52,16 +52,16 @@ public class XPayPaymentController {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Value("${xpay.response.urlredirect}")
-    private String PGS_RESPONSE_URL_REDIRECT;
+    private String pgsResponseUrlRedirect;
 
     @Value("${xpay.request.responseUrl}")
-    private String XPAY_RESPONSE_URL;
+    private String xpayResponseUrl;
 
     @Value("${xpay.apiKey}")
-    private String API_KEY;
+    private String apiKey;
 
     @Value("${xpay.secretKey}")
-    private String SECRET_KEY;
+    private String secretKey;
 
     @Autowired
     private PaymentRequestRepository paymentRequestRepository;
@@ -118,7 +118,7 @@ public class XPayPaymentController {
             response.setStatus(entity.getStatus());
         }
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(PGS_RESPONSE_URL_REDIRECT, requestId);
+            String urlRedirect = StringUtils.join(pgsResponseUrlRedirect, requestId);
             response.setUrlRedirect(urlRedirect);
         } else {
             response.setError(errorMessage);
@@ -134,7 +134,7 @@ public class XPayPaymentController {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         AuthPaymentXPayRequest xPayAuthRequest = createXpayAuthRequest(pgsRequest);
         generateRequestEntity(clientId, mdcFields, transactionId, paymentRequestEntity, xPayAuthRequest);
-        xPayAuthRequest.setUrlRisposta(String.format(XPAY_RESPONSE_URL, paymentRequestEntity.getGuid()));
+        xPayAuthRequest.setUrlRisposta(String.format(xpayResponseUrl, paymentRequestEntity.getGuid()));
         return executeXPayAuthorizationCall(xPayAuthRequest, paymentRequestEntity, transactionId);
     }
 
@@ -199,7 +199,7 @@ public class XPayPaymentController {
         String mac = createMac(codTrans, grandTotal, timeStamp);
 
         AuthPaymentXPayRequest xPayRequest = new AuthPaymentXPayRequest();
-        xPayRequest.setApiKey(API_KEY);
+        xPayRequest.setApiKey(apiKey);
         xPayRequest.setImporto(grandTotal);
         xPayRequest.setCvv(pgsRequest.getCvv());
         xPayRequest.setPan(pgsRequest.getPan());
@@ -232,7 +232,7 @@ public class XPayPaymentController {
 
     private String createMac(String codTrans, BigInteger importo, String timeStamp) {
         String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s",
-                API_KEY, codTrans, EUR_CURRENCY, importo, timeStamp, SECRET_KEY);
+                apiKey, codTrans, EUR_CURRENCY, importo, timeStamp, secretKey);
         return hashMac(macString);
     }
 

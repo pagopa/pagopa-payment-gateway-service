@@ -104,7 +104,7 @@ public class PostePayPaymentTransactionsController {
             boolean isAuthOutcomeOk = authMessage.getAuthOutcome() == OK;
 
             String authCode = authMessage.getAuthCode();
-            if (requestEntity.getIsOnboarding()) {
+            if (BooleanUtils.isTrue(requestEntity.getIsOnboarding())) {
                 log.info("This is an onboarding payment: skipping call to PATCH API on PM");
             } else {
                 Long transactionStatus = isAuthOutcomeOk ? TransactionStatusEnum.TX_AUTHORIZED_BY_PGS.getId() : TransactionStatusEnum.TX_REFUSED.getId();
@@ -298,10 +298,7 @@ public class PostePayPaymentTransactionsController {
             log.error("An exception occurred while executing PostePay authorization call", e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        paymentRequestEntity.setCorrelationId(correlationId);
-        paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
-        paymentRequestEntity.setResourcePath(postepayLogoUrl);
-        paymentRequestRepository.save(paymentRequestEntity);
+        setLastFieldsAndSave(paymentRequestEntity, correlationId, authorizationUrl);
         log.info("END - execute PostePay payment authorization request for transaction " + idTransaction);
     }
 
@@ -332,10 +329,7 @@ public class PostePayPaymentTransactionsController {
             log.error("An exception occurred while executing PostePay onboarding authorization call", e);
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        paymentRequestEntity.setCorrelationId(correlationId);
-        paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
-        paymentRequestEntity.setResourcePath(postepayLogoUrl);
-        paymentRequestRepository.save(paymentRequestEntity);
+        setLastFieldsAndSave(paymentRequestEntity, correlationId, authorizationUrl);
         log.info("END - execute PostePay onboarding authorization request for transaction " + onboardingTransactionId);
     }
 
@@ -428,7 +422,7 @@ public class PostePayPaymentTransactionsController {
         if (Objects.isNull(outcome)) {
             authorizationOutcome = null;
         } else {
-            authorizationOutcome = BooleanUtils.isTrue(outcome) ? OK :KO;
+            authorizationOutcome = BooleanUtils.isTrue(outcome) ? OK : KO;
         }
         response.setUrlRedirect(urlRedirect);
         response.setAuthOutcome(authorizationOutcome);
@@ -514,7 +508,7 @@ public class PostePayPaymentTransactionsController {
         String correlationId = requestEntity.getCorrelationId();
         boolean isAuthorizationApproved = StringUtils.isNotEmpty(requestEntity.getAuthorizationCode());
 
-        if (requestEntity.getIsRefunded()) {
+        if (BooleanUtils.isTrue(requestEntity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
             return createPostePayRefundResponse(requestId, correlationId, null, ExceptionsEnum.REFUND_REQUEST_ALREADY_PROCESSED);
         }
@@ -648,6 +642,13 @@ public class PostePayPaymentTransactionsController {
     private void logException(ApiException e) {
         log.error(RESPONSE_BODY_MSG + e.getResponseBody());
         log.error(COMPLETE_EXCEPTION_MSG, e);
+    }
+
+    private void setLastFieldsAndSave(PaymentRequestEntity paymentRequestEntity, String correlationId, String authorizationUrl) {
+        paymentRequestEntity.setCorrelationId(correlationId);
+        paymentRequestEntity.setAuthorizationUrl(authorizationUrl);
+        paymentRequestEntity.setResourcePath(postepayLogoUrl);
+        paymentRequestRepository.save(paymentRequestEntity);
     }
 
 }

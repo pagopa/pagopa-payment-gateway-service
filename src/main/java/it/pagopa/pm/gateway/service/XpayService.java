@@ -25,6 +25,7 @@ public class XpayService {
     RestTemplate xpayRestTemplate;
 
     public AuthPaymentXPayResponse callAutenticazione3DS(AuthPaymentXPayRequest xPayRequest) {
+        log.info("XPay Request: " + xPayRequest);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Ocp-Apim-Subscription-Key", apiKey);

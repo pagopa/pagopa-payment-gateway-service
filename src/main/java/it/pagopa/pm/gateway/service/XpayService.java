@@ -18,12 +18,16 @@ public class XpayService {
     @Value("${xpay.authenticationUrl}")
     private String xpayAuthUrl;
 
+    @Value("${xpay.azure.apiKey}")
+    private String apiKey;
+
     @Autowired
     RestTemplate xpayRestTemplate;
 
     public AuthPaymentXPayResponse callAutenticazione3DS(AuthPaymentXPayRequest xPayRequest) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Ocp-Apim-Subscription-Key", apiKey);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
         log.info("Calling POST - " + xpayAuthUrl);
         return xpayRestTemplate.postForObject(xpayAuthUrl, entity, AuthPaymentXPayResponse.class);

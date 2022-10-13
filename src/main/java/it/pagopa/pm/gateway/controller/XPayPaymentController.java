@@ -2,14 +2,13 @@ package it.pagopa.pm.gateway.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.dto.XPayAuthPollingResponse;
-import it.pagopa.pm.gateway.dto.XPayAuthRequest;
-import it.pagopa.pm.gateway.dto.XPayAuthResponse;
-import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
-import it.pagopa.pm.gateway.dto.xpay.XpayError;
+import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum;
+import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
+import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +22,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -31,13 +31,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.XPAY_AUTH;
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 import static it.pagopa.pm.gateway.constant.Messages.*;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
@@ -68,6 +66,9 @@ public class XPayPaymentController {
 
     @Autowired
     private XpayService xpayService;
+
+    @Autowired
+    private RestapiCdClientImpl restapiCdClient;
 
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
@@ -108,6 +109,42 @@ public class XPayPaymentController {
             return createXPayAuthPollingResponse(HttpStatus.NOT_FOUND, error, null);
         }
         return createXPayAuthPollingResponse(HttpStatus.OK, null, entity);
+    }
+
+    @PostMapping(XPAY_RESUME)
+    public ResponseEntity<String> resumeXPayPayment(@PathVariable String requestId,
+                                                    @RequestBody XPayResumeRequest pgsRequest) {
+
+        log.info(String.format("START - POST %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
+
+        if (Objects.isNull(pgsRequest.getEsito())) {
+            log.error(BAD_REQUEST_MSG);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BAD_REQUEST_MSG);
+        }
+
+        PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
+
+        if (Objects.isNull(entity)) {
+            log.error("No XPay entity has been found for requestId: " + requestId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(REQUEST_ID_NOT_FOUND_MSG);
+        }
+
+        if (pgsRequest.getEsito().equals(EsitoXpay.OK)) {
+            try {
+                executeXPayPaymentCall(pgsRequest, requestId, entity);
+            } catch (Exception e) {
+                String errorMessage = GENERIC_ERROR_PAYMENT_MSG + requestId;
+                log.error(errorMessage, e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
+            }
+        } else {
+            entity.setStatus(DENIED.name());
+            paymentRequestRepository.save(entity);
+        }
+
+        String urlRedirect = StringUtils.join(pgsResponseUrlRedirect, requestId);
+        log.info(String.format("END - POST %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 
     private ResponseEntity<XPayAuthResponse> createXpayAuthResponse(String errorMessage, HttpStatus status, String requestId) {
@@ -190,6 +227,68 @@ public class XPayPaymentController {
         log.info("END - createXPayAuthPollingResponse for requestId " + requestId);
         return ResponseEntity.ok().body(response);
     }
+
+    @Async
+    private void executeXPayPaymentCall(XPayResumeRequest pgsRequest, String requestId, PaymentRequestEntity entity) throws Exception {
+        try {
+            saveRequestEntityFieldsForPayment(entity, pgsRequest);
+            PaymentXPayRequest xpayRequest = createXPayPaymentRequest(entity, pgsRequest);
+
+            PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
+            if (response.getEsito().equals(EsitoXpay.OK)) {
+                entity.setStatus(AUTHORIZED.name());
+                entity.setAuthorizationCode(response.getCodiceAutorizzazione());
+            } else if (response.getEsito().equals(EsitoXpay.KO) || Objects.nonNull(response.getErrore())) {
+                entity.setStatus(DENIED.name());
+            }
+        } catch (Exception e) {
+            log.error(GENERIC_ERROR_PAYMENT_MSG + requestId + " cause: " + e.getCause() + " - " + e.getMessage(), e);
+            entity.setStatus(DENIED.name());
+            throw e;
+        } finally {
+            Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TransactionStatusEnum.TX_AUTHORIZED_BY_PGS.getId() : TransactionStatusEnum.TX_REFUSED.getId();
+            String authCode = entity.getAuthorizationCode();
+            PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
+            String closePaymentResult = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
+            log.info("Response from PATCH updateTransaction for requestId: " + requestId + " " + closePaymentResult);
+            paymentRequestRepository.save(entity);
+        }
+
+    }
+
+    private void saveRequestEntityFieldsForPayment(PaymentRequestEntity entity, XPayResumeRequest pgsRequest) {
+        entity.setXpayNonce(pgsRequest.getXpayNonce());
+        entity.setTimeStamp(pgsRequest.getXpayNonce());
+        paymentRequestRepository.save(entity);
+    }
+
+    private PaymentXPayRequest createXPayPaymentRequest(PaymentRequestEntity entity, XPayResumeRequest pgsRequest) throws Exception {
+        String idTransaction = entity.getIdTransaction();
+        String codTrans = StringUtils.leftPad(idTransaction, 2, "0");
+
+        String json = entity.getJsonRequest();
+        AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
+
+        BigInteger grandTotal = authRequest.getImporto();
+        String mac = authRequest.getMac();
+
+        if (!mac.equals(pgsRequest.getMac())) {
+            log.error("Response mac not valid");
+            throw new RestApiException(ExceptionsEnum.MAC_NOT_VALID);
+        }
+
+        PaymentXPayRequest request = new PaymentXPayRequest();
+        request.setDivisa(Long.valueOf(EUR_CURRENCY));
+        request.setApiKey(apiKey);
+        request.setCodiceTransazione(codTrans);
+        request.setTimeStamp(String.valueOf(System.currentTimeMillis()));
+        request.setMac(mac);
+        request.setImporto(grandTotal);
+        request.setXpayNonce(entity.getXpayNonce());
+
+        return request;
+    }
+
 
     private AuthPaymentXPayRequest createXpayAuthRequest(XPayAuthRequest pgsRequest) {
         String idTransaction = pgsRequest.getIdTransaction();

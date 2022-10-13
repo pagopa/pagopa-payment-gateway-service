@@ -361,10 +361,10 @@ public class PostePayPaymentControllerTest {
         final String correlationID = "correlation-ID";
 
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
-        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.postePayPatchRequest();
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
-        given(restapiCdClient.callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest))
+        given(restapiCdClient.callPatchTransactionV2(Long.valueOf(paymentRequestEntity.getIdTransaction()), patchRequest))
                 .willReturn(OutcomeEnum.OK.toString());
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
@@ -433,11 +433,11 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse(OutcomeEnum.KO);
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
-        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.postePayPatchRequest();
 
         doThrow(FeignException.class)
                 .when(restapiCdClient)
-                .callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest);
+                .callPatchTransactionV2(Long.valueOf(paymentRequestEntity.getIdTransaction()), patchRequest);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 
@@ -461,11 +461,11 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse(OutcomeEnum.KO);
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
-        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.postePayPatchRequest();
 
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)
-                .callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest);
+                .callPatchTransactionV2(Long.valueOf(paymentRequestEntity.getIdTransaction()), patchRequest);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 

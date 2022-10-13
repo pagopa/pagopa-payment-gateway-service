@@ -16,5 +16,5 @@ public interface RestapiCdClient {
     void updateTransaction(@Param Long id, @HeaderMap Map<String, Object> headerMap, TransactionUpdateRequestData transactionUpdateRequest);
 
     @RequestLine("PATCH /pp-restapi-CD/v2/transactions/{id}")
-    String updatePostePayTransaction(@Param Long id, @HeaderMap Map<String, Object> headerMap, PostePayPatchRequestData postePayPatchRequest);
+    String callPatchTransactionV2(@Param Long id, @HeaderMap Map<String, Object> headerMap, PostePayPatchRequestData postePayPatchRequest);
 }

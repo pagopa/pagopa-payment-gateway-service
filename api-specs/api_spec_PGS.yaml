@@ -453,6 +453,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayAuthPollingResponseEntity504'
+  /request-payments/xpay/{requestId}/resume:
+    post:
+      summary: payment to xPay
+      tags:
+        - payment-transactions-controller
+      operationId: payment-xpay
+      parameters:
+        - in: path
+          required: true
+          name: requestId
+          description: Id of the request
+          example: "41bc2409-5926-4aa9-afcc-797c7054e467"
+          schema:
+            type: string
+      responses:
+        "302":
+          description: OK-FOUND
+
+        "400":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bad Request - mandatory parameters missing"
+        "404":
+          description: TimeOut
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "RequestId not Found"
+        "500":
+          description: Internal server Error
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Error during payment for requestId: xxx "
 components:
   schemas:
     AuthMessage:

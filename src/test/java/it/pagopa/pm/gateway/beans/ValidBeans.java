@@ -544,8 +544,8 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayAuthPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
-        XPayAuthPollingResponse response = new XPayAuthPollingResponse();
+    public static XPayPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
+        XPayPollingResponse response = new XPayPollingResponse();
         if (isOk) {
             response.setHtml("<html><body></body></html>");
             response.setStatus(CREATED.name());

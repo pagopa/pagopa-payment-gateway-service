@@ -9,9 +9,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class XPayAuthPollingResponse {
+public class XPayPollingResponse {
 
     private String status;
     private XPayPollingResponseError error;
     private String html;
+    private String authOutcome;
+    private String authCode;
+    private String redirectUrl;
 }

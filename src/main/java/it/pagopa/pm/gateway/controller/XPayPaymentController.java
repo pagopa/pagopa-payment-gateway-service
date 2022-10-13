@@ -2,9 +2,9 @@ package it.pagopa.pm.gateway.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.dto.XPayAuthPollingResponse;
 import it.pagopa.pm.gateway.dto.XPayAuthRequest;
 import it.pagopa.pm.gateway.dto.XPayAuthResponse;
+import it.pagopa.pm.gateway.dto.XPayPollingResponse;
 import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
@@ -13,6 +13,7 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +33,12 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.XPAY_AUTH;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 import static it.pagopa.pm.gateway.constant.Messages.*;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
@@ -50,9 +51,13 @@ public class XPayPaymentController {
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
     private static final String EUR_CURRENCY = "978";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String PENDING_MSG = "pending";
 
-    @Value("${xpay.response.urlredirect}")
-    private String pgsResponseUrlRedirect;
+    @Value("${xpay.response.auth.urlredirect}")
+    private String authUrlRedirect;
+
+    @Value("${xpay.response.pay.urlredirect}")
+    private String payUrlRedirect;
 
     @Value("${xpay.request.responseUrl}")
     private String xpayResponseUrl;
@@ -96,10 +101,10 @@ public class XPayPaymentController {
         return createAuthPaymentXpay(pgsRequest, clientId, mdcFields);
     }
 
-    @GetMapping(XPAY_AUTH)
-    public ResponseEntity<XPayAuthPollingResponse> retrieveXpayAuthorizationResponse(@PathVariable String requestId,
-                                                                                     @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
-        log.info("START - GET XPay authorization response for requestId: " + requestId);
+    @GetMapping()
+    public ResponseEntity<XPayPollingResponse> getRequestInfo(@PathVariable String requestId,
+                                                              @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
+        log.info("START - GET XPay request info for requestId: " + requestId);
         setMdcFields(mdcFields);
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
         if (Objects.isNull(entity) || !StringUtils.equals(entity.getRequestEndpoint(), REQUEST_PAYMENTS_XPAY)) {
@@ -118,7 +123,7 @@ public class XPayPaymentController {
             response.setStatus(entity.getStatus());
         }
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(pgsResponseUrlRedirect, requestId);
+            String urlRedirect = StringUtils.join(authUrlRedirect, requestId);
             response.setUrlRedirect(urlRedirect);
         } else {
             response.setError(errorMessage);
@@ -156,6 +161,7 @@ public class XPayPaymentController {
                 } else {
                     requestEntity.setErrorCode(String.valueOf(xpayError.getCodice()));
                     requestEntity.setErrorMessage(xpayError.getMessaggio());
+                    requestEntity.setAuthorizationOutcome(false);
                     requestEntity.setStatus(DENIED.name());
                 }
                 paymentRequestRepository.save(requestEntity);
@@ -168,9 +174,8 @@ public class XPayPaymentController {
         }
     }
 
-    private ResponseEntity<XPayAuthPollingResponse> createXPayAuthPollingResponse(HttpStatus httpStatus, XPayPollingResponseError error, PaymentRequestEntity entity) {
-        XPayAuthPollingResponse response = new XPayAuthPollingResponse();
-
+    private ResponseEntity<XPayPollingResponse> createXPayAuthPollingResponse(HttpStatus httpStatus, XPayPollingResponseError error, PaymentRequestEntity entity) {
+        XPayPollingResponse response = new XPayPollingResponse();
         if (Objects.nonNull(error)) {
             log.info("START - create XPay polling response - error case");
             response.setError(error);
@@ -179,15 +184,43 @@ public class XPayPaymentController {
 
         String requestId = entity.getGuid();
         log.info("START - create XPay polling response for requestId: " + requestId);
-        response.setStatus(entity.getStatus());
-        response.setHtml(entity.getXpayHtml());
+        String status = entity.getStatus();
+        log.info(String.format("Request status for requestId %s is %s", requestId, status));
+
+        response.setStatus(status);
+        switch (getEnumValueFromString(status)) {
+            case CREATED:
+                String xpayHtml = entity.getXpayHtml();
+                response.setHtml(xpayHtml);
+                if (StringUtils.isBlank(xpayHtml)) {
+                    log.info(String.format("HTML from XPay for requestId %s has not been acquired yet", requestId));
+                }
+                if (Objects.isNull(entity.getAuthorizationOutcome())) {
+                    log.info(String.format("Authorization for requestId %s is pending", requestId));
+                    response.setAuthOutcome(PENDING_MSG);
+                }
+                break;
+            case AUTHORIZED:
+            case DENIED:
+                String authOutcome = BooleanUtils.toBoolean(entity.getAuthorizationOutcome()) ? OK.name() : KO.name();
+                log.info(String.format("Authorization outcome for requestId %s is %s", requestId, authOutcome));
+                response.setAuthOutcome(authOutcome);
+                response.setAuthCode(entity.getAuthorizationCode());
+                response.setRedirectUrl(StringUtils.join(payUrlRedirect, requestId));
+                break;
+            default:
+                log.info(BooleanUtils.toBoolean(entity.getIsRefunded()) ?
+                        String.format("XPay request with requestId %s has been refunded", requestId) :
+                        String.format("XPay request with requestId %s has not been refunded yet", requestId));
+                break;
+        }
 
         if (ObjectUtils.allNotNull(entity.getErrorCode(), entity.getErrorMessage())) {
             response.setError(new XPayPollingResponseError(Long.valueOf(entity.getErrorCode()), entity.getErrorMessage()));
             return ResponseEntity.ok().body(response);
         }
 
-        log.info("END - createXPayAuthPollingResponse for requestId " + requestId);
+        log.info("END - create XPay polling response for requestId " + requestId);
         return ResponseEntity.ok().body(response);
     }
 

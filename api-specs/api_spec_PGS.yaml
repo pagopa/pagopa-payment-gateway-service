@@ -467,6 +467,12 @@ paths:
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/XPayPAymentRequest'
+        required: true
       responses:
         "302":
           description: OK-FOUND
@@ -703,6 +709,39 @@ components:
           type: string
           description: Expiration date of the card, yyyyMM format
           example: 203012
+    XPayPAymentRequest:
+      required:
+        - esito
+      type: object
+      properties:
+        esito:
+          type: string
+          enum: [OK, KO]
+          description: outhcome from xpay
+        idOperazione:
+          type: string
+          description: idOperazione from xpay
+          example: "123456"
+        xpayNonce:
+          type: string
+          description: nonce from xpay
+          example: "nonce"
+        timestamp:
+          type: string
+          description: timestamp in ms
+          example: 16589654852
+        mac:
+          type: string
+          description: mac from xpay
+          example: bd2dd7a959e4816b1ba9e767cf2a5287192c8be7
+        codice:
+          type: string
+          description: error code from xpay
+          example: 1
+        messaggio:
+          type: string
+          description: error message from xpay
+          example: error message from xpay
     XPayAuthResponseEntity:
       type: object
       required:

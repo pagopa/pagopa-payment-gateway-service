@@ -9,7 +9,6 @@ import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
 import it.pagopa.pm.gateway.dto.XPayResumeRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
-import it.pagopa.pm.gateway.dto.xpay.PaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.PaymentXPayResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -258,7 +257,6 @@ public class XPayPaymentControllerTest {
         entity.setJsonRequest(jsonRequest);
 
 
-        PaymentXPayRequest paymentXPayRequest = ValidBeans.createXPayPaymentRequest(xPayResumeRequest, entity);
         PaymentXPayResponse xPayResponse = ValidBeans.createPaymentXPayResponse(true);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -339,5 +337,26 @@ public class XPayPaymentControllerTest {
                         .content(mapper.writeValueAsString(xPayResumeRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isFound());
+    }
+
+    @Test
+    public void xPay_givenGoodResumeRequest_shouldReturn401Status() throws Exception {
+        XPayResumeRequest xPayResumeRequest = ValidBeans.createXPayResumeRequest(false);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(xPayResumeRequest.getMac());
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+        entity.setAuthorizationOutcome(true);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        mvc.perform(post(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume")
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .content(mapper.writeValueAsString(xPayResumeRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
     }
 }

@@ -129,6 +129,11 @@ public class XPayPaymentController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(REQUEST_ID_NOT_FOUND_MSG);
         }
 
+        if(Objects.nonNull(entity.getAuthorizationOutcome())) {
+            log.warn(String.format("requestId %s already processed", requestId));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(TRANSACTION_ALREADY_PROCESSED_MSG);
+        }
+
         if (pgsRequest.getEsito().equals(EsitoXpay.OK)) {
             try {
                 executeXPayPaymentCall(pgsRequest, requestId, entity);
@@ -247,14 +252,14 @@ public class XPayPaymentController {
             log.error(GENERIC_ERROR_PAYMENT_MSG + requestId + " cause: " + e.getCause() + " - " + e.getMessage(), e);
             entity.setStatus(DENIED.name());
             throw e;
-        } finally {
-            Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TransactionStatusEnum.TX_AUTHORIZED_BY_PGS.getId() : TransactionStatusEnum.TX_REFUSED.getId();
-            String authCode = entity.getAuthorizationCode();
-            PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
-            String closePaymentResult = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
-            log.info("Response from PATCH updateTransaction for requestId: " + requestId + " " + closePaymentResult);
-            paymentRequestRepository.save(entity);
         }
+        paymentRequestRepository.save(entity);
+        Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TransactionStatusEnum.TX_AUTHORIZED_BY_PGS.getId() : TransactionStatusEnum.TX_REFUSED.getId();
+        String authCode = entity.getAuthorizationCode();
+        PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
+        String closePaymentResult = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
+        log.info("Response from PATCH updateTransaction for requestId: " + requestId + " " + closePaymentResult);
+
     }
 
     private void saveRequestEntityFieldsForPayment(PaymentRequestEntity entity, XPayResumeRequest pgsRequest) {

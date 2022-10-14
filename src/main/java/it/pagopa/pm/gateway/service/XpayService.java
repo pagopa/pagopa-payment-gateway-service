@@ -20,8 +20,11 @@ public class XpayService {
     @Value("${xpay.authenticationUrl}")
     private String xpayAuthUrl;
 
-    @Value("${pgs.xpay.azure.apiKey}")
-    private String apiKey;
+    @Value("${pgs.xpay.auth.apiKey}")
+    private String authApiKey;
+
+    @Value("${pgs.xpay.payment.apiKey}")
+    private String paymentApiKey;
 
     @Value("${xpay.paymentUrl}")
     private String xpayPaymentUrl;
@@ -33,7 +36,7 @@ public class XpayService {
         log.debug("XPay Request: " + xPayRequest);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("Ocp-Apim-Subscription-Key", apiKey);
+        headers.add("Ocp-Apim-Subscription-Key", authApiKey);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
         log.info("Calling POST - " + xpayAuthUrl);
         return xpayRestTemplate.postForObject(xpayAuthUrl, entity, AuthPaymentXPayResponse.class);
@@ -43,7 +46,7 @@ public class XpayService {
         log.debug("XPay Request: " + xPayRequest);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("Ocp-Apim-Subscription-Key", apiKey);
+        headers.add("Ocp-Apim-Subscription-Key", paymentApiKey);
         HttpEntity<PaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
         log.info("Calling POST - " + xpayPaymentUrl);
         return xpayRestTemplate.postForObject(xpayPaymentUrl, entity, PaymentXPayResponse.class);

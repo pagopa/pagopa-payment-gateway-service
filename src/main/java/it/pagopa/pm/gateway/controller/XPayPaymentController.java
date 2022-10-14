@@ -238,8 +238,10 @@ public class XPayPaymentController {
             if (response.getEsito().equals(EsitoXpay.OK)) {
                 entity.setStatus(AUTHORIZED.name());
                 entity.setAuthorizationCode(response.getCodiceAutorizzazione());
+                entity.setAuthorizationOutcome(true);
             } else if (response.getEsito().equals(EsitoXpay.KO) || Objects.nonNull(response.getErrore())) {
                 entity.setStatus(DENIED.name());
+                entity.setAuthorizationOutcome(false);
             }
         } catch (Exception e) {
             log.error(GENERIC_ERROR_PAYMENT_MSG + requestId + " cause: " + e.getCause() + " - " + e.getMessage(), e);
@@ -253,7 +255,6 @@ public class XPayPaymentController {
             log.info("Response from PATCH updateTransaction for requestId: " + requestId + " " + closePaymentResult);
             paymentRequestRepository.save(entity);
         }
-
     }
 
     private void saveRequestEntityFieldsForPayment(PaymentRequestEntity entity, XPayResumeRequest pgsRequest) {
@@ -288,7 +289,6 @@ public class XPayPaymentController {
 
         return request;
     }
-
 
     private AuthPaymentXPayRequest createXpayAuthRequest(XPayAuthRequest pgsRequest) {
         String idTransaction = pgsRequest.getIdTransaction();

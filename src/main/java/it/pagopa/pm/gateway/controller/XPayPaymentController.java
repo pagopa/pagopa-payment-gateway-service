@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_ID;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
@@ -101,7 +102,7 @@ public class XPayPaymentController {
         return createAuthPaymentXpay(pgsRequest, clientId, mdcFields);
     }
 
-    @GetMapping()
+    @GetMapping(REQUEST_ID)
     public ResponseEntity<XPayPollingResponse> getRequestInfo(@PathVariable String requestId,
                                                               @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
         log.info("START - GET XPay request info for requestId: " + requestId);

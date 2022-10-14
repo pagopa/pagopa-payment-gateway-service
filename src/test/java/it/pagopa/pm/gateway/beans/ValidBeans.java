@@ -438,10 +438,10 @@ public class ValidBeans {
             xPayAuthResponse.setError(errorMessage);
         } else if (isDenied) {
             xPayAuthResponse.setStatus("DENIED");
-            xPayAuthResponse.setUrlRedirect("${pgs.xpay.response.urlredirect}" + requestId);
+            xPayAuthResponse.setUrlRedirect("${xpay.response.auth.urlredirect}" + requestId);
         } else {
             xPayAuthResponse.setStatus("CREATED");
-            xPayAuthResponse.setUrlRedirect("${pgs.xpay.response.urlredirect}" + requestId);
+            xPayAuthResponse.setUrlRedirect("${xpay.response.auth.urlredirect}" + requestId);
         }
         return xPayAuthResponse;
     }
@@ -544,11 +544,12 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
+    public static XPayPollingResponse createXpayPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
         XPayPollingResponse response = new XPayPollingResponse();
         if (isOk) {
             response.setHtml("<html><body></body></html>");
             response.setStatus(CREATED.name());
+            response.setAuthOutcome("pending");
         } else if (Objects.nonNull(error)) {
             response.setStatus(DENIED.name());
             response.setError(error);

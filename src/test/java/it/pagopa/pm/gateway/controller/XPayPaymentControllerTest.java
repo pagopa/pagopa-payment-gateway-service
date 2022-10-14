@@ -244,7 +244,6 @@ public class XPayPaymentControllerTest {
                 .andExpect(status().isInternalServerError());
     }
 
-
     @Test
     public void xPay_givenGoodResumeRequest_shouldReturn302Status() throws Exception {
         XPayResumeRequest xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);

@@ -7,8 +7,6 @@ import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
-import it.pagopa.pm.gateway.exception.ExceptionsEnum;
-import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import lombok.extern.slf4j.Slf4j;
@@ -129,7 +127,7 @@ public class XPayPaymentController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(REQUEST_ID_NOT_FOUND_MSG);
         }
 
-        if(Objects.nonNull(entity.getAuthorizationOutcome())) {
+        if (Objects.nonNull(entity.getAuthorizationOutcome())) {
             log.warn(String.format("requestId %s already processed", requestId));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(TRANSACTION_ALREADY_PROCESSED_MSG);
         }
@@ -237,7 +235,7 @@ public class XPayPaymentController {
     private void executeXPayPaymentCall(XPayResumeRequest pgsRequest, String requestId, PaymentRequestEntity entity) throws Exception {
         try {
             saveRequestEntityFieldsForPayment(entity, pgsRequest);
-            PaymentXPayRequest xpayRequest = createXPayPaymentRequest(entity, pgsRequest);
+            PaymentXPayRequest xpayRequest = createXPayPaymentRequest(entity);
 
             PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
             if (response.getEsito().equals(EsitoXpay.OK)) {
@@ -251,6 +249,7 @@ public class XPayPaymentController {
         } catch (Exception e) {
             log.error(GENERIC_ERROR_PAYMENT_MSG + requestId + " cause: " + e.getCause() + " - " + e.getMessage(), e);
             entity.setStatus(DENIED.name());
+            paymentRequestRepository.save(entity);
             throw e;
         }
         paymentRequestRepository.save(entity);
@@ -264,11 +263,11 @@ public class XPayPaymentController {
 
     private void saveRequestEntityFieldsForPayment(PaymentRequestEntity entity, XPayResumeRequest pgsRequest) {
         entity.setXpayNonce(pgsRequest.getXpayNonce());
-        entity.setTimeStamp(pgsRequest.getXpayNonce());
+        entity.setTimeStamp(pgsRequest.getTimestamp());
         paymentRequestRepository.save(entity);
     }
 
-    private PaymentXPayRequest createXPayPaymentRequest(PaymentRequestEntity entity, XPayResumeRequest pgsRequest) throws Exception {
+    private PaymentXPayRequest createXPayPaymentRequest(PaymentRequestEntity entity) throws JsonProcessingException {
         String idTransaction = entity.getIdTransaction();
         String codTrans = StringUtils.leftPad(idTransaction, 2, "0");
 
@@ -276,18 +275,14 @@ public class XPayPaymentController {
         AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
 
         BigInteger grandTotal = authRequest.getImporto();
-        String mac = authRequest.getMac();
-
-        if (!mac.equals(pgsRequest.getMac())) {
-            log.error("Response mac not valid");
-            throw new RestApiException(ExceptionsEnum.MAC_NOT_VALID);
-        }
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        String mac = createMac(codTrans, grandTotal, timeStamp);
 
         PaymentXPayRequest request = new PaymentXPayRequest();
         request.setDivisa(Long.valueOf(EUR_CURRENCY));
         request.setApiKey(apiKey);
         request.setCodiceTransazione(codTrans);
-        request.setTimeStamp(String.valueOf(System.currentTimeMillis()));
+        request.setTimeStamp(timeStamp);
         request.setMac(mac);
         request.setImporto(grandTotal);
         request.setXpayNonce(entity.getXpayNonce());

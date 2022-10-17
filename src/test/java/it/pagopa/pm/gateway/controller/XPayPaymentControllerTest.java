@@ -48,7 +48,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = XPayPaymentController.class)
 @AutoConfigureMockMvc
 @EnableWebMvc
-@TestPropertySource(properties = {"xpay.response.urlredirect=http://localhost:8080/payment-gateway/"})
+@TestPropertySource(properties = {
+        "xpay.response.auth.urlredirect=http://localhost:8080/payment-gateway/",
+        "xpay.response.pay.urlredirect=http://localhost:8080/payment-gateway/"
+})
 public class XPayPaymentControllerTest {
 
     @Rule
@@ -188,7 +191,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true));
 
-        String url = REQUEST_PAYMENTS_XPAY + "/" +  UUID_SAMPLE;
+        String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(true, null, false))));
     }
@@ -202,7 +205,7 @@ public class XPayPaymentControllerTest {
 
         XPayPollingResponseError error = new XPayPollingResponseError(Long.valueOf(requestEntity.getErrorCode()), requestEntity.getErrorMessage());
 
-        String url = REQUEST_PAYMENTS_XPAY + "/" +  UUID_SAMPLE;
+        String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, error, false))));
     }
@@ -213,7 +216,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(ValidBeans.paymentRequestEntityxPayWithoutHtml(xPayAuthRequest, APP_ORIGIN));
 
-        String url = REQUEST_PAYMENTS_XPAY + "/" +  UUID_SAMPLE;
+        String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, null, true))));
     }
@@ -222,7 +225,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenInvalidRequestId_shouldReturnNotFound() throws Exception {
         when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
 
-        String url = REQUEST_PAYMENTS_XPAY + "/" +  UUID_SAMPLE;
+        String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(status().isNotFound());
 

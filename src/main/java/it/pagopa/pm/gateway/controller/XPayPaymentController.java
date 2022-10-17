@@ -134,7 +134,8 @@ public class XPayPaymentController {
 
         if (pgsRequest.getEsito().equals(EsitoXpay.OK)) {
             try {
-                executeXPayPaymentCall(pgsRequest, requestId, entity);
+                executeXPayPaymentCall(pgsRequest, entity);
+                executePatchTransactionV2(entity, requestId);
             } catch (Exception e) {
                 String errorMessage = GENERIC_ERROR_PAYMENT_MSG + requestId;
                 log.error(errorMessage, e.getMessage());
@@ -232,39 +233,46 @@ public class XPayPaymentController {
     }
 
     @Async
-    private void executeXPayPaymentCall(XPayResumeRequest pgsRequest, String requestId, PaymentRequestEntity entity) throws Exception {
-        try {
-            saveRequestEntityFieldsForPayment(entity, pgsRequest);
-            PaymentXPayRequest xpayRequest = createXPayPaymentRequest(entity);
+    private void executeXPayPaymentCall(XPayResumeRequest pgsRequest, PaymentRequestEntity entity) throws JsonProcessingException {
+        entity.setXpayNonce(pgsRequest.getXpayNonce());
+        entity.setTimeStamp(pgsRequest.getTimestamp());
 
-            PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
-            if (response.getEsito().equals(EsitoXpay.OK)) {
-                entity.setStatus(AUTHORIZED.name());
-                entity.setAuthorizationCode(response.getCodiceAutorizzazione());
-                entity.setAuthorizationOutcome(true);
-            } else if (response.getEsito().equals(EsitoXpay.KO) || Objects.nonNull(response.getErrore())) {
-                entity.setStatus(DENIED.name());
-                entity.setAuthorizationOutcome(false);
+        PaymentXPayRequest xpayRequest = createXPayPaymentRequest(entity);
+
+        String status = DENIED.name();
+        int retryCount = 0;
+        boolean isAuthorized = false;
+        while (!isAuthorized && retryCount < 3) {
+            try {
+                PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
+                if (response.getEsito().equals(EsitoXpay.OK)) {
+                    isAuthorized = true;
+                    status = AUTHORIZED.name();
+                    entity.setAuthorizationCode(response.getCodiceAutorizzazione());
+                } else if (response.getEsito().equals(EsitoXpay.KO) || Objects.nonNull(response.getErrore())) {
+                    retryCount++;
+                }
+            } catch (Exception e) {
+                retryCount++;
             }
-        } catch (Exception e) {
-            log.error(GENERIC_ERROR_PAYMENT_MSG + requestId + " cause: " + e.getCause() + " - " + e.getMessage(), e);
-            entity.setStatus(DENIED.name());
-            paymentRequestRepository.save(entity);
-            throw e;
         }
+        entity.setStatus(status);
+        entity.setAuthorizationOutcome(isAuthorized);
         paymentRequestRepository.save(entity);
+    }
+
+    private void executePatchTransactionV2(PaymentRequestEntity entity, String requestId) {
+        log.info("START PATCH updateTransaction for requestId: " + requestId);
         Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TransactionStatusEnum.TX_AUTHORIZED_BY_PGS.getId() : TransactionStatusEnum.TX_REFUSED.getId();
         String authCode = entity.getAuthorizationCode();
         PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
-        String closePaymentResult = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
+        String closePaymentResult = StringUtils.EMPTY;
+        try{
+            closePaymentResult = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
+        } catch (Exception e) {
+            log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
+        }
         log.info("Response from PATCH updateTransaction for requestId: " + requestId + " " + closePaymentResult);
-
-    }
-
-    private void saveRequestEntityFieldsForPayment(PaymentRequestEntity entity, XPayResumeRequest pgsRequest) {
-        entity.setXpayNonce(pgsRequest.getXpayNonce());
-        entity.setTimeStamp(pgsRequest.getTimestamp());
-        paymentRequestRepository.save(entity);
     }
 
     private PaymentXPayRequest createXPayPaymentRequest(PaymentRequestEntity entity) throws JsonProcessingException {

@@ -361,7 +361,7 @@ public class PostePayPaymentControllerTest {
         final String correlationID = "correlation-ID";
 
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
-        PatchRequest patchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.patchRequest();
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
         given(restapiCdClient.callPatchTransactionV2(Long.valueOf(paymentRequestEntity.getIdTransaction()), patchRequest))
@@ -433,7 +433,7 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse(OutcomeEnum.KO);
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
-        PatchRequest patchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.patchRequest();
 
         doThrow(FeignException.class)
                 .when(restapiCdClient)
@@ -461,7 +461,7 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse(OutcomeEnum.KO);
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
-        PatchRequest patchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.patchRequest();
 
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)

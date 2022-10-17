@@ -404,7 +404,7 @@ public class ValidBeans {
         return detailsPaymentRequest;
     }
 
-    public static PatchRequest postePayPatchRequest() {
+    public static PatchRequest patchRequest() {
         return new PatchRequest(21L, "authCode");
     }
 
@@ -561,7 +561,7 @@ public class ValidBeans {
     }
 
     private static String hashMac(String macString) throws NoSuchAlgorithmException {
-        String hash = StringUtils.EMPTY;
+        String hash;
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
         byte[] in = digest.digest(macString.getBytes(StandardCharsets.UTF_8));
 

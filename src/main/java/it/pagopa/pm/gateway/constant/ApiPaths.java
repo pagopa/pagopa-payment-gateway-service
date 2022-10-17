@@ -2,7 +2,8 @@ package it.pagopa.pm.gateway.constant;
 
 public class ApiPaths {
 
-    private ApiPaths() {}
+    private ApiPaths() {
+    }
 
     private static final String REQUEST_PAYMENTS = "/request-payments";
     private static final String REQUEST_REFUNDS = "/request-refunds";
@@ -16,5 +17,6 @@ public class ApiPaths {
     public static final String REQUEST_ID = "/{requestId}";
     public static final String POSTEPAY_REQUEST_PAYMENTS_PATH = REQUEST_PAYMENTS + POSTEPAY + REQUEST_ID;
     public static final String REQUEST_PAYMENTS_XPAY = REQUEST_PAYMENTS + XPAY;
+    public static final String XPAY_RESUME = REQUEST_ID + "/resume";
 
 }

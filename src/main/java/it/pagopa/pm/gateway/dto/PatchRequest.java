@@ -5,8 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class PostePayPatchRequest {
+public class PatchRequest {
     private Long status;
     private String authCode;
-    private String rrn;
 }

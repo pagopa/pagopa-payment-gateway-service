@@ -539,12 +539,11 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayPollingResponse createXpayPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
+    public static XPayPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
         XPayPollingResponse response = new XPayPollingResponse();
         if (isOk) {
             response.setHtml("<html><body></body></html>");
             response.setStatus(CREATED.name());
-            response.setAuthOutcome("pending");
         } else if (Objects.nonNull(error)) {
             response.setStatus(DENIED.name());
             response.setError(error);
@@ -575,19 +574,6 @@ public class ValidBeans {
         return hash;
     }
 
-
-    public static PaymentXPayRequest createXPayPaymentRequest(XPayResumeRequest xPayResumeRequest, PaymentRequestEntity entity) {
-        PaymentXPayRequest xPayRequest = new PaymentXPayRequest();
-        String timeStamp = String.valueOf(System.currentTimeMillis());
-        xPayRequest.setApiKey("ExampleApiKey");
-        xPayRequest.setCodiceTransazione(entity.getIdTransaction());
-        xPayRequest.setImporto(BigInteger.valueOf(1256));
-        xPayRequest.setDivisa(978L);
-        xPayRequest.setTimeStamp(timeStamp);
-        xPayRequest.setMac(xPayResumeRequest.getMac());
-        xPayRequest.setXpayNonce(xPayResumeRequest.getXpayNonce());
-        return xPayRequest;
-    }
 
     public static XPayResumeRequest createXPayResumeRequest(boolean isValid) {
         XPayResumeRequest request = new XPayResumeRequest();

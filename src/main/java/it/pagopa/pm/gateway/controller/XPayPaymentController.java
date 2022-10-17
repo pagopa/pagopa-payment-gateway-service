@@ -5,13 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.xpay.*;
-import it.pagopa.pm.gateway.dto.XPayAuthRequest;
-import it.pagopa.pm.gateway.dto.XPayAuthResponse;
-import it.pagopa.pm.gateway.dto.XPayPollingResponse;
-import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
-import it.pagopa.pm.gateway.dto.xpay.XpayError;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
@@ -36,8 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_ID;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 import static it.pagopa.pm.gateway.constant.Messages.*;
@@ -166,7 +158,7 @@ public class XPayPaymentController {
             paymentRequestRepository.save(entity);
         }
 
-        String urlRedirect = StringUtils.join(pgsResponseUrlRedirect, requestId);
+        String urlRedirect = StringUtils.join(payUrlRedirect, requestId);
         log.info(String.format("END - POST %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }

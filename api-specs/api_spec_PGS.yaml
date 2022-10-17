@@ -9,7 +9,7 @@ paths:
   /request-payments/bancomatpay:
     put:
       tags:
-        - payment-transactions-controller
+        - BancomatPay
       operationId: updateTransaction
       parameters:
         - name: X-Correlation-ID
@@ -68,7 +68,7 @@ paths:
                 $ref: '#/components/schemas/Error'
     post:
       tags:
-        - payment-transactions-controller
+        - BancomatPay
       operationId: requestPaymentToBancomatPay
       requestBody:
         content:
@@ -110,7 +110,7 @@ paths:
   /request-refunds/bancomatpay:
     post:
       tags:
-        - payment-transactions-controller
+        - BancomatPay
       operationId: refundTransaction
       parameters:
         - name: X-Correlation-ID
@@ -154,7 +154,7 @@ paths:
     get:
       summary: PGS webview polling call for PostePay authorization
       tags:
-        - payment-transactions-controller
+        - PostePay
       operationId: webview-polling
       parameters:
         - in: path
@@ -198,7 +198,7 @@ paths:
                 $ref: '#/components/schemas/PollingResponseEntity'
     delete:
       tags:
-        - payment-transactions-controller
+        - PostePay
       summary: refund PostePay requests
       operationId: refund-request
       parameters:
@@ -245,7 +245,7 @@ paths:
     post:
       summary: payment authorization request to PostePay
       tags:
-        - payment-transactions-controller
+        - PostePay
       operationId: auth-request
       parameters:
         - in: query
@@ -309,7 +309,7 @@ paths:
                 $ref: '#/components/schemas/PostePayAuthResponseEntity'
     put:
       tags:
-        - payment-transactions-controller
+        - PostePay
       summary: authorization outcome response from PostePay
       operationId: auth-response
       parameters:
@@ -366,7 +366,7 @@ paths:
     post:
       summary: payment authorization request to xPay
       tags:
-        - payment-transactions-controller
+        - XPay
       operationId: auth-request-xpay
       parameters:
         - in: header
@@ -414,11 +414,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayAuthResponseEntity500'
-  /request-payments/xpay/auth/{requestId}:
+  /request-payments/xpay/{requestId}:
     get:
       summary: payment authorization request to xPay
       tags:
-        - payment-transactions-controller
+        - XPay
       operationId: auth-response-xpay
       parameters:
         - in: path

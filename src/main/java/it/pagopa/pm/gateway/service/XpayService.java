@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class XpayService {
 
+    private static final String OCP_APIM_SUBSCRIPTION_KEY = "Ocp-Apim-Subscription-Key";
     @Value("${xpay.authenticationUrl}")
     private String xpayAuthUrl;
 
@@ -33,7 +34,7 @@ public class XpayService {
         log.debug("XPay Request: " + xPayRequest);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("Ocp-Apim-Subscription-Key", azureApiKey);
+        headers.add(OCP_APIM_SUBSCRIPTION_KEY, azureApiKey);
         HttpEntity<AuthPaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
         log.info("Calling POST - " + xpayAuthUrl);
         return xpayRestTemplate.postForObject(xpayAuthUrl, entity, AuthPaymentXPayResponse.class);
@@ -43,7 +44,7 @@ public class XpayService {
         log.debug("XPay Request: " + xPayRequest);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("Ocp-Apim-Subscription-Key", azureApiKey);
+        headers.add(OCP_APIM_SUBSCRIPTION_KEY, azureApiKey);
         HttpEntity<PaymentXPayRequest> entity = new HttpEntity<>(xPayRequest, headers);
         log.info("Calling POST - " + xpayPaymentUrl);
         return xpayRestTemplate.postForObject(xpayPaymentUrl, entity, PaymentXPayResponse.class);

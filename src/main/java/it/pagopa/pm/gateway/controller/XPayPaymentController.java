@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -34,6 +33,10 @@ import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_AUTHORIZED_BY_PGS;
+import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
+import static it.pagopa.pm.gateway.dto.xpay.EsitoXpay.KO;
+import static it.pagopa.pm.gateway.dto.xpay.EsitoXpay.OK;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
@@ -46,6 +49,8 @@ public class XPayPaymentController {
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
     private static final String EUR_CURRENCY = "978";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String ZERO_CHAR = "0";
+    private static final int PAGA3DS_MAX_RETRIES = 3;
 
     @Value("${xpay.response.urlredirect}")
     private String pgsResponseUrlRedirect;
@@ -115,13 +120,13 @@ public class XPayPaymentController {
 
         log.info(String.format("START - POST %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
 
-        if (Objects.isNull(pgsRequest.getEsito())) {
-            log.error(BAD_REQUEST_MSG);
+        EsitoXpay outcome = pgsRequest.getEsito();
+        if (Objects.isNull(outcome)) {
+            log.error(BAD_REQUEST_MSG + " for XPay resume request - requestId " + requestId);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BAD_REQUEST_MSG);
         }
 
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
-
         if (Objects.isNull(entity)) {
             log.error("No XPay entity has been found for requestId: " + requestId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(REQUEST_ID_NOT_FOUND_MSG);
@@ -132,16 +137,18 @@ public class XPayPaymentController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(TRANSACTION_ALREADY_PROCESSED_MSG);
         }
 
-        if (pgsRequest.getEsito().equals(EsitoXpay.OK)) {
+        if (outcome.equals(OK)) {
             try {
-                executeXPayPaymentCall(pgsRequest, entity);
+                executeXPayPaymentCall(requestId, pgsRequest, entity);
                 executePatchTransactionV2(entity, requestId);
             } catch (Exception e) {
-                String errorMessage = GENERIC_ERROR_PAYMENT_MSG + requestId;
-                log.error(errorMessage, e.getMessage());
+                String errorMessage = String.format("An error occurred during payment for requestId: %s - reason: %s",
+                        requestId, e.getMessage());
+                log.error(errorMessage, e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
             }
         } else {
+            log.info(String.format("Outcome is %s: setting status as DENIED for requestId %s", outcome, requestId));
             entity.setStatus(DENIED.name());
             paymentRequestRepository.save(entity);
         }
@@ -233,51 +240,59 @@ public class XPayPaymentController {
     }
 
     @Async
-    private void executeXPayPaymentCall(XPayResumeRequest pgsRequest, PaymentRequestEntity entity) throws JsonProcessingException {
-        entity.setXpayNonce(pgsRequest.getXpayNonce());
-        entity.setTimeStamp(pgsRequest.getTimestamp());
-
-        PaymentXPayRequest xpayRequest = createXPayPaymentRequest(entity);
-
+    private void executeXPayPaymentCall(String requestId, XPayResumeRequest pgsRequest, PaymentRequestEntity entity) throws JsonProcessingException {
+        log.info("START - executeXPayPaymentCall for requestId " + requestId);
+        PaymentXPayRequest xpayRequest = createXPayPaymentRequest(requestId, entity);
         String status = DENIED.name();
-        int retryCount = 0;
+        int retryCount = 1;
         boolean isAuthorized = false;
-        while (!isAuthorized && retryCount < 3) {
+        log.info("Calling XPay /paga3DS - requestId: " + requestId);
+        while (!isAuthorized && retryCount <= PAGA3DS_MAX_RETRIES) {
             try {
+                log.info(String.format("Attempt no. %s for requestId: %s", retryCount, requestId));
                 PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
-                if (response.getEsito().equals(EsitoXpay.OK)) {
+                EsitoXpay outcome = response.getEsito();
+                if (outcome.equals(OK)) {
+                    log.info(String.format("Paga3DS outcome is %s for requestId: %s", OK.name(), requestId));
                     isAuthorized = true;
                     status = AUTHORIZED.name();
                     entity.setAuthorizationCode(response.getCodiceAutorizzazione());
-                } else if (response.getEsito().equals(EsitoXpay.KO) || Objects.nonNull(response.getErrore())) {
+                } else if (outcome.equals(KO) || Objects.nonNull(response.getErrore())) {
+                    log.warn(String.format("paga3DS outcome for requestId %s is %s or no response has been received from XPay", requestId, KO.name()));
                     retryCount++;
                 }
             } catch (Exception e) {
+                log.error(String.format("An exception occurred while calling XPay's /paga3DS for requestId: %s. " +
+                        "Cause: %s, message: %s", requestId, e.getCause(), e.getMessage()));
+                log.error("Complete exception:", e);
                 retryCount++;
             }
         }
+        entity.setXpayNonce(pgsRequest.getXpayNonce());
+        entity.setTimeStamp(pgsRequest.getTimestamp());
         entity.setStatus(status);
         entity.setAuthorizationOutcome(isAuthorized);
         paymentRequestRepository.save(entity);
+        log.info(String.format("END - executeXPayPaymentCall for requestId: %s. Status: %s " +
+                "- Authorization: %s. Retry attempts number: %s", requestId, status, isAuthorized, retryCount));
     }
 
     private void executePatchTransactionV2(PaymentRequestEntity entity, String requestId) {
-        log.info("START PATCH updateTransaction for requestId: " + requestId);
-        Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TransactionStatusEnum.TX_AUTHORIZED_BY_PGS.getId() : TransactionStatusEnum.TX_REFUSED.getId();
+        log.info("START - PATCH updateTransaction for requestId: " + requestId);
+        Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
         String authCode = entity.getAuthorizationCode();
         PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
-        String closePaymentResult = StringUtils.EMPTY;
-        try{
-            closePaymentResult = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
+        try {
+            String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
+            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
         }
-        log.info("Response from PATCH updateTransaction for requestId: " + requestId + " " + closePaymentResult);
     }
 
-    private PaymentXPayRequest createXPayPaymentRequest(PaymentRequestEntity entity) throws JsonProcessingException {
+    private PaymentXPayRequest createXPayPaymentRequest(String requestId, PaymentRequestEntity entity) throws JsonProcessingException {
         String idTransaction = entity.getIdTransaction();
-        String codTrans = StringUtils.leftPad(idTransaction, 2, "0");
+        String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
 
         String json = entity.getJsonRequest();
         AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
@@ -294,13 +309,13 @@ public class XPayPaymentController {
         request.setMac(mac);
         request.setImporto(grandTotal);
         request.setXpayNonce(entity.getXpayNonce());
-
+        log.info("XPay payment request object created for requestId: " + requestId);
         return request;
     }
 
     private AuthPaymentXPayRequest createXpayAuthRequest(XPayAuthRequest pgsRequest) {
         String idTransaction = pgsRequest.getIdTransaction();
-        String codTrans = StringUtils.leftPad(idTransaction, 2, "0");
+        String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
         String timeStamp = String.valueOf(System.currentTimeMillis());
         BigInteger grandTotal = pgsRequest.getGrandTotal();
         String mac = createMac(codTrans, grandTotal, timeStamp);

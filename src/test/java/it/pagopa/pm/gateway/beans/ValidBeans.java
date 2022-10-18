@@ -6,10 +6,7 @@ import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
-import it.pagopa.pm.gateway.dto.xpay.EsitoXpay;
-import it.pagopa.pm.gateway.dto.xpay.XpayError;
+import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.StringUtils;
@@ -407,10 +404,8 @@ public class ValidBeans {
         return detailsPaymentRequest;
     }
 
-    public static PostePayPatchRequest postePayPatchRequest() {
-        PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(21L, "authCode", "correlation-ID");
-        return postePayPatchRequest;
-
+    public static PatchRequest patchRequest() {
+        return new PatchRequest(21L, "authCode");
     }
 
 
@@ -438,10 +433,10 @@ public class ValidBeans {
             xPayAuthResponse.setError(errorMessage);
         } else if (isDenied) {
             xPayAuthResponse.setStatus("DENIED");
-            xPayAuthResponse.setUrlRedirect("${pgs.xpay.response.urlredirect}" + requestId);
+            xPayAuthResponse.setUrlRedirect("http://localhost:8080/payment-gateway/" + requestId);
         } else {
             xPayAuthResponse.setStatus("CREATED");
-            xPayAuthResponse.setUrlRedirect("${pgs.xpay.response.urlredirect}" + requestId);
+            xPayAuthResponse.setUrlRedirect("http://localhost:8080/payment-gateway/" + requestId);
         }
         return xPayAuthResponse;
     }
@@ -566,7 +561,7 @@ public class ValidBeans {
     }
 
     private static String hashMac(String macString) throws NoSuchAlgorithmException {
-        String hash = StringUtils.EMPTY;
+        String hash;
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
         byte[] in = digest.digest(macString.getBytes(StandardCharsets.UTF_8));
 
@@ -577,6 +572,73 @@ public class ValidBeans {
         hash = builder.toString();
 
         return hash;
+    }
+
+
+    public static PaymentXPayRequest createXPayPaymentRequest(XPayResumeRequest xPayResumeRequest, PaymentRequestEntity entity) {
+        PaymentXPayRequest xPayRequest = new PaymentXPayRequest();
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        xPayRequest.setApiKey("ExampleApiKey");
+        xPayRequest.setCodiceTransazione(entity.getIdTransaction());
+        xPayRequest.setImporto(BigInteger.valueOf(1256));
+        xPayRequest.setDivisa(978L);
+        xPayRequest.setTimeStamp(timeStamp);
+        xPayRequest.setMac(xPayResumeRequest.getMac());
+        xPayRequest.setXpayNonce(xPayResumeRequest.getXpayNonce());
+        return xPayRequest;
+    }
+
+    public static XPayResumeRequest createXPayResumeRequest(boolean isValid) {
+        XPayResumeRequest request = new XPayResumeRequest();
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        if (isValid) {
+            request.setEsito(EsitoXpay.OK);
+            request.setIdOperazione("123455");
+            request.setXpayNonce("nonce");
+            request.setMac("mac");
+        } else {
+            request.setEsito(EsitoXpay.KO);
+            request.setCodice("codiceErrore");
+            request.setMessaggio("messaggioErrore");
+        }
+        request.setTimestamp(timeStamp);
+        return request;
+    }
+
+    public static XPayResumeRequest createXPayResumeRequestWithEsitoNull() {
+        XPayResumeRequest request = new XPayResumeRequest();
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        request.setEsito(null);
+        request.setIdOperazione("123455");
+        request.setXpayNonce("nonce");
+        request.setMac("mac");
+        request.setTimestamp(timeStamp);
+        return request;
+    }
+
+    public static PaymentXPayResponse createPaymentXPayResponse(boolean isValid) {
+        PaymentXPayResponse response = new PaymentXPayResponse();
+        response.setTimeStamp(System.currentTimeMillis());
+        if(isValid) {
+            response.setEsito(EsitoXpay.OK);
+            response.setIdOperazione("idOperazione");
+            response.setCodiceAutorizzazione("codiceAutorizzazione");
+            response.setCodiceConvenzione("codiceConvenzione");
+            response.setData("DataDiOggi");
+            response.setNazione("IT");
+            response.setRegione("Lombardia");
+            response.setBrand("brand");
+            response.setMac("mac");
+            response.setTipoProdotto("prodotto");
+            response.setTipoTransazione("transazione");
+        } else {
+            response.setEsito(EsitoXpay.KO);
+            XpayError error = new XpayError();
+            error.setCodice(1L);
+            error.setMessaggio("messaggioErrore");
+            response.setErrore(error);
+        }
+        return response;
     }
 }
 

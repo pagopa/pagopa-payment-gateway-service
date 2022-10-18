@@ -108,8 +108,8 @@ public class PostePayPaymentTransactionsController {
                 log.info("This is an onboarding payment: skipping call to PATCH API on PM");
             } else {
                 Long transactionStatus = isAuthOutcomeOk ? TransactionStatusEnum.TX_AUTHORIZED_BY_PGS.getId() : TransactionStatusEnum.TX_REFUSED.getId();
-                PostePayPatchRequest postePayPatchRequest = new PostePayPatchRequest(transactionStatus, authCode, correlationId);
-                String closePaymentResult = restapiCdClient.callUpdatePostePayTransaction(Long.valueOf(requestEntity.getIdTransaction()), postePayPatchRequest);
+                PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
+                String closePaymentResult = restapiCdClient.callPatchTransactionV2(Long.valueOf(requestEntity.getIdTransaction()), patchRequest);
                 log.info("Response from PATCH updateTransaction for correlation-id: " + correlationId + " " + closePaymentResult);
             }
             requestEntity.setIsProcessed(true);

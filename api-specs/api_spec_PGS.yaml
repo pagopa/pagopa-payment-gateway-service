@@ -471,7 +471,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/XPayPAymentRequest'
+              $ref: '#/components/schemas/XPayPaymentRequest'
         required: true
       responses:
         "302":
@@ -709,7 +709,7 @@ components:
           type: string
           description: Expiration date of the card, yyyyMM format
           example: 203012
-    XPayPAymentRequest:
+    XPayPaymentRequest:
       required:
         - esito
       type: object

@@ -433,7 +433,8 @@ public class XPayPaymentControllerTest {
     public void xPay_shouldReturnRefundedCase() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
-                .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, false));
+                .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED,
+                        true));
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))

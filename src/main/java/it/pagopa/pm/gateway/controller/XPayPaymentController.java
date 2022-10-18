@@ -2,16 +2,10 @@ package it.pagopa.pm.gateway.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.dto.*;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
-import it.pagopa.pm.gateway.dto.xpay.XpayError;
-import it.pagopa.pm.gateway.dto.xpay.XpayOrderStatusRequest;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
-import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import lombok.extern.slf4j.Slf4j;
@@ -190,24 +184,26 @@ public class XPayPaymentController {
 
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
 
-        if(Objects.isNull(entity)){
+        if (Objects.isNull(entity)) {
             log.error(REQUEST_ID_NOT_FOUND_MSG);
             return createXPayRefundRespone(requestId, HttpStatus.NOT_FOUND, null);
         }
-
 
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
             return createXPayRefundRespone(requestId, HttpStatus.OK, null);
         }
 
-        String refundOutcome = StringUtils.EMPTY;
-        try{
-            executeXPayOrderState(entity);
+        EsitoXpay refundOutcome = null;
+        try {
+            EsitoXpay outcomeOrderStatus = executeXPayOrderStatus(entity);
+            if (outcomeOrderStatus.equals(OK)) {
+                refundOutcome = executeXPayRevert(entity);
+            }
         } catch (Exception e) {
-
+            return createXPayRefundRespone(requestId, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
-        return  createXPayRefundRespone(requestId, HttpStatus.OK, refundOutcome);
+        return createXPayRefundRespone(requestId, HttpStatus.OK, refundOutcome);
     }
 
     private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(XPayAuthRequest pgsRequest, String clientId, String mdcFields) {
@@ -347,29 +343,100 @@ public class XPayPaymentController {
         return request;
     }
 
-    private ResponseEntity<XPayRefundResponse> createXPayRefundRespone(String requestId, HttpStatus httpStatus, String refundOutcome) {
+    private EsitoXpay executeXPayOrderStatus(PaymentRequestEntity entity) throws Exception {
+        String requestId = entity.getGuid();
+        XPayOrderStatusResponse response;
+        try {
+            log.info("START executeXPayOrderStatus for requestId " + requestId);
+            XPayOrderStatusRequest request = createXPayOrderStatusRequest(entity);
+            response = xpayService.callSituazioneOrdine(request);
+        } catch (Exception e) {
+            log.error(GENERIC_REFUND_ERROR_MSG + requestId, e);
+            throw e;
+        }
+        return response.getEsito();
+    }
+
+    private EsitoXpay executeXPayRevert(PaymentRequestEntity entity) throws Exception {
+        String requestId = entity.getGuid();
+        XPayRevertResponse response;
+        try {
+            log.info("START executeXPayOrderStatus for requestId " + requestId);
+            XPayRevertRequest request = createXPayRevertRequest(entity);
+            response = xpayService.callStorna(request);
+        } catch (Exception e) {
+            log.error(GENERIC_REFUND_ERROR_MSG + requestId, e);
+            throw e;
+        }
+        if (response.getEsito().equals(OK)) {
+            entity.setStatus(CANCELLED.name());
+            entity.setIsRefunded(Boolean.TRUE);
+            paymentRequestRepository.save(entity);
+        }
+        return response.getEsito();
+    }
+
+    private ResponseEntity<XPayRefundResponse> createXPayRefundRespone(String requestId, HttpStatus httpStatus, EsitoXpay refundOutcome) {
         XPayRefundResponse response = new XPayRefundResponse();
         response.setRequestId(requestId);
 
-        if(httpStatus.is4xxClientError()) {
+        if (httpStatus.is4xxClientError()) {
             response.setError(REQUEST_ID_NOT_FOUND_MSG);
-            return ResponseEntity.status(httpStatus).body(response);
-        } else if(httpStatus.is2xxSuccessful()) {
-            if(Objects.isNull(refundOutcome)) {
+        } else if (httpStatus.is2xxSuccessful()) {
+            if (Objects.isNull(refundOutcome)) {
                 response.setError("RequestId " + requestId + " has been refunded already. Skipping refund");
             } else {
-                response.setRefundOutcome(refundOutcome);
+                response.setRefundOutcome(String.valueOf(refundOutcome));
             }
-            return ResponseEntity.status(httpStatus).body(response);
         } else {
             response.setError(GENERIC_REFUND_ERROR_MSG);
-            return ResponseEntity.status(httpStatus).body(response);
         }
+
+        log.info("END - requesting XPay refund for requestId: " + requestId);
+        return ResponseEntity.status(httpStatus).body(response);
     }
 
-    private void executeXPayOrderState(PaymentRequestEntity entity) {
+    private XPayOrderStatusRequest createXPayOrderStatusRequest(PaymentRequestEntity entity) throws JsonProcessingException {
+        String idTransaction = entity.getIdTransaction();
+        String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
+
+        String json = entity.getJsonRequest();
+        AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
+
+        BigInteger grandTotal = authRequest.getImporto();
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        String mac = createMac(codTrans, grandTotal, timeStamp);
+
+        XPayOrderStatusRequest request = new XPayOrderStatusRequest();
+        request.setApiKey(apiKey);
+        request.setMac(mac);
+        request.setCodiceTransazione(codTrans);
+        request.setTimeStamp(timeStamp);
+
+        return request;
     }
 
+    private XPayRevertRequest createXPayRevertRequest(PaymentRequestEntity entity) throws JsonProcessingException {
+        String idTransaction = entity.getIdTransaction();
+        String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
+
+        String json = entity.getJsonRequest();
+        AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
+
+        BigInteger grandTotal = authRequest.getImporto();
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        String mac = createMac(codTrans, grandTotal, timeStamp);
+
+        XPayRevertRequest request = new XPayRevertRequest();
+        request.setApiKey(apiKey);
+        request.setMac(mac);
+        request.setCodiceTransazione(codTrans);
+        request.setTimeStamp(timeStamp);
+        request.setDivisa(Long.valueOf(EUR_CURRENCY));
+        request.setImporto(grandTotal);
+
+        return request;
+    }
 
     private AuthPaymentXPayRequest createXpayAuthRequest(XPayAuthRequest pgsRequest) {
         String idTransaction = pgsRequest.getIdTransaction();

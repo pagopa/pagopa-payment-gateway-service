@@ -7,11 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class XpayOrderStatusRequest {
+public class XPayRevertResponse {
 
-    private String apiKey;
-    private String codiceTransazione;
-    private String timeStamp;
+    private EsitoXpay esito;
+    private String idOperazione;
+    private Long timeStamp;
     private String mac;
+    private XpayError errore;
 
 }

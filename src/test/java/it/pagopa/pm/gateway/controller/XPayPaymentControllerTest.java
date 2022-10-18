@@ -4,13 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.Headers;
-import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.XPayAuthRequest;
 import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
 import it.pagopa.pm.gateway.dto.XPayResumeRequest;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
-import it.pagopa.pm.gateway.dto.xpay.PaymentXPayResponse;
+import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
@@ -40,8 +37,7 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -69,10 +65,6 @@ public class XPayPaymentControllerTest {
 
     @Mock
     final UUID uuid = UUID.fromString(UUID_SAMPLE);
-
-    @Mock
-    private final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
 
     private static final String APP_ORIGIN = "APP";
     private final ObjectMapper mapper = new ObjectMapper();
@@ -120,7 +112,6 @@ public class XPayPaymentControllerTest {
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.xPayAuthResponse(false, null, UUID_SAMPLE, true))));
         }
     }
-
 
     @Test
     public void xPay_givenGoodRequest_shouldThrowResourceAccessException() throws Exception {
@@ -379,7 +370,6 @@ public class XPayPaymentControllerTest {
 
         PaymentXPayResponse xPayResponse = ValidBeans.createPaymentXPayResponse(true);
 
-        PatchRequest patchRequest = ValidBeans.patchRequest();
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
@@ -393,7 +383,6 @@ public class XPayPaymentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isFound());
     }
-
 
     @Test
     public void xPay_givenGoodResumeRequest_shouldThrowExpetionAdnReturn500() throws Exception {
@@ -410,6 +399,142 @@ public class XPayPaymentControllerTest {
         mvc.perform(post(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume")
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayResumeRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    public void xPay_givenBadRequestIdForResume_shouldReturn404() throws Exception {
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void xPay_givenRequestAlreadyRefunded_shouldReturn200() throws Exception {
+
+        XPayResumeRequest xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(xPayResumeRequest.getMac());
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+        entity.setIsRefunded(true);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldReturn200() throws Exception {
+
+        XPayResumeRequest xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(xPayResumeRequest.getMac());
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
+
+        XPayRevertResponse revertResponse = ValidBeans.createXPayRevertResponse(true);
+
+        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
+
+        when(xpayService.callStorna(any())).thenReturn(revertResponse);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldReturn200ButKO() throws Exception {
+
+        XPayResumeRequest xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(xPayResumeRequest.getMac());
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
+
+        XPayRevertResponse revertResponse = ValidBeans.createXPayRevertResponse(false);
+
+        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
+
+        when(xpayService.callStorna(any())).thenReturn(revertResponse);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldThrownExceptionDurigExecuteXPayOrderStatus() throws Exception {
+
+        XPayResumeRequest xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(xPayResumeRequest.getMac());
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        when(xpayService.callSituazioneOrdine(any())).thenThrow(RuntimeException.class);
+
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldThrownExceptionDurigExecuteXPayRevert() throws Exception {
+
+        XPayResumeRequest xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(xPayResumeRequest.getMac());
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
+        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
+
+        when(xpayService.callStorna(any())).thenThrow(RuntimeException.class);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
     }

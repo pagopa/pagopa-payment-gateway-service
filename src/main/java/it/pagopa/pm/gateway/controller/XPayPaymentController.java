@@ -31,8 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.XPAY_AUTH;
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 import static it.pagopa.pm.gateway.constant.Messages.*;
@@ -126,6 +125,11 @@ public class XPayPaymentController {
 
         log.info(String.format("END - POST %s for requestId %s", REQUEST_PAYMENTS_XPAY, requestId));
         return ResponseEntity.status(status).body(response);
+    }
+
+    @DeleteMapping(REQUEST_ID)
+    public void xPayRefund(@PathVariable String requestId) {
+
     }
 
     private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(XPayAuthRequest pgsRequest, String clientId, String mdcFields) {

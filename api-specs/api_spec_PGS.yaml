@@ -428,31 +428,26 @@ paths:
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
             type: string
+        - in: header
+          name: MDC-Fields
+          description: MDC information
+          example: 97g10t83x7bb0437bbc50sdf58e970gt
+          schema:
+            type: string
+          required: false
       responses:
         "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/XPayAuthPollingResponseEntity'
+                $ref: '#/components/schemas/XPayPollingResponseEntity'
         "404":
           description: Not Found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/XPayAuthPollingResponseEntity404'
-        "500":
-          description: Internal server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XPayAuthPollingResponseEntity500'
-        "504":
-          description: TimeOut
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XPayAuthPollingResponseEntity504'
+                $ref: '#/components/schemas/XPayPollingResponseEntity404'
 components:
   schemas:
     AuthMessage:
@@ -709,10 +704,9 @@ components:
           type: string
           description: error description
           example: "Error while requesting authorization for idTransaction: xxx"
-    XPayAuthPollingResponseEntity:
+    XPayPollingResponseEntity:
       type: object
       required:
-        - html
         - status
       properties:
         html:
@@ -723,7 +717,19 @@ components:
           type: string
           description: status
           example: CREATED
-    XPayAuthPollingResponseEntity404:
+        authOutcome:
+          type: string
+          description: authorization outcome received from XPay
+          example: OK
+        authCode:
+          type: string
+          description: authorization code received from XPay
+          example: 123
+        redirectUrl:
+          type: string
+          description: redirection URL after a response from XPay has been received
+          example: "http://localhost:8080/payment-gateway/request-payments/xpay/auth/2d75ebf8-c789-46a9-9a22-edf1976a8917"
+    XPayPollingResponseEntity404:
       type: object
       required:
         - error
@@ -743,43 +749,3 @@ components:
               type: string
               description: error message
               example: "RequestId not found"
-    XPayAuthPollingResponseEntity500:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: object
-          required:
-            - code
-            - message
-          properties:
-            code:
-              type: number
-              format: integer
-              description: error code
-              example: 500
-            message:
-              type: string
-              description: error message
-              example: "Internal Server Error"
-    XPayAuthPollingResponseEntity504:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: object
-          required:
-            - code
-            - message
-          properties:
-            code:
-              type: number
-              format: integer
-              description: error code
-              example: 504
-            message:
-              type: string
-              description: error message
-              example: "Timeout"

@@ -2,17 +2,17 @@ package it.pagopa.pm.gateway.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.dto.XPayAuthPollingResponse;
-import it.pagopa.pm.gateway.dto.XPayAuthRequest;
-import it.pagopa.pm.gateway.dto.XPayAuthResponse;
-import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
+import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
 import it.pagopa.pm.gateway.dto.xpay.XpayError;
+import it.pagopa.pm.gateway.dto.xpay.XpayOrderStatusRequest;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
+import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,8 +128,30 @@ public class XPayPaymentController {
     }
 
     @DeleteMapping(REQUEST_ID)
-    public void xPayRefund(@PathVariable String requestId) {
+    public ResponseEntity<XPayRefundResponse> xPayRefund(@PathVariable String requestId) {
 
+        log.info("START - requesting XPay refund for requestId: " + requestId);
+
+        PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
+
+        if(Objects.isNull(entity)){
+            log.error(REQUEST_ID_NOT_FOUND_MSG);
+            return createXPayRefundRespone(requestId, HttpStatus.NOT_FOUND, null);
+        }
+
+
+        if (BooleanUtils.isTrue(entity.getIsRefunded())) {
+            log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
+            return createXPayRefundRespone(requestId, HttpStatus.OK, null);
+        }
+
+        String refundOutcome = StringUtils.EMPTY;
+        try{
+            executeXPayOrderState(entity);
+        } catch (Exception e) {
+
+        }
+        return  createXPayRefundRespone(requestId, HttpStatus.OK, refundOutcome);
     }
 
     private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(XPayAuthRequest pgsRequest, String clientId, String mdcFields) {
@@ -194,6 +216,30 @@ public class XPayPaymentController {
         log.info("END - createXPayAuthPollingResponse for requestId " + requestId);
         return ResponseEntity.ok().body(response);
     }
+
+    private ResponseEntity<XPayRefundResponse> createXPayRefundRespone(String requestId, HttpStatus httpStatus, String refundOutcome) {
+        XPayRefundResponse response = new XPayRefundResponse();
+        response.setRequestId(requestId);
+
+        if(httpStatus.is4xxClientError()) {
+            response.setError(REQUEST_ID_NOT_FOUND_MSG);
+            return ResponseEntity.status(httpStatus).body(response);
+        } else if(httpStatus.is2xxSuccessful()) {
+            if(Objects.isNull(refundOutcome)) {
+                response.setError("RequestId " + requestId + " has been refunded already. Skipping refund");
+            } else {
+                response.setRefundOutcome(refundOutcome);
+            }
+            return ResponseEntity.status(httpStatus).body(response);
+        } else {
+            response.setError(GENERIC_REFUND_ERROR_MSG);
+            return ResponseEntity.status(httpStatus).body(response);
+        }
+    }
+
+    private void executeXPayOrderState(PaymentRequestEntity entity) {
+    }
+
 
     private AuthPaymentXPayRequest createXpayAuthRequest(XPayAuthRequest pgsRequest) {
         String idTransaction = pgsRequest.getIdTransaction();

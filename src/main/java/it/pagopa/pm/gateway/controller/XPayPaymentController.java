@@ -54,11 +54,8 @@ public class XPayPaymentController {
     private static final String ZERO_CHAR = "0";
     private static final int PAGA3DS_MAX_RETRIES = 3;
 
-    @Value("${xpay.response.auth.urlredirect}")
-    private String authUrlRedirect;
-
-    @Value("${xpay.response.pay.urlredirect}")
-    private String payUrlRedirect;
+    @Value("${xpay.response.urlredirect}")
+    private String responseUrlRedirect;
 
     @Value("${xpay.request.responseUrl}")
     private String xpayResponseUrl;
@@ -158,7 +155,7 @@ public class XPayPaymentController {
             paymentRequestRepository.save(entity);
         }
 
-        String urlRedirect = StringUtils.join(payUrlRedirect, requestId);
+        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
         log.info(String.format("END - POST %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
@@ -171,7 +168,7 @@ public class XPayPaymentController {
             response.setStatus(entity.getStatus());
         }
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(authUrlRedirect, requestId);
+            String urlRedirect = StringUtils.join(this.responseUrlRedirect, requestId);
             response.setUrlRedirect(urlRedirect);
         } else {
             response.setError(errorMessage);
@@ -254,7 +251,7 @@ public class XPayPaymentController {
                 log.info(String.format("Authorization outcome for requestId %s is %s", requestId, authOutcome));
                 response.setAuthOutcome(authOutcome);
                 response.setAuthCode(entity.getAuthorizationCode());
-                response.setRedirectUrl(StringUtils.join(payUrlRedirect, requestId));
+                response.setRedirectUrl(StringUtils.join(responseUrlRedirect, requestId));
                 break;
             default:
                 log.info(BooleanUtils.toBoolean(entity.getIsRefunded()) ?

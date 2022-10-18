@@ -49,8 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @EnableWebMvc
 @TestPropertySource(properties = {
-        "xpay.response.auth.urlredirect=http://localhost:8080/payment-gateway/",
-        "xpay.response.pay.urlredirect=http://localhost:8080/payment-gateway/"
+        "xpay.response.urlredirect=http://localhost:8080/payment-gateway/"
 })
 public class XPayPaymentControllerTest {
 

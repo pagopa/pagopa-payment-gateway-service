@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
@@ -22,8 +23,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
@@ -441,7 +441,9 @@ public class ValidBeans {
         return xPayAuthResponse;
     }
 
-    public static PaymentRequestEntity paymentRequestEntityxPay(XPayAuthRequest XPayAuthRequest, String clientId, Boolean isValid) {
+    public static PaymentRequestEntity paymentRequestEntityxPay(XPayAuthRequest XPayAuthRequest, String clientId,
+                                                                Boolean isValid, PaymentRequestStatusEnum statusEnum,
+                                                                boolean isRefunded) {
         String authRequestJson = null;
 
 
@@ -459,7 +461,8 @@ public class ValidBeans {
         paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
         paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         paymentRequestEntity.setJsonRequest(authRequestJson);
-        paymentRequestEntity.setStatus(CREATED.name());
+        paymentRequestEntity.setStatus(statusEnum.name());
+        paymentRequestEntity.setIsRefunded(isRefunded);
         if (Objects.nonNull(isValid) && isValid) {
             paymentRequestEntity.setXpayHtml("<html><body></body></html>");
         }
@@ -539,7 +542,8 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error, Boolean isPending) {
+    public static XPayPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error,
+                                                                    Boolean isPending, boolean isCancelled) {
         XPayPollingResponse response = new XPayPollingResponse();
         if (isOk) {
             response.setHtml("<html><body></body></html>");
@@ -549,6 +553,9 @@ public class ValidBeans {
             response.setError(error);
         } else if (isPending) {
             response.setStatus(CREATED.name());
+        }
+        if (isCancelled) {
+            response.setStatus(CANCELLED.name());
         }
         return response;
     }

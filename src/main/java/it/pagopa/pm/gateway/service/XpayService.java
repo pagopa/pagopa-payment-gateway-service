@@ -72,6 +72,6 @@ public class XpayService {
         headers.add(OCP_APIM_SUBSCRIPTION_KEY, azureApiKey);
         HttpEntity<XPayRevertRequest> entity = new HttpEntity<>(xPayRequest, headers);
         log.info(CALLING_POST_STRING + orderStatusUrl);
-        return xpayRestTemplate.postForObject(xpayPaymentUrl, entity, XPayRevertResponse.class);
+        return xpayRestTemplate.postForObject(revertUrl, entity, XPayRevertResponse.class);
     }
 }

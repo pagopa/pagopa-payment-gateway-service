@@ -58,3 +58,7 @@ steps:
     displayName: 'Publish SonarCloud results on build summary'
     inputs:
       pollingTimeoutSec: '300'
+
+  - script: |
+      docker-compose -f docker-compose-springboot-postgres.yaml up --build
+    displayName: 'Run app with docker-compose'

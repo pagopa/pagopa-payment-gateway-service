@@ -498,6 +498,40 @@ paths:
               schema:
                 type: string
                 example: "Error during payment for requestId: xxx "
+  /request-payments/xpay{requestId}:
+    delete:
+      tags:
+        - payment-transactions-controller
+      summary: refund xpay requests
+      operationId: refund-xpay-request
+      parameters:
+        - in: path
+          name: requestId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: PGS-generated GUID of the request to retrieve
+          example: 77e1c83b-7bb0-437b-bc50-a7a58e5660ac
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayRefundResponse200'
+        "404":
+          description: Request doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayRefundResponse404'
+        "500":
+          description: Generic Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayRefundResponse500'
 components:
   schemas:
     AuthMessage:
@@ -861,3 +895,41 @@ components:
               type: string
               description: error message
               example: "Timeout"
+    XPayRefundResponse200:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
+        refundOutcome:
+          type: string
+          example: "OK"
+        error:
+          type: string
+      required:
+        - transactionId
+        - refundOutcome
+    XPayRefundResponse404:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
+        error:
+          type: string
+          example: "RequestId not Found"
+      required:
+        - transactionId
+        - error
+    XPayRefundResponse500:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
+        error:
+          type: string
+          example: "Error while requesting refund for requestId: xxx"
+      required:
+        - transactionId
+        - error

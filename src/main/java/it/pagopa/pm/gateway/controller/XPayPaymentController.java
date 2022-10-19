@@ -389,7 +389,7 @@ public class XPayPaymentController {
                 response.setRefundOutcome(String.valueOf(refundOutcome));
             }
         } else {
-            response.setError(GENERIC_REFUND_ERROR_MSG);
+            response.setError(GENERIC_REFUND_ERROR_MSG + requestId);
         }
 
         log.info("END - requesting XPay refund for requestId: " + requestId);

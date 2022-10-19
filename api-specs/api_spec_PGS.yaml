@@ -806,7 +806,7 @@ components:
         redirectUrl:
           type: string
           description: redirection URL after a response from XPay has been received
-          example: "http://localhost:8080/payment-gateway/request-payments/xpay/auth/2d75ebf8-c789-46a9-9a22-edf1976a8917"
+          example: "http://localhost:8080/payment-gateway/request-payments/xpay/2d75ebf8-c789-46a9-9a22-edf1976a8917"
     XPayPollingResponseEntity404:
       type: object
       required:

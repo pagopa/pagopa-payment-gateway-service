@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -50,7 +51,6 @@ public class XPayPaymentController {
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
     private static final String EUR_CURRENCY = "978";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String PENDING_MSG = "pending";
     private static final String ZERO_CHAR = "0";
     private static final int PAGA3DS_MAX_RETRIES = 3;
 
@@ -233,16 +233,13 @@ public class XPayPaymentController {
         log.info(String.format("Request status for requestId %s is %s", requestId, status));
 
         response.setStatus(status);
-        switch (getEnumValueFromString(status)) {
+        PaymentRequestStatusEnum statusEnum = getEnumValueFromString(status);
+        switch (statusEnum) {
             case CREATED:
                 String xpayHtml = entity.getXpayHtml();
                 response.setHtml(xpayHtml);
                 if (StringUtils.isBlank(xpayHtml)) {
                     log.info(String.format("HTML from XPay for requestId %s has not been acquired yet", requestId));
-                }
-                if (Objects.isNull(entity.getAuthorizationOutcome())) {
-                    log.info(String.format("Authorization for requestId %s is pending", requestId));
-                    response.setAuthOutcome(PENDING_MSG);
                 }
                 break;
             case AUTHORIZED:
@@ -273,23 +270,30 @@ public class XPayPaymentController {
     private void executeXPayPaymentCall(String requestId, XPayResumeRequest pgsRequest, PaymentRequestEntity entity) throws JsonProcessingException {
         log.info("START - executeXPayPaymentCall for requestId " + requestId);
         PaymentXPayRequest xpayRequest = createXPayPaymentRequest(requestId, entity);
-        String status = DENIED.name();
         int retryCount = 1;
         boolean isAuthorized = false;
         log.info("Calling XPay /paga3DS - requestId: " + requestId);
         while (!isAuthorized && retryCount <= PAGA3DS_MAX_RETRIES) {
             try {
-                log.info(String.format("Attempt no. %s for requestId: %s", retryCount, requestId));
+                log.info(String.format("Attempt no.%s for requestId: %s", retryCount, requestId));
                 PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
-                EsitoXpay outcome = response.getEsito();
-                if (outcome.equals(OK)) {
-                    log.info(String.format("Paga3DS outcome is %s for requestId: %s", OK.name(), requestId));
-                    isAuthorized = true;
-                    status = AUTHORIZED.name();
-                    entity.setAuthorizationCode(response.getCodiceAutorizzazione());
-                } else if (outcome.equals(KO) || Objects.nonNull(response.getErrore())) {
-                    log.warn(String.format("paga3DS outcome for requestId %s is %s or no response has been received from XPay", requestId, KO.name()));
+                if (ObjectUtils.isEmpty(response)) {
+                    log.warn(String.format("paga3DS response from XPay to requestId %s is empty", requestId));
                     retryCount++;
+                } else {
+                    EsitoXpay outcome = response.getEsito();
+                    String logMsg = "paga3DS outcome for requestId %s is %s";
+                    if (outcome == OK) {
+                        log.info(String.format(logMsg, requestId, OK.name()));
+                        isAuthorized = true;
+                        entity.setStatus(AUTHORIZED.name());
+                        entity.setAuthorizationCode(response.getCodiceAutorizzazione());
+                    } else if (outcome == KO) {
+                        log.warn(String.format(logMsg, requestId, KO.name()));
+                        entity.setStatus(DENIED.name());
+                        setErrorCodeAndMessage(requestId, entity, response);
+                        retryCount++;
+                    }
                 }
             } catch (Exception e) {
                 log.error(String.format("An exception occurred while calling XPay's /paga3DS for requestId: %s. " +
@@ -300,11 +304,22 @@ public class XPayPaymentController {
         }
         entity.setXpayNonce(pgsRequest.getXpayNonce());
         entity.setTimeStamp(pgsRequest.getTimestamp());
-        entity.setStatus(status);
         entity.setAuthorizationOutcome(isAuthorized);
         paymentRequestRepository.save(entity);
         log.info(String.format("END - executeXPayPaymentCall for requestId: %s. Status: %s " +
-                "- Authorization: %s. Retry attempts number: %s", requestId, status, isAuthorized, retryCount));
+                "- Authorization: %s. Retry attempts number: %s", requestId, entity.getStatus(), isAuthorized, retryCount));
+    }
+
+    private void setErrorCodeAndMessage(String requestId, PaymentRequestEntity entity, PaymentXPayResponse response) {
+        if (ObjectUtils.isNotEmpty(response.getErrore())) {
+            XpayError xpayError = response.getErrore();
+            String errorCode = String.valueOf(xpayError.getCodice());
+            String errorMessage = xpayError.getMessaggio();
+            log.info(String.format("RequestId %s has error code: %s - message: %s", requestId,
+                    errorCode, errorMessage));
+            entity.setErrorCode(errorCode);
+            entity.setErrorMessage(errorMessage);
+        }
     }
 
     private void executePatchTransactionV2(PaymentRequestEntity entity, String requestId) {

@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.Headers;
-import it.pagopa.pm.gateway.dto.PatchRequest;
-import it.pagopa.pm.gateway.dto.XPayAuthRequest;
-import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
-import it.pagopa.pm.gateway.dto.XPayResumeRequest;
+import it.pagopa.pm.gateway.dto.*;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
 import it.pagopa.pm.gateway.dto.xpay.PaymentXPayResponse;
@@ -189,12 +186,11 @@ public class XPayPaymentControllerTest {
     @Test
     public void xPay_shouldReturnAuthPollingResponseOK() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
-                .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false));
-
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        XPayPollingResponse expectedResponse = ValidBeans.createXpayAuthPollingResponse(true, null, false);
+        when(paymentRequestRepository.findByGuid(UUID_SAMPLE)).thenReturn(entity);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
-        mvc.perform(get(url))
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(true, null, false, false))));
+        mvc.perform(get(url)).andExpect(content().json(mapper.writeValueAsString(expectedResponse)));
     }
 
     @Test
@@ -208,7 +204,7 @@ public class XPayPaymentControllerTest {
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, error, false, false))));
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, error, false))));
     }
 
     @Test
@@ -219,7 +215,7 @@ public class XPayPaymentControllerTest {
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, null, true, false))));
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, null, false))));
     }
 
     @Test
@@ -426,7 +422,7 @@ public class XPayPaymentControllerTest {
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false,
-                        null, false, true))));
+                        null, true))));
     }
 
     @Test
@@ -439,6 +435,6 @@ public class XPayPaymentControllerTest {
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false,
-                        null, false, true))));
+                        null, true))));
     }
 }

@@ -10,6 +10,7 @@ import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginRespons
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.*;
 import org.springframework.http.HttpStatus;
@@ -463,7 +464,7 @@ public class ValidBeans {
         paymentRequestEntity.setJsonRequest(authRequestJson);
         paymentRequestEntity.setStatus(statusEnum.name());
         paymentRequestEntity.setIsRefunded(isRefunded);
-        if (Objects.nonNull(isValid) && isValid) {
+        if (BooleanUtils.toBoolean(isValid)) {
             paymentRequestEntity.setXpayHtml("<html><body></body></html>");
         }
         return paymentRequestEntity;
@@ -542,8 +543,8 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayPollingResponse createXpayAuthPollingResponse(Boolean isOk, XPayPollingResponseError error,
-                                                                    Boolean isPending, boolean isCancelled) {
+    public static XPayPollingResponse createXpayAuthPollingResponse(boolean isOk, XPayPollingResponseError error,
+                                                                    boolean isCancelled) {
         XPayPollingResponse response = new XPayPollingResponse();
         if (isOk) {
             response.setHtml("<html><body></body></html>");
@@ -551,8 +552,6 @@ public class ValidBeans {
         } else if (Objects.nonNull(error)) {
             response.setStatus(DENIED.name());
             response.setError(error);
-        } else if (isPending) {
-            response.setStatus(CREATED.name());
         }
         if (isCancelled) {
             response.setStatus(CANCELLED.name());
@@ -613,7 +612,7 @@ public class ValidBeans {
     public static PaymentXPayResponse createPaymentXPayResponse(boolean isValid) {
         PaymentXPayResponse response = new PaymentXPayResponse();
         response.setTimeStamp(System.currentTimeMillis());
-        if(isValid) {
+        if (isValid) {
             response.setEsito(EsitoXpay.OK);
             response.setIdOperazione("idOperazione");
             response.setCodiceAutorizzazione("codiceAutorizzazione");

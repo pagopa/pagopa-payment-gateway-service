@@ -416,6 +416,7 @@ paths:
                 $ref: '#/components/schemas/XPayAuthResponseEntity500'
   /request-payments/xpay/{requestId}/resume:
     get:
+      summary: payment request to xPay
       tags:
         - XPay
       operationId: resumeXPayPayment

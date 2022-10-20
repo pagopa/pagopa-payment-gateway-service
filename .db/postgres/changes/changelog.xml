@@ -56,7 +56,6 @@
 				<column name="HTML" type="VARCHAR(50)"></column>
 				<column name="NONCE" type="TEXT"></column>
 				<column name="ERROR_MESSAGE" type="VARCHAR(50)"></column>
-				<column name="ERROR_CODE" type="VARCHAR(50)"></column>
 			</createTable>
 			<createSequence sequenceName="SEQ_PGS_REQUEST_INFO" incrementBy="1" startValue="1" />
 		    <createIndex indexName="PGS_REQUEST_GUID_IDX" tableName="PP_PGS_REQUEST_INFO">

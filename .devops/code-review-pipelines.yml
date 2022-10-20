@@ -64,7 +64,7 @@ steps:
     displayName: 'Waiting App running'
 
   - script: |
-      curl http://localhost:8085/healthcheck -fail
+      timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8085/healthcheck)" != "200" ]]; do sleep 5; done' || exit 1
     displayName: 'Health check'
 
   - script: |

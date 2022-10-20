@@ -64,5 +64,5 @@ steps:
     displayName: 'Health check'
 
   - script: |
-      docker ps --filter status=exited --format="{{.Image}} :: {{.Status}}" | grep liquibase | cut -d':' -f3 | sed -r "s/Exited \((.*)\) .*/\1/g" | tr -d ' '
+      [[ "$(docker ps --filter status=exited --format="{{.Image}} :: {{.Status}}" | grep liquibase | cut -d':' -f3 | sed -r "s/Exited \((.*)\) .*/\1/g" | tr -d ' ')" == "0" ]]
     displayName: 'Liquibase check'  

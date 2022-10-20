@@ -426,13 +426,36 @@ paths:
           required: true
           schema:
             type: string
-        - name: params
+        - name: esito
           in: query
-          required: true
+          required: false
           schema:
-            type: object
-            additionalProperties:
-              type: string
+            type: string
+        - name: idOperazione
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: xpayNonce
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: timeStamp
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: mac
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: resumeType
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "302":
           description: OK-FOUND

@@ -13,4 +13,5 @@ public class Messages {
     public static final String SERIALIZATION_ERROR_MSG = "Error while creating json from PostePayAuthRequest object";
     public static final String GENERIC_ERROR_MSG = "Error while requesting authorization for idTransaction: ";
     public static final String REQUEST_ID_NOT_FOUND_MSG = "RequestId not Found";
+    public static final String PATCH_CLOSE_PAYMENT_ERROR = "Error during call to Payment Manager's PATCH API for requestId: ";
 }

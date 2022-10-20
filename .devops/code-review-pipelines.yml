@@ -66,3 +66,7 @@ steps:
   - script: |
       curl http://localhost:8085/healthcheck -fail
     displayName: 'Health check'
+
+  - script: |
+      docker ps --filter status=exited --format="{{.Image}} :: {{.Status}}" | grep liquibase | cut -d':' -f3 | sed -r "s/Exited \((.*)\) .*/\1/g" | tr -d ' '
+    displayName: 'Liquibase check'  

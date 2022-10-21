@@ -1,9 +1,8 @@
-trigger: none
-pr:
+trigger:
   branches:
     include:
+      - main
       - develop
-
 pool:
   vmImage: ubuntu-latest
 
@@ -58,3 +57,15 @@ steps:
     displayName: 'Publish SonarCloud results on build summary'
     inputs:
       pollingTimeoutSec: '300'
+
+  - script: |
+      docker-compose -f docker-compose-springboot-postgres.yaml up --build -d
+    displayName: 'Run app with docker-compose'
+
+  - script: |
+      timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8085/healthcheck)" != "200" ]]; do sleep 5; done' || exit 1
+    displayName: 'Health check'
+
+  - script: |
+      [[ "$(docker ps --filter status=exited --format="{{.Image}} :: {{.Status}}" | grep liquibase | cut -d':' -f3 | sed -r "s/Exited \((.*)\) .*/\1/g" | tr -d ' ')" == "0" ]]
+    displayName: 'Liquibase check'  

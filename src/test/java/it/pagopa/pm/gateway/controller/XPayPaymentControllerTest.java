@@ -6,11 +6,7 @@ import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.Headers;
 import it.pagopa.pm.gateway.dto.XPayAuthRequest;
 import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
-import it.pagopa.pm.gateway.dto.XPayResumeRequest;
 import it.pagopa.pm.gateway.dto.xpay.*;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
-import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayResponse;
-import it.pagopa.pm.gateway.dto.xpay.PaymentXPayResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
@@ -392,7 +388,6 @@ public class XPayPaymentControllerTest {
                 .andExpect(status().isFound());
     }
 
-
     @Test
     public void xPay_givenGoodResumeRequest_shouldThrowExpetionAdnReturn500() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
@@ -409,6 +404,143 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
+                .andExpect(status().isInternalServerError());
+    }
+
+
+    @Test
+    public void xPay_givenBadRequestIdForResume_shouldReturn404() throws Exception {
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void xPay_givenRequestAlreadyRefunded_shouldReturn200() throws Exception {
+
+        MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+        entity.setIsRefunded(true);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldReturn200() throws Exception {
+
+        MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
+
+        XPayRevertResponse revertResponse = ValidBeans.createXPayRevertResponse(true);
+
+        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
+
+        when(xpayService.callStorna(any())).thenReturn(revertResponse);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldReturn200ButKO() throws Exception {
+
+        MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
+
+        XPayRevertResponse revertResponse = ValidBeans.createXPayRevertResponse(false);
+
+        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
+
+        when(xpayService.callStorna(any())).thenReturn(revertResponse);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldThrownExceptionDurigExecuteXPayOrderStatus() throws Exception {
+
+        MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        when(xpayService.callSituazioneOrdine(any())).thenThrow(RuntimeException.class);
+
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    public void xPay_givenGoodRequestIdForRefund_shouldThrownExceptionDurigExecuteXPayRevert() throws Exception {
+
+        MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
+        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
+
+        when(xpayService.callStorna(any())).thenThrow(RuntimeException.class);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
     }
 }

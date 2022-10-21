@@ -26,10 +26,10 @@ public class XpayService {
     @Value("${xpay.paymentUrl}")
     private String xpayPaymentUrl;
 
-    @Value("${xpay.orderStatusUrl")
+    @Value("${xpay.orderStatusUrl}")
     private String orderStatusUrl;
 
-    @Value("${xpay.revertUrl")
+    @Value("${xpay.revertUrl}")
     private String revertUrl;
 
     @Autowired

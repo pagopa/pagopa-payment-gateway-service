@@ -341,7 +341,7 @@ public class XPayPaymentController {
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {
         log.info("Building XPay3DSResponse ");
         XPay3DSResponse xPay3DSResponse = new XPay3DSResponse();
-        if(params.get(XPAY_KEY_RESUME_TYPE).equalsIgnoreCase(RESUME_TYPE_XPAY)) {
+        if (params.get(XPAY_KEY_RESUME_TYPE).equalsIgnoreCase(RESUME_TYPE_XPAY)) {
             xPay3DSResponse.setOutcome(EsitoXpay.valueOf(params.get(XPAY_OUTCOME)));
             xPay3DSResponse.setOperationId(params.get(XPAY_OPERATION_ID));
             xPay3DSResponse.setTimestamp(params.get(XPAY_TIMESTAMP));

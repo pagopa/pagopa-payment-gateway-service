@@ -22,13 +22,13 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
-import static it.pagopa.pm.gateway.constant.ApiPaths.XPAY_RESUME;
 import static it.pagopa.pm.gateway.constant.XPayParams.*;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {

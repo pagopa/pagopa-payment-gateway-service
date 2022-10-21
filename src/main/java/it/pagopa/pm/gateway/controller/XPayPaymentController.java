@@ -343,7 +343,7 @@ public class XPayPaymentController {
         return request;
     }
 
-    private EsitoXpay executeXPayOrderStatus(PaymentRequestEntity entity) throws Exception {
+    private EsitoXpay executeXPayOrderStatus(PaymentRequestEntity entity) {
         String requestId = entity.getGuid();
         XPayOrderStatusResponse response;
         try {
@@ -396,14 +396,12 @@ public class XPayPaymentController {
         return ResponseEntity.status(httpStatus).body(response);
     }
 
-    private XPayOrderStatusRequest createXPayOrderStatusRequest(PaymentRequestEntity entity) throws JsonProcessingException {
+    private XPayOrderStatusRequest createXPayOrderStatusRequest(PaymentRequestEntity entity) {
         String idTransaction = entity.getIdTransaction();
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
 
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String macToHash = String.format("apiKey=%scodiceTransazione=%stimeStamp=%s%s",
-                apiKey, codTrans, timeStamp, secretKey);
-        String mac = hashMac(macToHash);
+        String mac = createMacForRevert(codTrans, timeStamp);
 
         XPayOrderStatusRequest request = new XPayOrderStatusRequest();
         request.setApiKey(apiKey);
@@ -423,7 +421,7 @@ public class XPayPaymentController {
 
         BigInteger grandTotal = authRequest.getImporto();
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = createMac(codTrans, grandTotal, timeStamp);
+        String mac = createMacForRevert(codTrans, timeStamp);
 
         XPayRevertRequest request = new XPayRevertRequest();
         request.setApiKey(apiKey);
@@ -473,6 +471,12 @@ public class XPayPaymentController {
             log.error("Error while serializing request as JSON. Request object is: " + request);
         }
         paymentRequestEntity.setJsonRequest(jsonRequest);
+    }
+
+    private String createMacForRevert(String codTrans, String timeStamp) {
+        String macString = String.format("apiKey=%scodiceTransazione=%stimeStamp=%s%s",
+                apiKey, codTrans, timeStamp, secretKey);
+        return hashMac(macString);
     }
 
     private String createMac(String codTrans, BigInteger importo, String timeStamp) {

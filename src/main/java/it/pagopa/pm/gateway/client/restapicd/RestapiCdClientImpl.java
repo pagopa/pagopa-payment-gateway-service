@@ -5,7 +5,7 @@ import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
 import feign.okhttp.OkHttpClient;
 import it.pagopa.pm.gateway.dto.PatchRequest;
-import it.pagopa.pm.gateway.dto.PostePayPatchRequestData;
+import it.pagopa.pm.gateway.dto.PatchRequestData;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequestData;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ public class RestapiCdClientImpl {
         log.info("Calling Payment Manager's patchTransactionV2 for transaction " + id);
         Map<String, Object> headerMap = buildMdcHeader();
         headerMap.put(OCP_APIM_SUBSCRIPTION_KEY_NAME, apimUpdateSubscriptionKey);
-        return restapiCdClient.callPatchTransactionV2(id, headerMap, new PostePayPatchRequestData(patchRequest));
+        return restapiCdClient.callPatchTransactionV2(id, headerMap, new PatchRequestData(patchRequest));
     }
 
 }

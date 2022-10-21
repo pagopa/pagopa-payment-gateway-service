@@ -400,12 +400,10 @@ public class XPayPaymentController {
         String idTransaction = entity.getIdTransaction();
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
 
-        String json = entity.getJsonRequest();
-        AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
-
-        BigInteger grandTotal = authRequest.getImporto();
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = createMac(codTrans, grandTotal, timeStamp);
+        String macToHash = String.format("apiKey=%scodiceTransazione=%stimeStamp=%s%s",
+                apiKey, codTrans, timeStamp, secretKey);
+        String mac = hashMac(macToHash);
 
         XPayOrderStatusRequest request = new XPayOrderStatusRequest();
         request.setApiKey(apiKey);

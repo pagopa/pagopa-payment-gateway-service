@@ -15,16 +15,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.constant.ApiPaths.XPAY_RESUME;
+import static it.pagopa.pm.gateway.constant.XPayParams.*;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
@@ -581,32 +585,44 @@ public class ValidBeans {
     }
 
 
-    public static XPayResumeRequest createXPayResumeRequest(boolean isValid) {
-        XPayResumeRequest request = new XPayResumeRequest();
+    public static PaymentXPayRequest createXPayPaymentRequest(XPay3DSResponse xPayResumeRequest, PaymentRequestEntity entity) {
+        PaymentXPayRequest xPayRequest = new PaymentXPayRequest();
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        if (isValid) {
-            request.setEsito(EsitoXpay.OK);
-            request.setIdOperazione("123455");
-            request.setXpayNonce("nonce");
-            request.setMac("mac");
-        } else {
-            request.setEsito(EsitoXpay.KO);
-            request.setCodice("codiceErrore");
-            request.setMessaggio("messaggioErrore");
-        }
-        request.setTimestamp(timeStamp);
-        return request;
+        xPayRequest.setApiKey("ExampleApiKey");
+        xPayRequest.setCodiceTransazione(entity.getIdTransaction());
+        xPayRequest.setImporto(BigInteger.valueOf(1256));
+        xPayRequest.setDivisa(978L);
+        xPayRequest.setTimeStamp(timeStamp);
+        xPayRequest.setMac(xPayResumeRequest.getMac());
+        xPayRequest.setXpayNonce(xPayResumeRequest.getXpayNonce());
+        return xPayRequest;
     }
 
-    public static XPayResumeRequest createXPayResumeRequestWithEsitoNull() {
-        XPayResumeRequest request = new XPayResumeRequest();
+    public static MultiValueMap<String, String> createXPayResumeRequest(boolean isValid) {
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        request.setEsito(null);
-        request.setIdOperazione("123455");
-        request.setXpayNonce("nonce");
-        request.setMac("mac");
-        request.setTimestamp(timeStamp);
-        return request;
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.put(XPAY_KEY_RESUME_TYPE, Collections.singletonList(RESUME_TYPE_XPAY));
+        if (isValid) {
+            parameters.put(XPAY_OUTCOME, Collections.singletonList("OK"));
+            parameters.put(XPAY_OPERATION_ID, Collections.singletonList("123456"));
+            parameters.put(XPAY_NONCE, Collections.singletonList("nonce"));
+            parameters.put(XPAY_MAC, Collections.singletonList("mac"));
+        } else {
+            parameters.put(XPAY_OUTCOME, Collections.singletonList("KO"));
+            parameters.put(XPAY_ERROR_CODE, Collections.singletonList("codiceErrore"));
+            parameters.put(XPAY_ERROR_MESSAGE, Collections.singletonList("messaggioErrore"));
+        }
+        parameters.put(XPAY_TIMESTAMP, Collections.singletonList(timeStamp));
+        return parameters;
+    }
+
+    public static MultiValueMap<String, String> createXPayResumeRequestWithEsitoNull() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.put(XPAY_KEY_RESUME_TYPE, Collections.singletonList(RESUME_TYPE_XPAY));
+        parameters.put(XPAY_OPERATION_ID, Collections.singletonList("123456"));
+        parameters.put(XPAY_NONCE, Collections.singletonList("nonce"));
+        parameters.put(XPAY_MAC, Collections.singletonList("mac"));
+        return parameters;
     }
 
     public static PaymentXPayResponse createPaymentXPayResponse(boolean isValid) {

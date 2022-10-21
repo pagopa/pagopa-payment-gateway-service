@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostePayPatchRequestData {
+public class PatchRequestData {
     private PatchRequest data;
 }

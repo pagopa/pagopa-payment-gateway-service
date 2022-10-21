@@ -415,25 +415,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/XPayAuthResponseEntity500'
   /request-payments/xpay/{requestId}/resume:
-    post:
-      summary: payment to xPay
+    get:
+      summary: payment request to xPay
       tags:
         - XPay
-      operationId: payment-xpay
+      operationId: resumeXPayPayment
       parameters:
-        - in: path
+        - name: requestId
+          in: path
           required: true
-          name: requestId
-          description: Id of the request
-          example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
             type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/XPayPaymentRequest'
-        required: true
+        - name: esito
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: idOperazione
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: xpayNonce
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: timeStamp
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: mac
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: resumeType
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "302":
           description: OK-FOUND
@@ -461,7 +483,7 @@ paths:
                 example: "Error during payment for requestId: xxx "
   /request-payments/xpay/{requestId}:
     get:
-      summary: payment authorization request to xPay
+      summary: retrieve XPay payment request
       tags:
         - XPay
       operationId: auth-response-xpay
@@ -493,6 +515,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayPollingResponseEntity404'
+  /request-payments/xpay{requestId}:
+    delete:
+      tags:
+        - XPay
+      summary: refund xpay requests
+      operationId: refund-xpay-request
+      parameters:
+        - in: path
+          name: requestId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: PGS-generated GUID of the request to retrieve
+          example: 77e1c83b-7bb0-437b-bc50-a7a58e5660ac
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayRefundResponse200'
+        "404":
+          description: Request doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayRefundResponse404'
+        "500":
+          description: Generic Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayRefundResponse500'
 components:
   schemas:
     AuthMessage:
@@ -704,6 +760,39 @@ components:
           type: string
           description: Expiration date of the card, yyyyMM format
           example: 203012
+    XPayPaymentRequest:
+      required:
+        - esito
+      type: object
+      properties:
+        esito:
+          type: string
+          enum: [OK, KO]
+          description: outhcome from xpay
+        idOperazione:
+          type: string
+          description: idOperazione from xpay
+          example: "123456"
+        xpayNonce:
+          type: string
+          description: nonce from xpay
+          example: "nonce"
+        timestamp:
+          type: string
+          description: timestamp in ms
+          example: 16589654852
+        mac:
+          type: string
+          description: mac from xpay
+          example: bd2dd7a959e4816b1ba9e767cf2a5287192c8be7
+        codice:
+          type: string
+          description: error code from xpay
+          example: 1
+        messaggio:
+          type: string
+          description: error message from xpay
+          example: error message from xpay
     XPayAuthResponseEntity:
       type: object
       required:
@@ -749,39 +838,6 @@ components:
           type: string
           description: error description
           example: "Error while requesting authorization for idTransaction: xxx"
-    XPayPaymentRequest:
-      required:
-        - esito
-      type: object
-      properties:
-        esito:
-          type: string
-          enum: [OK, KO]
-          description: outhcome from xpay
-        idOperazione:
-          type: string
-          description: idOperazione from xpay
-          example: "123456"
-        xpayNonce:
-          type: string
-          description: nonce from xpay
-          example: "nonce"
-        timestamp:
-          type: string
-          description: timestamp in ms
-          example: 16589654852
-        mac:
-          type: string
-          description: mac from xpay
-          example: bd2dd7a959e4816b1ba9e767cf2a5287192c8be7
-        codice:
-          type: string
-          description: error code from xpay
-          example: 1
-        messaggio:
-          type: string
-          description: error message from xpay
-          example: error message from xpay
     XPayPollingResponseEntity:
       type: object
       required:
@@ -827,3 +883,41 @@ components:
               type: string
               description: error message
               example: "RequestId not found"
+    XPayRefundResponse200:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
+        refundOutcome:
+          type: string
+          example: "OK"
+        error:
+          type: string
+      required:
+        - transactionId
+        - refundOutcome
+    XPayRefundResponse404:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
+        error:
+          type: string
+          example: "RequestId not Found"
+      required:
+        - transactionId
+        - error
+    XPayRefundResponse500:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
+        error:
+          type: string
+          example: "Error while requesting refund for requestId: xxx"
+      required:
+        - transactionId
+        - error

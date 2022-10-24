@@ -5,6 +5,7 @@ import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.Headers;
 import it.pagopa.pm.gateway.dto.XPayAuthRequest;
+import it.pagopa.pm.gateway.dto.XPayPollingResponse;
 import it.pagopa.pm.gateway.dto.XPayPollingResponseError;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
@@ -34,8 +35,7 @@ import java.util.UUID;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.XPayParams.XPAY_MAC;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
@@ -426,7 +426,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, true);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -447,7 +447,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, true);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -475,7 +475,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, true);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -503,7 +503,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, AUTHORIZED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -526,7 +526,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, AUTHORIZED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));

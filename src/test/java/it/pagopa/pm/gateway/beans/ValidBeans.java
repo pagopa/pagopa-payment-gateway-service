@@ -649,6 +649,43 @@ public class ValidBeans {
         }
         return response;
     }
+
+    public static XPayOrderStatusResponse createXPayOrderStatusResponse(Boolean isValid) {
+        XPayOrderStatusResponse response = new XPayOrderStatusResponse();
+
+        response.setTimeStamp(System.currentTimeMillis());
+        if (isValid) {
+            response.setEsito(EsitoXpay.OK);
+        } else {
+            response.setEsito(EsitoXpay.KO);
+            XpayError error = new XpayError();
+            error.setCodice(12L);
+            error.setMessaggio("ErrroMessage");
+            response.setErrore(error);
+        }
+        response.setIdOperazione("idOperazione");
+        response.setReport(null);
+        response.setMac("mac");
+        return response;
+    }
+
+    public static XPayRevertResponse createXPayRevertResponse(boolean isValid) {
+        XPayRevertResponse response = new XPayRevertResponse();
+
+        if (isValid) {
+            response.setEsito(EsitoXpay.OK);
+        } else {
+            response.setEsito(EsitoXpay.KO);
+            XpayError error = new XpayError();
+            error.setCodice(12L);
+            error.setMessaggio("ErrroMessage");
+            response.setErrore(error);
+        }
+        response.setIdOperazione("idOperazione");
+        response.setTimeStamp(System.currentTimeMillis());
+        response.setMac("mac");
+        return response;
+    }
 }
 
 

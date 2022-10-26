@@ -4,14 +4,23 @@ import feign.FeignException;
 import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.ACKMessage;
+import it.pagopa.pm.gateway.dto.AuthMessage;
+import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayInfoResponse;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +50,7 @@ public class BancomatPayPaymentTransactionsController {
 
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
-    
+
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();
@@ -105,6 +114,31 @@ public class BancomatPayPaymentTransactionsController {
         return new BPayOutcomeResponse(true);
     }
 
+    @GetMapping(RETRIEVE_BPAY_INFO)
+    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String requestId,
+                                                             @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
+        log.info("START - retrieve bancomatPay information for requestId " + requestId);
+        setMdcFields(mdcFields);
+        String outputMsg;
+
+        if (StringUtils.isBlank(requestId)) {
+            outputMsg = "RequestId is blank: please specify a valid requestId";
+            log.error(outputMsg);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BPayInfoResponse(null, outputMsg));
+        }
+
+        BPayPaymentResponseEntity entity = bPayPaymentResponseRepository.findByClientGuid(requestId);
+        if (Objects.isNull(entity)) {
+            outputMsg = "No entity has been found for requestId " + requestId;
+            log.error(outputMsg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BPayInfoResponse(null, outputMsg));
+        }
+
+        String correlationId = entity.getCorrelationId();
+        log.info(String.format("CorrelationId %s has been found for requestId %s", correlationId, requestId));
+        log.info("END - retrieved bancomatPay information for requestId " + requestId);
+        return ResponseEntity.status(HttpStatus.OK).body(new BPayInfoResponse(correlationId, null));
+    }
 
     private String inquiryTransactionToBancomatPay(BPayRefundRequest request) throws Exception {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse;

@@ -4,9 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayInfoResponse;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
+import it.pagopa.pm.gateway.dto.postepay.*;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
@@ -685,6 +690,13 @@ public class ValidBeans {
         response.setTimeStamp(System.currentTimeMillis());
         response.setMac("mac");
         return response;
+    }
+
+    public static BPayInfoResponse bpayInfoResponse(boolean isError, String errorString) {
+        BPayInfoResponse bPayInfoResponse;
+        bPayInfoResponse = isError ? new BPayInfoResponse(null, errorString) :
+                new BPayInfoResponse("id", null);
+        return bPayInfoResponse;
     }
 }
 

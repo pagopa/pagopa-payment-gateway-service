@@ -21,7 +21,8 @@ import java.net.SocketTimeoutException;
 import java.util.Objects;
 import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.*;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_REFUNDS_BPAY;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CORRELATION_ID;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
@@ -41,7 +42,7 @@ public class BancomatPayPaymentTransactionsController {
 
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
-    
+
     @PutMapping(REQUEST_PAYMENTS_BPAY)
     public ACKMessage updateTransaction(@RequestBody AuthMessage authMessage, @RequestHeader(X_CORRELATION_ID) String correlationId) throws RestApiException {
         MDC.clear();
@@ -55,7 +56,9 @@ public class BancomatPayPaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.TRANSACTION_ALREADY_PROCESSED);
             }
         }
-        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId(), authMessage.getAuthCode(), null, alreadySaved.getErrorCode());
+        Long transactionStatus = authMessage.getAuthOutcome().equals(OK) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
+        TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(transactionStatus, authMessage.getAuthCode(),
+                null, alreadySaved.getErrorCode(), alreadySaved.getCorrelationId());
         try {
             restapiCdClient.callTransactionUpdate(alreadySaved.getIdPagoPa(), transactionUpdate);
             alreadySaved.setIsProcessed(true);
@@ -160,7 +163,8 @@ public class BancomatPayPaymentTransactionsController {
                 throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
             }
             EsitoVO esitoVO = response.getReturn().getEsito();
-            log.info("Response from BPay sendPaymentRequest - idPagopa: " + idPagoPa + " - correlationId: " + response.getReturn().getCorrelationId() + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
+            log.info("Response from BPay sendPaymentRequest - idPagopa: " + idPagoPa + " - correlationId: " +
+                    response.getReturn().getCorrelationId() + " - esito: " + esitoVO.getCodice() + " - messaggio: " + esitoVO.getMessaggio());
         } catch (Exception e) {
             log.error("Exception calling BancomatPay with idPagopa: " + idPagoPa, e);
             if (e.getCause() instanceof SocketTimeoutException) {
@@ -171,7 +175,8 @@ public class BancomatPayPaymentTransactionsController {
         BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid, mdcInfo);
         bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         try {
-            TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(), null, null, bPayPaymentResponseEntity.getErrorCode());
+            TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(),
+                    null, null, bPayPaymentResponseEntity.getErrorCode(), bPayPaymentResponseEntity.getCorrelationId());
             restapiCdClient.callTransactionUpdate(idPagoPa, transactionUpdate);
         } catch (FeignException e) {
             log.error("Exception calling RestapiCD transaction update", e);

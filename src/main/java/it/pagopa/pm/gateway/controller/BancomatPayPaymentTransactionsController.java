@@ -115,10 +115,8 @@ public class BancomatPayPaymentTransactionsController {
     }
 
     @GetMapping(RETRIEVE_BPAY_INFO)
-    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String requestId,
-                                                             @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
+    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String requestId) {
         log.info("START - retrieve bancomatPay information for requestId " + requestId);
-        setMdcFields(mdcFields);
         String outputMsg;
 
         if (StringUtils.isBlank(requestId)) {

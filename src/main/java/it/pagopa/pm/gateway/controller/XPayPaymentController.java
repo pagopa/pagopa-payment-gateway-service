@@ -251,6 +251,7 @@ public class XPayPaymentController {
 
     private ResponseEntity<XPayPollingResponse> createXPayAuthPollingResponse(HttpStatus httpStatus, XPayPollingResponseError error, PaymentRequestEntity entity) {
         XPayPollingResponse response = new XPayPollingResponse();
+
         if (Objects.nonNull(error)) {
             log.info("START - create XPay polling response - error case");
             response.setError(error);
@@ -258,6 +259,8 @@ public class XPayPaymentController {
         }
 
         String requestId = entity.getGuid();
+        response.setRequestId(requestId);
+
         log.info("START - create XPay polling response for requestId: " + requestId);
         String status = entity.getStatus();
         log.info(String.format("Request status for requestId %s is %s", requestId, status));

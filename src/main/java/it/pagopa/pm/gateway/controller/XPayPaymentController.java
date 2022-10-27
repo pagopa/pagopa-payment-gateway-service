@@ -9,6 +9,7 @@ import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
+import it.pagopa.pm.gateway.utils.XPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -22,9 +23,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
@@ -47,9 +45,9 @@ public class XPayPaymentController {
     private static final String APP_ORIGIN = "APP";
     private static final String WEB_ORIGIN = "WEB";
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
-    private static final String EUR_CURRENCY = "978";
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String ZERO_CHAR = "0";
+    public static final String EUR_CURRENCY = "978";
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    public static final String ZERO_CHAR = "0";
     private static final int PAGA3DS_MAX_RETRIES = 3;
 
     @Value("${xpay.response.urlredirect}")
@@ -61,9 +59,6 @@ public class XPayPaymentController {
     @Value("${xpay.apiKey}")
     private String apiKey;
 
-    @Value("${xpay.secretKey}")
-    private String secretKey;
-
     @Autowired
     private PaymentRequestRepository paymentRequestRepository;
 
@@ -72,6 +67,9 @@ public class XPayPaymentController {
 
     @Autowired
     private RestapiCdClientImpl restapiCdClient;
+
+    @Autowired
+    private XPayUtils xPayUtils;
 
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
@@ -116,7 +114,7 @@ public class XPayPaymentController {
 
     @GetMapping(XPAY_RESUME)
     public ResponseEntity<String> resumeXPayPayment(@PathVariable String requestId,
-                                                    @RequestParam Map<String, String> params) {
+                                                    @RequestParam Map<String, String> params) throws JsonProcessingException {
 
         log.info(String.format("START - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
         log.info("Params received from XPay: " + params);
@@ -141,15 +139,13 @@ public class XPayPaymentController {
         }
 
         if (outcome.equals(OK)) {
-            try {
-                executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
-                executePatchTransactionV2(entity, requestId);
-            } catch (Exception e) {
-                String errorMessage = String.format("An error occurred during payment for requestId: %s - reason: %s",
-                        requestId, e.getMessage());
-                log.error(errorMessage, e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
+            String xPayMac = xPay3DSResponse.getMac();
+            if (BooleanUtils.isFalse(xPayUtils.checkMac(entity, xPayMac))) {
+                log.error(String.format(MAC_NOT_EQUAL_ERROR_MSG, xPayMac) + "for requestId: " + requestId);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MAC_NOT_EQUAL_ERROR_MSG);
             }
+            executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
+            executePatchTransactionV2(entity, requestId);
         } else {
             log.info(String.format("Outcome is %s: setting status as DENIED for requestId %s", outcome, requestId));
             entity.setStatus(DENIED.name());
@@ -297,15 +293,16 @@ public class XPayPaymentController {
     }
 
     @Async
-    private void executeXPayPaymentCall(String requestId, XPay3DSResponse xpay3DSResponse, PaymentRequestEntity entity) throws JsonProcessingException {
+    private void executeXPayPaymentCall(String requestId, XPay3DSResponse xpay3DSResponse, PaymentRequestEntity entity) {
         log.info("START - executeXPayPaymentCall for requestId " + requestId);
-        PaymentXPayRequest xpayRequest = createXPayPaymentRequest(requestId, entity);
+        entity.setXpayNonce(xpay3DSResponse.getXpayNonce());
         String status = DENIED.name();
         int retryCount = 1;
         boolean isAuthorized = false;
         log.info("Calling XPay /paga3DS - requestId: " + requestId);
         while (!isAuthorized && retryCount <= PAGA3DS_MAX_RETRIES) {
             try {
+                PaymentXPayRequest xpayRequest = createXPayPaymentRequest(requestId, entity);
                 log.info(String.format("Attempt no.%s for requestId: %s", retryCount, requestId));
                 PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
                 if (ObjectUtils.isEmpty(response)) {
@@ -333,7 +330,6 @@ public class XPayPaymentController {
                 retryCount++;
             }
         }
-        entity.setXpayNonce(xpay3DSResponse.getXpayNonce());
         entity.setTimeStamp(xpay3DSResponse.getTimestamp());
         entity.setStatus(status);
         entity.setAuthorizationOutcome(isAuthorized);
@@ -365,6 +361,7 @@ public class XPayPaymentController {
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
         }
+        paymentRequestRepository.save(entity);
     }
 
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {
@@ -386,12 +383,9 @@ public class XPayPaymentController {
         String idTransaction = entity.getIdTransaction();
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
 
-        String json = entity.getJsonRequest();
-        AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
-
-        BigInteger grandTotal = authRequest.getImporto();
+        BigInteger grandTotal = xPayUtils.getGrandTotalForMac(entity);
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = createMac(codTrans, grandTotal, timeStamp);
+        String mac = xPayUtils.createMac(codTrans, grandTotal, timeStamp);
 
         PaymentXPayRequest request = new PaymentXPayRequest();
         request.setDivisa(Long.valueOf(EUR_CURRENCY));
@@ -463,7 +457,7 @@ public class XPayPaymentController {
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
 
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = createMacForRevert(codTrans, timeStamp);
+        String mac = xPayUtils.createMacForRevert(codTrans, timeStamp);
 
         XPayOrderStatusRequest request = new XPayOrderStatusRequest();
         request.setApiKey(apiKey);
@@ -483,7 +477,7 @@ public class XPayPaymentController {
 
         BigInteger grandTotal = authRequest.getImporto();
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = createMacForRevert(codTrans, timeStamp);
+        String mac = xPayUtils.createMacForRevert(codTrans, timeStamp);
 
         XPayRevertRequest request = new XPayRevertRequest();
         request.setApiKey(apiKey);
@@ -501,7 +495,7 @@ public class XPayPaymentController {
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
         String timeStamp = String.valueOf(System.currentTimeMillis());
         BigInteger grandTotal = pgsRequest.getGrandTotal();
-        String mac = createMac(codTrans, grandTotal, timeStamp);
+        String mac = xPayUtils.createMac(codTrans, grandTotal, timeStamp);
 
         AuthPaymentXPayRequest xPayRequest = new AuthPaymentXPayRequest();
         xPayRequest.setApiKey(apiKey);
@@ -533,35 +527,6 @@ public class XPayPaymentController {
             log.error("Error while serializing request as JSON. Request object is: " + request);
         }
         paymentRequestEntity.setJsonRequest(jsonRequest);
-    }
-
-    private String createMacForRevert(String codTrans, String timeStamp) {
-        String macString = String.format("apiKey=%scodiceTransazione=%stimeStamp=%s%s",
-                apiKey, codTrans, timeStamp, secretKey);
-        return hashMac(macString);
-    }
-
-    private String createMac(String codTrans, BigInteger importo, String timeStamp) {
-        String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s",
-                apiKey, codTrans, EUR_CURRENCY, importo, timeStamp, secretKey);
-        return hashMac(macString);
-    }
-
-    private String hashMac(String macString) {
-        String hash = StringUtils.EMPTY;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            byte[] in = digest.digest(macString.getBytes(StandardCharsets.UTF_8));
-
-            final StringBuilder builder = new StringBuilder();
-            for (byte b : in) {
-                builder.append(String.format("%02x", b));
-            }
-            hash = builder.toString();
-        } catch (NoSuchAlgorithmException e) {
-            log.error("hashMac", e);
-        }
-        return hash;
     }
 
 }

@@ -408,12 +408,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayAuthResponseEntity401'
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XPayAuthResponseEntity500'
   /request-payments/xpay/{requestId}/resume:
     get:
       summary: payment request to xPay
@@ -459,7 +453,13 @@ paths:
       responses:
         "302":
           description: OK-FOUND
-
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Transaction already processed"
         "400":
           description: Not Found
           content:
@@ -474,13 +474,6 @@ paths:
               schema:
                 type: string
                 example: "RequestId not Found"
-        "500":
-          description: Internal server Error
-          content:
-            application/json:
-              schema:
-                type: string
-                example: "Error during payment for requestId: xxx "
   /request-payments/xpay/{requestId}:
     get:
       summary: retrieve XPay payment request
@@ -760,39 +753,6 @@ components:
           type: string
           description: Expiration date of the card, yyyyMM format
           example: 203012
-    XPayPaymentRequest:
-      required:
-        - esito
-      type: object
-      properties:
-        esito:
-          type: string
-          enum: [OK, KO]
-          description: outhcome from xpay
-        idOperazione:
-          type: string
-          description: idOperazione from xpay
-          example: "123456"
-        xpayNonce:
-          type: string
-          description: nonce from xpay
-          example: "nonce"
-        timestamp:
-          type: string
-          description: timestamp in ms
-          example: 16589654852
-        mac:
-          type: string
-          description: mac from xpay
-          example: bd2dd7a959e4816b1ba9e767cf2a5287192c8be7
-        codice:
-          type: string
-          description: error code from xpay
-          example: 1
-        messaggio:
-          type: string
-          description: error message from xpay
-          example: error message from xpay
     XPayAuthResponseEntity:
       type: object
       required:
@@ -829,24 +789,20 @@ components:
           type: string
           description: error description
           example: Transaction already processed
-    XPayAuthResponseEntity500:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-          description: error description
-          example: "Error while requesting authorization for idTransaction: xxx"
     XPayPollingResponseEntity:
       type: object
       required:
         - status
+        - requestId
       properties:
         html:
           type: string
           description: HTML received in response from XPay
           example: "\u003chtml\u003e\n\u003chead\u003e\n\u003ctitle\u003e\nGestione Pagamento Fraud detection\u003c/title\u003e\n\u003cscript type\u003d\"text/javascript\" language\u003d\"javascript\"\u003e\nfunction moveWindow() {\n    document.tdsFraudForm.submit();\n}\n\u003c/script\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003cform name\u003d\"tdsFraudForm\" action\u003d\"https://coll-ecommerce.nexi.it/ecomm/ecomm/TdsMerchantServlet\" method\u003d\"POST\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"action\"     value\u003d\"fraud\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"merchantId\" value\u003d\"31320986\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"description\" value\u003d\"7090069933_1606392234626\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"gdiUrl\"      value\u003d\"\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"gdiNotify\"   value\u003d\"\"\u003e\n\u003c/form\u003e\n\u003cscript type\u003d\"text/javascript\"\u003e\n  moveWindow();\n\u003c/script\u003e\n\u003c/body\u003e\n\u003c/html\u003e\n"
+        requestId:
+          type: string
+          description: payment request Id
+          example: affd8e24-f99a-406f-9ded-67a4a20c097f
         status:
           type: string
           description: status

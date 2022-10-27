@@ -74,4 +74,5 @@ public class XpayService {
         log.info(CALLING_POST_STRING + orderStatusUrl);
         return xpayRestTemplate.postForObject(revertUrl, entity, XPayRevertResponse.class);
     }
+
 }

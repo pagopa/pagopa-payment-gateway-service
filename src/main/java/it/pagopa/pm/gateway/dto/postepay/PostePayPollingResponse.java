@@ -1,4 +1,4 @@
-package it.pagopa.pm.gateway.dto;
+package it.pagopa.pm.gateway.dto.postepay;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;

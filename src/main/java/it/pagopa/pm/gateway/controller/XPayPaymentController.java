@@ -359,19 +359,13 @@ public class XPayPaymentController {
         Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
         String authCode = entity.getAuthorizationCode();
         PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
-        boolean isToContinue = true;
-        int retryCount = 1;
-        while (isToContinue && retryCount <= MAX_RETRIES) {
-            try {
-                log.info(String.format("Attempt no.%s for requestId: %s", retryCount, requestId));
-                String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
-                isToContinue = false;
-                log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
-            } catch (Exception e) {
-                retryCount++;
-                log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
-                entity.setStatus(CANCELLED.name());
-            }
+
+        try {
+            String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
+            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
+        } catch (Exception e) {
+            log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
+            entity.setStatus(CANCELLED.name());
         }
         paymentRequestRepository.save(entity);
     }

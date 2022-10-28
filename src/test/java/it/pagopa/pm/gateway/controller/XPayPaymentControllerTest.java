@@ -95,33 +95,6 @@ public class XPayPaymentControllerTest {
     }
 
     @Test
-    public void xPay_ReceivingErrorFromXPay_shouldReturnOkResponseAndStatusDenied() throws Exception {
-        try (MockedStatic<UUID> mockedUuid = Mockito.mockStatic(UUID.class)) {
-
-            mockedUuid.when(UUID::randomUUID).thenReturn(uuid);
-            when(uuid.toString()).thenReturn(UUID_SAMPLE);
-
-            XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-            AuthPaymentXPayRequest xPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
-            AuthPaymentXPayResponse xPayResponse = ValidBeans.createXPayAuthResponseError(xPayRequest);
-            PaymentRequestEntity entity = ValidBeans.paymentRequestEntityXpayDenied(xPayAuthRequest, APP_ORIGIN);
-
-            entity.setGuid(UUID_SAMPLE);
-
-            when(paymentRequestRepository.findByGuid(any())).
-                    thenReturn(entity);
-
-            when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
-
-            mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                            .header(Headers.X_CLIENT_ID, APP_ORIGIN)
-                            .content(mapper.writeValueAsString(xPayAuthRequest))
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(content().json(mapper.writeValueAsString(ValidBeans.xPayAuthResponse(false, null, UUID_SAMPLE, true))));
-        }
-    }
-
-    @Test
     public void xPay_givenGoodRequest_shouldThrowResourceAccessException() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(xpayService.callAutenticazione3DS(any())).thenThrow(ResourceAccessException.class);
@@ -130,7 +103,7 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().is2xxSuccessful());
     }
 
     @Test

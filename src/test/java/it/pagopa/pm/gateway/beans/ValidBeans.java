@@ -3,7 +3,10 @@ package it.pagopa.pm.gateway.beans;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.ACKMessage;
+import it.pagopa.pm.gateway.dto.AuthMessage;
+import it.pagopa.pm.gateway.dto.PatchRequest;
+import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayInfoResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
@@ -27,6 +30,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
@@ -528,7 +532,7 @@ public class ValidBeans {
         authPaymentXPayRequest.setUrlRisposta("localhost");
         authPaymentXPayRequest.setDivisa("978");
         authPaymentXPayRequest.setTimeStamp(timeStamp);
-        authPaymentXPayRequest.setMac(createMac(xPayAuthRequest.getIdTransaction(), xPayAuthRequest.getGrandTotal(), timeStamp));
+        authPaymentXPayRequest.setMac(createMac(xPayAuthRequest.getGrandTotal(), timeStamp));
         return authPaymentXPayRequest;
     }
 
@@ -570,9 +574,9 @@ public class ValidBeans {
     }
 
 
-    private static String createMac(String codTrans, BigInteger importo, String timeStamp) throws NoSuchAlgorithmException {
+    private static String createMac(BigInteger importo, String timeStamp) throws NoSuchAlgorithmException {
         String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s",
-                "apiKey", codTrans, "978", importo, timeStamp, "chiavesegreta");
+                "apiKey", "02", "978", importo, timeStamp, "secretKey");
         return hashMac(macString);
     }
 
@@ -604,7 +608,7 @@ public class ValidBeans {
         return xPayRequest;
     }
 
-    public static MultiValueMap<String, String> createXPayResumeRequest(boolean isValid) {
+    public static MultiValueMap<String, String> createXPayResumeRequest(boolean isValid) throws NoSuchAlgorithmException {
         String timeStamp = String.valueOf(System.currentTimeMillis());
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.put(XPAY_KEY_RESUME_TYPE, Collections.singletonList(RESUME_TYPE_XPAY));
@@ -612,7 +616,7 @@ public class ValidBeans {
             parameters.put(XPAY_OUTCOME, Collections.singletonList("OK"));
             parameters.put(XPAY_OPERATION_ID, Collections.singletonList("123456"));
             parameters.put(XPAY_NONCE, Collections.singletonList("nonce"));
-            parameters.put(XPAY_MAC, Collections.singletonList("mac"));
+            parameters.put(XPAY_MAC, Collections.singletonList(createMac(BigInteger.valueOf(1234), String.valueOf(12L))));
         } else {
             parameters.put(XPAY_OUTCOME, Collections.singletonList("KO"));
             parameters.put(XPAY_ERROR_CODE, Collections.singletonList("codiceErrore"));
@@ -691,6 +695,10 @@ public class ValidBeans {
         response.setTimeStamp(System.currentTimeMillis());
         response.setMac("mac");
         return response;
+    }
+
+    public static Calendar returnCalendar() {
+        return Calendar.getInstance();
     }
 
     public static BPayInfoResponse bpayInfoResponse(boolean isError, String errorString) {

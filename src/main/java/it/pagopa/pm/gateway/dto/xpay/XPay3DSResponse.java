@@ -1,6 +1,5 @@
 package it.pagopa.pm.gateway.dto.xpay;
 
-import it.pagopa.pm.gateway.dto.xpay.EsitoXpay;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

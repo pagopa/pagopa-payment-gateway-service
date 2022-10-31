@@ -1,4 +1,4 @@
-package it.pagopa.pm.gateway.dto;
+package it.pagopa.pm.gateway.dto.xpay;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -17,4 +17,5 @@ public class XPayPollingResponse {
     private String authOutcome;
     private String authCode;
     private String redirectUrl;
+    private String requestId;
 }

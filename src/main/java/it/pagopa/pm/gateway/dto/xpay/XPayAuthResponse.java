@@ -1,4 +1,4 @@
-package it.pagopa.pm.gateway.dto;
+package it.pagopa.pm.gateway.dto.xpay;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

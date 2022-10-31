@@ -8,14 +8,15 @@ import it.pagopa.pm.gateway.client.bpay.BancomatPayClient;
 import it.pagopa.pm.gateway.client.bpay.generated.ObjectFactory;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.ApiPaths;
-import it.pagopa.pm.gateway.dto.BPayPaymentRequest;
-import it.pagopa.pm.gateway.dto.BPayRefundRequest;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.BPayPaymentResponseRepository;
 import it.pagopa.pm.gateway.ExceptionUtil.ExceptionEnumMatcher;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -39,8 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -83,13 +83,11 @@ public class BancomatPayControllerTests {
             BPayPaymentRequest request = ValidBeans.bPayPaymentRequest();
             given(client.sendPaymentRequest(any(BPayPaymentRequest.class), anyString())).willReturn(ValidBeans.inserimentoRichiestaPagamentoPagoPaResponse());
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_BPAY)
-                    .content(mapper.writeValueAsString(request))
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .content(mapper.writeValueAsString(request))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bPayPaymentOutcomeResponseToReturn())));
             verify(bPayPaymentResponseRepository).findByIdPagoPa(1L);
-           // verify(bPayPaymentResponseRepository).save(ValidBeans.bPayPaymentResponseEntityToSave());
-         //   verify(client).sendPaymentRequest(request, "8d8b30e3-de52-4f1c-a71c-9905a8043dac");
         }
     }
 
@@ -113,9 +111,9 @@ public class BancomatPayControllerTests {
         given(bPayPaymentResponseRepository.findByCorrelationId(anyString())).willReturn(ValidBeans.bPayPaymentResponseEntityToFind());
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_BPAY)
-                .header("X-Correlation-ID", "correlationId")
-                .content(mapper.writeValueAsString(ValidBeans.authMessage(OutcomeEnum.OK)))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header("X-Correlation-ID", "correlationId")
+                        .content(mapper.writeValueAsString(ValidBeans.authMessage(OutcomeEnum.OK)))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.ackMessageResponse(OutcomeEnum.OK))));
         verify(bPayPaymentResponseRepository).findByCorrelationId("correlationId");
@@ -190,19 +188,19 @@ public class BancomatPayControllerTests {
         }
     }
 
-   @Test
-   public void givenBPayPaymentResponseEntityNotFound_shouldReturnTransactionNotFound() throws Exception {
-       thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_NOT_FOUND)));
-       given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(null);
+    @Test
+    public void givenBPayPaymentResponseEntityNotFound_shouldReturnTransactionNotFound() throws Exception {
+        thrown.expect(ExceptionEnumMatcher.withExceptionEnum(equalTo(ExceptionsEnum.TRANSACTION_NOT_FOUND)));
+        given(bPayPaymentResponseRepository.findByIdPagoPa(1L)).willReturn(null);
 
-       try {
-           mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
-                   .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
-                   .contentType(MediaType.APPLICATION_JSON));
-       } catch (NestedServletException | JsonProcessingException e) {
-           throw (Exception) e.getCause();
-       }
-   }
+        try {
+            mvc.perform(post(ApiPaths.REQUEST_REFUNDS_BPAY)
+                    .content(mapper.writeValueAsString(ValidBeans.bPayRefundRequest()))
+                    .contentType(MediaType.APPLICATION_JSON));
+        } catch (NestedServletException | JsonProcessingException e) {
+            throw (Exception) e.getCause();
+        }
+    }
 
     @Test
     public void givenBPayRefundRequestWithNoReturn_shouldReturnGenericError() throws Exception {
@@ -253,6 +251,29 @@ public class BancomatPayControllerTests {
         }
     }
 
+    @Test
+    public void whenBlankRequestId_thenReturnGenericError() throws Exception {
+        String errorMsg = "RequestId is blank: please specify a valid requestId";
+        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, StringUtils.SPACE))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(true, errorMsg))));
+    }
 
+    @Test
+    public void whenRequestIdIsNotFound_thenReturnNotFound() throws Exception {
+        String requestId = "testRequestId";
+        String errorMsg = "No entity has been found for requestId " + requestId;
+        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, requestId))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(true, errorMsg))));
+    }
 
+    @Test
+    public void whenRequestIdIsFound_thenReturnBpayInfoResponse() throws Exception {
+        when(bPayPaymentResponseRepository.findByClientGuid(anyString()))
+                .thenReturn(ValidBeans.bPayPaymentResponseEntityToFind());
+        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, "testRequestId"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(false, null))));
+    }
 }

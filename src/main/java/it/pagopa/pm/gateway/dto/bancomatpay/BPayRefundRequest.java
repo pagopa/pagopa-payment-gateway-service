@@ -1,4 +1,4 @@
-package it.pagopa.pm.gateway.dto;
+package it.pagopa.pm.gateway.dto.bancomatpay;
 
 import lombok.*;
 

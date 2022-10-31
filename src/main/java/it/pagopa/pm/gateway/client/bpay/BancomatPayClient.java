@@ -1,7 +1,8 @@
 package it.pagopa.pm.gateway.client.bpay;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
 import it.pagopa.pm.gateway.utils.ClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

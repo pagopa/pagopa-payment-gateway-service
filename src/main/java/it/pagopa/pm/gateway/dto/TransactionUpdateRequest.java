@@ -15,4 +15,6 @@ public class TransactionUpdateRequest {
 
     private String pgsOutcome;
 
+    private String correlationId;
+
 }

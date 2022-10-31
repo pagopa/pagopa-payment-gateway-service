@@ -128,6 +128,7 @@ public class ValidBeans {
         transactionUpdateRequest.setStatus(21L);
         transactionUpdateRequest.setAuthCode("authCode");
         transactionUpdateRequest.setPgsOutcome("0");
+        transactionUpdateRequest.setCorrelationId("id");
         return transactionUpdateRequest;
     }
 

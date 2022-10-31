@@ -8,7 +8,7 @@ import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.PatchRequestData;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
 import it.pagopa.pm.gateway.dto.TransactionUpdateRequestData;
-import it.pagopa.pm.gateway.utils.Custom5xxErrorDecoder;
+import it.pagopa.pm.gateway.utils.CustomErrorDecoder;
 import it.pagopa.pm.gateway.utils.RetryerCustom;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +36,7 @@ public class RestapiCdClientImpl {
                 .client(new OkHttpClient())
                 .encoder(new JacksonEncoder())
                 .decoder(new JacksonDecoder())
-                .errorDecoder(new Custom5xxErrorDecoder())
+                .errorDecoder(new CustomErrorDecoder())
                 .retryer(new RetryerCustom(100L, 3000L, 3))
                 .target(RestapiCdClient.class, hostnamePm);
     }

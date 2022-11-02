@@ -3,7 +3,7 @@ package it.pagopa.pm.gateway.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
@@ -48,7 +48,7 @@ public class XPayPaymentController {
     public static final String EUR_CURRENCY = "978";
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static final String ZERO_CHAR = "0";
-    private static final int PAGA3DS_MAX_RETRIES = 3;
+    private static final int MAX_RETRIES = 3;
 
     @Value("${xpay.response.urlredirect}")
     private String responseUrlRedirect;
@@ -303,7 +303,7 @@ public class XPayPaymentController {
         int retryCount = 1;
         boolean isAuthorized = false;
         log.info("Calling XPay /paga3DS - requestId: " + requestId);
-        while (!isAuthorized && retryCount <= PAGA3DS_MAX_RETRIES) {
+        while (!isAuthorized && retryCount <= MAX_RETRIES) {
             try {
                 PaymentXPayRequest xpayRequest = createXPayPaymentRequest(requestId, entity);
                 log.info(String.format("Attempt no.%s for requestId: %s", retryCount, requestId));
@@ -363,6 +363,7 @@ public class XPayPaymentController {
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
+            entity.setStatus(CANCELLED.name());
         }
         paymentRequestRepository.save(entity);
     }

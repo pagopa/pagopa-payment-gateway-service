@@ -21,8 +21,6 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.*;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -361,18 +359,6 @@ public class ValidBeans {
         return postePayPollingResponse;
     }
 
-
-    public static ResponseEntity<PostePayRefundResponse> postePayRefundResponseResponseEntity(String requestId, String paymentId, String refundOutcome) {
-
-        PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
-        postePayRefundResponse.setRequestId(requestId);
-        postePayRefundResponse.setPaymentId(paymentId);
-        postePayRefundResponse.setRefundOutcome(refundOutcome);
-
-        return ResponseEntity.status(HttpStatus.OK).body(postePayRefundResponse);
-
-    }
-
     public static PostePayRefundResponse postePayRefundResponse(String requestId, String paymentId, String refundOutcome, String error) {
         PostePayRefundResponse postePayRefundResponse = new PostePayRefundResponse();
         postePayRefundResponse.setRequestId(requestId);
@@ -495,17 +481,6 @@ public class ValidBeans {
         return paymentRequestEntity;
     }
 
-    public static PaymentRequestEntity paymentRequestEntityXpayDenied(XPayAuthRequest XPayAuthRequest, String clientId) {
-        PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
-        paymentRequestEntity.setClientId(clientId);
-        paymentRequestEntity.setGuid(UUID.randomUUID().toString());
-        paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_XPAY);
-        paymentRequestEntity.setIdTransaction(XPayAuthRequest.getIdTransaction());
-        paymentRequestEntity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
-        paymentRequestEntity.setStatus(DENIED.name());
-        return paymentRequestEntity;
-    }
-
     public static PaymentRequestEntity paymentRequestEntityxPayWithError(XPayAuthRequest XPayAuthRequest, String clientId) {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         paymentRequestEntity.setClientId(clientId);
@@ -545,18 +520,6 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static AuthPaymentXPayResponse createXPayAuthResponseError(AuthPaymentXPayRequest authPaymentXPayRequest) {
-        AuthPaymentXPayResponse authPaymentXPayResponse = new AuthPaymentXPayResponse();
-        authPaymentXPayResponse.setEsito(EsitoXpay.KO);
-        authPaymentXPayResponse.setTimeStamp(System.currentTimeMillis());
-        authPaymentXPayResponse.setMac(authPaymentXPayRequest.getMac());
-        XpayError error = new XpayError();
-        error.setMessaggio("erroreTest");
-        error.setCodice(22L);
-        authPaymentXPayResponse.setErrore(error);
-        return authPaymentXPayResponse;
-    }
-
     public static XPayPollingResponse createXpayAuthPollingResponse(boolean isOk, XPayPollingResponseError error,
                                                                     boolean isCancelled) {
         XPayPollingResponse response = new XPayPollingResponse();
@@ -572,7 +535,6 @@ public class ValidBeans {
         }
         return response;
     }
-
 
     private static String createMac(BigInteger importo, String timeStamp) throws NoSuchAlgorithmException {
         String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s",
@@ -594,8 +556,7 @@ public class ValidBeans {
         return hash;
     }
 
-
-    public static PaymentXPayRequest createXPayPaymentRequest(XPay3DSResponse xPayResumeRequest, PaymentRequestEntity entity) {
+    public static PaymentXPayRequest createXPayPaymentRequest(PaymentRequestEntity entity) {
         PaymentXPayRequest xPayRequest = new PaymentXPayRequest();
         String timeStamp = String.valueOf(System.currentTimeMillis());
         xPayRequest.setApiKey("ExampleApiKey");
@@ -603,8 +564,8 @@ public class ValidBeans {
         xPayRequest.setImporto(BigInteger.valueOf(1256));
         xPayRequest.setDivisa(978L);
         xPayRequest.setTimeStamp(timeStamp);
-        xPayRequest.setMac(xPayResumeRequest.getMac());
-        xPayRequest.setXpayNonce(xPayResumeRequest.getXpayNonce());
+        xPayRequest.setMac("mac");
+        xPayRequest.setXpayNonce("nonce");
         return xPayRequest;
     }
 
@@ -706,6 +667,24 @@ public class ValidBeans {
         bPayInfoResponse = isError ? new BPayInfoResponse(null, errorString) :
                 new BPayInfoResponse("id", null);
         return bPayInfoResponse;
+    }
+
+    public static XPayOrderStatusRequest createXPayOrderStatusRequest() {
+        return new XPayOrderStatusRequest(
+                "apiKey",
+                "codTrans",
+                String.valueOf(System.currentTimeMillis()),
+                "mac");
+    }
+
+    public static XPayRevertRequest createXPayRevertRequest() {
+        return new XPayRevertRequest(
+                "apiKey",
+                "codTrans",
+                BigInteger.valueOf(23L),
+                978L,
+                String.valueOf(System.currentTimeMillis()),
+                "mac");
     }
 }
 

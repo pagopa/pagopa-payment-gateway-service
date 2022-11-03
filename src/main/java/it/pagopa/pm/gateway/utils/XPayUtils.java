@@ -12,7 +12,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Calendar;
 
 import static it.pagopa.pm.gateway.controller.XPayPaymentController.*;
 
@@ -26,10 +25,9 @@ public class XPayUtils {
     @Value("${xpay.secretKey}")
     private String secretKey;
 
-    public Boolean checkMac(PaymentRequestEntity entity, String xPayMac) throws JsonProcessingException {
+    public Boolean checkMac(PaymentRequestEntity entity, String xPayMac, String timeStamp) throws JsonProcessingException {
         String idTransaction = entity.getIdTransaction();
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
-        String timeStamp = String.valueOf(Calendar.getInstance().getTimeInMillis());
         BigInteger grandTotal = getGrandTotalForMac(entity);
         String pgsMac = createMac(codTrans, grandTotal, timeStamp);
 

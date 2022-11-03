@@ -825,6 +825,7 @@ components:
         - requestId
         - urlRedirect
         - status
+        - timeStamp
       properties:
         requestId:
           type: string
@@ -837,6 +838,10 @@ components:
           type: string
           description: status
           example: CREATED
+        timeStamp:
+          type: string
+          description: timeStamp
+          example: 1667484646944
     XPayAuthResponseEntity400:
       type: object
       required:

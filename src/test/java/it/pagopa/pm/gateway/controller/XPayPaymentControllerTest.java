@@ -210,7 +210,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
@@ -235,7 +235,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
@@ -258,7 +258,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenReturn(null);
 
@@ -281,7 +281,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenThrow(new RuntimeException());
 
@@ -326,7 +326,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
@@ -338,8 +338,6 @@ public class XPayPaymentControllerTest {
                         .params(params))
                 .andExpect(status().isFound());
     }
-
-
 
     @Test
     public void xPay_givenResumeRequestWithEsitoEqualToNull_shouldReturn400Status() throws Exception {
@@ -396,8 +394,6 @@ public class XPayPaymentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
-
-
 
     @Test
     public void xPay_givenRequestAlreadyRefunded_shouldReturn200() throws Exception {

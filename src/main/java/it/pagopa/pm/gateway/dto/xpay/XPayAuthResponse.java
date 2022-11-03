@@ -15,5 +15,6 @@ public class XPayAuthResponse {
     private String error;
     private String requestId;
     private String status;
+    private String timeStamp;
 
 }

@@ -78,13 +78,13 @@ public class XPayPaymentController {
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.info("START - POST " + REQUEST_PAYMENTS_XPAY);
             log.error(String.format("Client id %s is not valid", clientId));
-            return createXpayAuthResponse(BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
+            return createXpayAuthResponse(BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null, null);
         }
 
         if (ObjectUtils.anyNull(pgsRequest) || pgsRequest.getGrandTotal().equals(BigInteger.ZERO)) {
             log.info("START POST - " + REQUEST_PAYMENTS_XPAY);
             log.error(BAD_REQUEST_MSG);
-            return createXpayAuthResponse(BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null);
+            return createXpayAuthResponse(BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null, null);
         }
 
         String idTransaction = pgsRequest.getIdTransaction();
@@ -93,7 +93,7 @@ public class XPayPaymentController {
 
         if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createXpayAuthResponse(TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
+            return createXpayAuthResponse(TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null, null);
         }
 
         return createAuthPaymentXpay(pgsRequest, clientId, mdcFields);
@@ -141,7 +141,7 @@ public class XPayPaymentController {
 
         if (outcome.equals(OK)) {
             String xPayMac = xPay3DSResponse.getMac();
-            if (BooleanUtils.isFalse(xPayUtils.checkMac(entity, xPayMac))) {
+            if (BooleanUtils.isFalse(xPayUtils.checkMac(entity, xPayMac, entity.getTimeStamp()))) {
                 log.error(String.format(MAC_NOT_EQUAL_ERROR_MSG, xPayMac) + "for requestId: " + requestId);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MAC_NOT_EQUAL_ERROR_MSG);
             }
@@ -158,8 +158,9 @@ public class XPayPaymentController {
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 
-    private ResponseEntity<XPayAuthResponse> createXpayAuthResponse(String errorMessage, HttpStatus status, String requestId) {
+    private ResponseEntity<XPayAuthResponse> createXpayAuthResponse(String errorMessage, HttpStatus status, String requestId, String timeStamp) {
         XPayAuthResponse response = new XPayAuthResponse();
+        response.setTimeStamp(timeStamp);
         if (StringUtils.isNotBlank(requestId)) {
             response.setRequestId(requestId);
         }
@@ -215,7 +216,7 @@ public class XPayPaymentController {
         xPayAuthRequest.setUrlRisposta(String.format(xpayResponseUrl, paymentRequestEntity.getGuid()));
         executeXPayAuthorizationCall(xPayAuthRequest, paymentRequestEntity, transactionId);
 
-        return createXpayAuthResponse(null, HttpStatus.OK, paymentRequestEntity.getGuid());
+        return createXpayAuthResponse(null, HttpStatus.OK, paymentRequestEntity.getGuid(), paymentRequestEntity.getTimeStamp());
     }
 
     @Async
@@ -228,7 +229,7 @@ public class XPayPaymentController {
                 log.error(errorMsg);
                 requestEntity.setStatus(DENIED.name());
             } else {
-                requestEntity.setTimeStamp(String.valueOf(response.getTimeStamp()));
+                requestEntity.setTimeStamp(xPayRequest.getTimeStamp());
                 XpayError xpayError = response.getErrore();
                 if (ObjectUtils.isEmpty(xpayError)) {
                     requestEntity.setXpayHtml(response.getHtml());

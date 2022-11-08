@@ -2,6 +2,8 @@ package it.pagopa.pm.gateway.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.pagopa.pm.gateway.dto.xpay.AuthPaymentXPayRequest;
+import it.pagopa.pm.gateway.dto.xpay.EsitoXpay;
+import it.pagopa.pm.gateway.dto.xpay.XPay3DSResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,11 +27,12 @@ public class XPayUtils {
     @Value("${xpay.secretKey}")
     private String secretKey;
 
-    public Boolean checkMac(PaymentRequestEntity entity, String xPayMac, String timeStamp) throws JsonProcessingException {
-        String idTransaction = entity.getIdTransaction();
-        String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
-        BigInteger grandTotal = getGrandTotalForMac(entity);
-        String pgsMac = createMac(codTrans, grandTotal, timeStamp);
+    public Boolean checkMac(String xPayMac, XPay3DSResponse xPay3DSResponse) {
+        String operationId = xPay3DSResponse.getOperationId();
+        String timeStamp = xPay3DSResponse.getTimestamp();
+        EsitoXpay outcome = xPay3DSResponse.getOutcome();
+        String pgsMac = hashMac(String.format("esito=%sidOperazione=%stimeStamp=%s%s",
+                outcome.name(), operationId, timeStamp, secretKey));
 
         return xPayMac.equals(pgsMac);
     }

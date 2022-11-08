@@ -90,6 +90,24 @@ public class XPayPaymentControllerTest {
                 .andExpect(status().isOk());
     }
 
+
+    @Test
+    public void badResponseFromXPay_shouldReturnOkResponse() throws Exception {
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        AuthPaymentXPayRequest xPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        AuthPaymentXPayResponse xPayResponse = ValidBeans.createBadXPayAuthResponse(xPayRequest);
+
+        when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false));
+
+        mvc.perform(post(REQUEST_PAYMENTS_XPAY)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .content(mapper.writeValueAsString(xPayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
     @Test
     public void xPay_givenGoodRequest_shouldThrowResourceAccessException() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
@@ -198,6 +216,32 @@ public class XPayPaymentControllerTest {
 
     @Test
     public void xPay_givenGoodResumeRequest_shouldReturn302Status() throws Exception {
+        boolean isTrue = true;
+        MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(isTrue);
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(isTrue);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, isTrue, CREATED, false);
+
+        AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
+        String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
+        entity.setJsonRequest(jsonRequest);
+
+        PaymentXPayResponse xPayResponse = ValidBeans.createPaymentXPayResponse(isTrue);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+        when(xPayUtils.checkMac(any(), any())).thenReturn(isTrue);
+
+        when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
+
+        mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .params(params))
+                .andExpect(status().isFound());
+    }
+
+    @Test
+    public void xPay_givenMacIncorrect_shouldReturn302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
@@ -210,7 +254,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any())).thenReturn(false);
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
@@ -235,7 +279,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
@@ -258,7 +302,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenReturn(null);
 
@@ -281,7 +325,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenThrow(new RuntimeException());
 
@@ -326,7 +370,7 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        when(xPayUtils.checkMac(any(), any(), any())).thenReturn(true);
+        when(xPayUtils.checkMac(any(), any())).thenReturn(true);
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
@@ -340,18 +384,7 @@ public class XPayPaymentControllerTest {
     }
 
     @Test
-    public void xPay_givenResumeRequestWithEsitoEqualToNull_shouldReturn400Status() throws Exception {
-        MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequestWithEsitoNull();
-
-        mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .params(params))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    public void xPay_givenGoodResumeRequest_shouldReturn4042Status() throws Exception {
+    public void xPay_givenGoodResumeRequest_NoEntityshouldReturn302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
@@ -360,12 +393,12 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isFound());
     }
 
     @Test
-    public void xPay_givenGoodResumeRequest_shouldReturn401Status() throws Exception {
-        MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(false);
+    public void xPay_givenBadResumeRequest_TransactionAlredyProcessedshouldReturn302Status() throws Exception {
+        MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
 
@@ -381,11 +414,11 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isFound());
     }
 
     @Test
-    public void xPay_givenBadRequestIdForResume_shouldReturn404() throws Exception {
+    public void xPay_givenBadRequestIdForRefund_shouldReturn404() throws Exception {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
 

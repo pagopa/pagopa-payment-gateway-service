@@ -520,6 +520,19 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
+    public static AuthPaymentXPayResponse createBadXPayAuthResponse(AuthPaymentXPayRequest authPaymentXPayRequest) {
+        AuthPaymentXPayResponse authPaymentXPayResponse = new AuthPaymentXPayResponse();
+        authPaymentXPayResponse.setHtml("<html><body></body></html>");
+        authPaymentXPayResponse.setEsito(EsitoXpay.KO);
+        authPaymentXPayResponse.setTimeStamp(System.currentTimeMillis());
+        authPaymentXPayResponse.setMac(authPaymentXPayRequest.getMac());
+        XpayError error = new XpayError();
+        error.setMessaggio("messaggio");
+        error.setCodice(1L);
+        authPaymentXPayResponse.setErrore(error);
+        return authPaymentXPayResponse;
+    }
+
     public static XPayPollingResponse createXpayAuthPollingResponse(boolean isOk, XPayPollingResponseError error,
                                                                     boolean isCancelled) {
         XPayPollingResponse response = new XPayPollingResponse();

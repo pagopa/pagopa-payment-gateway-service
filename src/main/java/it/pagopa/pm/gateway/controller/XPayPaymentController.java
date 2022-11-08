@@ -184,12 +184,12 @@ public class XPayPaymentController {
 
         if (Objects.isNull(entity)) {
             log.error(REQUEST_ID_NOT_FOUND_MSG);
-            return createXPayRefundRespone(requestId, HttpStatus.NOT_FOUND, null);
+            return createXPayRefundResponse(requestId, HttpStatus.NOT_FOUND, null);
         }
 
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
-            return createXPayRefundRespone(requestId, HttpStatus.OK, null);
+            return createXPayRefundResponse(requestId, HttpStatus.OK, null);
         }
 
         EsitoXpay refundOutcome = null;
@@ -198,9 +198,9 @@ public class XPayPaymentController {
             if (outcomeOrderStatus.equals(OK)) {
                 refundOutcome = executeXPayRevert(entity);
             }
-            return createXPayRefundRespone(requestId, HttpStatus.OK, refundOutcome);
+            return createXPayRefundResponse(requestId, HttpStatus.OK, refundOutcome);
         } catch (Exception e) {
-            return createXPayRefundRespone(requestId, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createXPayRefundResponse(requestId, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
 
@@ -436,7 +436,7 @@ public class XPayPaymentController {
         }
     }
 
-    private ResponseEntity<XPayRefundResponse> createXPayRefundRespone(String requestId, HttpStatus httpStatus, EsitoXpay refundOutcome) {
+    private ResponseEntity<XPayRefundResponse> createXPayRefundResponse(String requestId, HttpStatus httpStatus, EsitoXpay refundOutcome) {
         XPayRefundResponse response = new XPayRefundResponse();
         response.setRequestId(requestId);
 

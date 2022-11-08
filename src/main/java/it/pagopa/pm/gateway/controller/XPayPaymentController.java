@@ -178,10 +178,8 @@ public class XPayPaymentController {
     }
 
     @DeleteMapping(REQUEST_ID)
-    public ResponseEntity<XPayRefundResponse> xPayRefund(@PathVariable String requestId) {
-
+    public ResponseEntity<XPayRefundResponse> refundXpayPayment(@PathVariable String requestId) {
         log.info("START - requesting XPay refund for requestId: " + requestId);
-
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
 
         if (Objects.isNull(entity)) {
@@ -200,10 +198,10 @@ public class XPayPaymentController {
             if (outcomeOrderStatus.equals(OK)) {
                 refundOutcome = executeXPayRevert(entity);
             }
+            return createXPayRefundRespone(requestId, HttpStatus.OK, refundOutcome);
         } catch (Exception e) {
             return createXPayRefundRespone(requestId, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
-        return createXPayRefundRespone(requestId, HttpStatus.OK, refundOutcome);
     }
 
     private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(XPayAuthRequest pgsRequest, String clientId, String mdcFields) {
@@ -364,9 +362,9 @@ public class XPayPaymentController {
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
-            entity.setStatus(CANCELLED.name());
+            log.info("Refunding payment with requestId: " + requestId);
+            refundXpayPayment(requestId);
         }
-        paymentRequestRepository.save(entity);
     }
 
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {
@@ -408,33 +406,34 @@ public class XPayPaymentController {
         String requestId = entity.getGuid();
         XPayOrderStatusResponse response;
         try {
-            log.info("START executeXPayOrderStatus for requestId " + requestId);
+            log.info("Calling situazioneOrdine for requestId " + requestId);
             XPayOrderStatusRequest request = createXPayOrderStatusRequest(entity);
             response = xpayService.callSituazioneOrdine(request);
+            return response.getEsito();
         } catch (Exception e) {
-            log.error(GENERIC_REFUND_ERROR_MSG + requestId, e);
+            log.error("Error while calling XPay's situazioneOrdine API for requestId " + requestId, e);
             throw e;
         }
-        return response.getEsito();
     }
 
     private EsitoXpay executeXPayRevert(PaymentRequestEntity entity) throws Exception {
         String requestId = entity.getGuid();
-        XPayRevertResponse response;
         try {
-            log.info("START executeXPayOrderStatus for requestId " + requestId);
+            log.info("Calling revert API for requestId " + requestId);
             XPayRevertRequest request = createXPayRevertRequest(entity);
-            response = xpayService.callStorna(request);
+            XPayRevertResponse response = xpayService.callStorna(request);
+            EsitoXpay outcome = response.getEsito();
+            log.info(String.format("XPay response to revert API is %s for requestId %s", outcome, requestId));
+            if (outcome.equals(OK)) {
+                entity.setStatus(CANCELLED.name());
+                entity.setIsRefunded(true);
+                paymentRequestRepository.save(entity);
+            }
+            return outcome;
         } catch (Exception e) {
             log.error(GENERIC_REFUND_ERROR_MSG + requestId, e);
             throw e;
         }
-        if (response.getEsito().equals(OK)) {
-            entity.setStatus(CANCELLED.name());
-            entity.setIsRefunded(Boolean.TRUE);
-            paymentRequestRepository.save(entity);
-        }
-        return response.getEsito();
     }
 
     private ResponseEntity<XPayRefundResponse> createXPayRefundRespone(String requestId, HttpStatus httpStatus, EsitoXpay refundOutcome) {

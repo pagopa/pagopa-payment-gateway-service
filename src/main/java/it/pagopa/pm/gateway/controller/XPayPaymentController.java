@@ -115,36 +115,25 @@ public class XPayPaymentController {
 
     @GetMapping(XPAY_RESUME)
     public ResponseEntity<String> resumeXPayPayment(@PathVariable String requestId,
-                                                    @RequestParam Map<String, String> params) throws JsonProcessingException {
+                                                    @RequestParam Map<String, String> params) {
 
         log.info(String.format("START - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
         log.info("Params received from XPay: " + params);
 
-        if (ObjectUtils.anyNull(params, params.get(XPAY_OUTCOME))) {
-            log.error(BAD_REQUEST_MSG + " for XPay resume request - requestId " + requestId);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BAD_REQUEST_MSG);
-        }
-
         XPay3DSResponse xPay3DSResponse = buildXPay3DSResponse(params);
         EsitoXpay outcome = xPay3DSResponse.getOutcome();
+
+        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
 
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
         if (Objects.isNull(entity)) {
             log.error("No XPay entity has been found for requestId: " + requestId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(REQUEST_ID_NOT_FOUND_MSG);
+            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
         }
 
-        if (Objects.nonNull(entity.getAuthorizationOutcome())) {
-            log.warn(String.format("requestId %s already processed", requestId));
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(TRANSACTION_ALREADY_PROCESSED_MSG);
-        }
+        boolean isToExecutePayment = checkResumeRequest(entity, requestId, xPay3DSResponse);
 
-        if (outcome.equals(OK)) {
-            String xPayMac = xPay3DSResponse.getMac();
-            if (BooleanUtils.isFalse(xPayUtils.checkMac(entity, xPayMac, entity.getTimeStamp()))) {
-                log.error(String.format(MAC_NOT_EQUAL_ERROR_MSG, xPayMac) + "for requestId: " + requestId);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MAC_NOT_EQUAL_ERROR_MSG);
-            }
+        if (isToExecutePayment && outcome.equals(OK)) {
             executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
             executePatchTransactionV2(entity, requestId);
         } else {
@@ -153,7 +142,6 @@ public class XPayPaymentController {
             paymentRequestRepository.save(entity);
         }
 
-        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
         log.info(String.format("END - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
@@ -229,6 +217,7 @@ public class XPayPaymentController {
             } else {
                 requestEntity.setTimeStamp(xPayRequest.getTimeStamp());
                 XpayError xpayError = response.getErrore();
+                requestEntity.setCorrelationId(response.getIdOperazione());
                 if (ObjectUtils.isEmpty(xpayError)) {
                     requestEntity.setXpayHtml(response.getHtml());
                 } else {
@@ -338,6 +327,26 @@ public class XPayPaymentController {
         paymentRequestRepository.save(entity);
         log.info(String.format("END - executeXPayPaymentCall for requestId: %s. Status: %s " +
                 "- Authorization: %s. Retry attempts number: %s", requestId, entity.getStatus(), isAuthorized, retryCount));
+    }
+
+    private boolean checkResumeRequest(PaymentRequestEntity entity, String requestId, XPay3DSResponse xpay3DSResponse) {
+        log.info("CheckResumeRequest for requestId: " + requestId);
+
+        if (Objects.nonNull(entity.getAuthorizationOutcome())) {
+            log.warn(String.format("requestId %s already processed", requestId));
+            entity.setErrorMessage("requestId already processed");
+            return false;
+        }
+
+        String xPayMac = xpay3DSResponse.getMac();
+        if (BooleanUtils.isFalse(xPayUtils.checkMac(xPayMac, xpay3DSResponse))) {
+            log.error(String.format(MAC_NOT_EQUAL_ERROR_MSG, xPayMac) + "for requestId: " + requestId);
+            entity.setErrorMessage("Mac not Equal");
+            return false;
+        }
+
+        return true;
+
     }
 
     private void setErrorCodeAndMessage(String requestId, PaymentRequestEntity entity, PaymentXPayResponse response) {

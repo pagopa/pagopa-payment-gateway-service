@@ -31,8 +31,9 @@ public class XPayUtils {
         String operationId = xPay3DSResponse.getOperationId();
         String timeStamp = xPay3DSResponse.getTimestamp();
         EsitoXpay outcome = xPay3DSResponse.getOutcome();
-        String pgsMac = hashMac(String.format("esito=%sidOperazione=%stimeStamp=%s%s",
-                outcome.name(), operationId, timeStamp, secretKey));
+        String xpayNonce = xPay3DSResponse.getXpayNonce();
+        String pgsMac = hashMac(String.format("esito=%sidOperazione=%sxpayNonce=%stimeStamp=%s%s",
+                outcome.name(), operationId, xpayNonce, timeStamp, secretKey));
 
         return xPayMac.equals(pgsMac);
     }

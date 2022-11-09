@@ -219,6 +219,7 @@ public class XPayPaymentController {
             } else {
                 requestEntity.setTimeStamp(xPayRequest.getTimeStamp());
                 XpayError xpayError = response.getErrore();
+                requestEntity.setCorrelationId(response.getIdOperazione());
                 if (ObjectUtils.isEmpty(xpayError)) {
                     requestEntity.setXpayHtml(response.getHtml());
                 } else {

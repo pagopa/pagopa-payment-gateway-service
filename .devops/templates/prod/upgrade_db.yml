@@ -79,19 +79,19 @@ jobs:
                 echo "##vso[task.prependpath]$(Pipeline.Workspace)/liquibase-app"
               displayName: "Install Liquibase"
 
-              # AGID_USER (PM)
-              - template: ../liquibase-update.yml
-                parameters:
-                  url: $(prod-db-pgs-url-simple)
-                  username: $(prod-db-pgs-username)
-                  password: $(prod-db-pgs-password)
-                  classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
-                  liquibaseSchemaName: $(prod-db-pgs-schema)
-                  defaultSchemaName: $(prod-db-pgs-schema)
-                  schema: $(prod-db-pgs-schema)
-                  args: "-Dversion=${{ parameters.version }}"
-                  liquibaseTablespaceName: $(prod-db-pgs-tablespace)
-                  title: "Update DB AGID_USER - PROD"
-                  databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
-                  databaseChangelogTableName: "DATABASECHANGELOG_PGS"
-                  contexts: "tag,insert-prod,incremental-prod"
+            # AGID_USER (PM)
+            - template: ../liquibase-update.yml
+              parameters:
+                url: $(prod-db-pgs-url-simple)
+                username: $(prod-db-pgs-username)
+                password: $(prod-db-pgs-password)
+                classpath: $(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script/changelogs/payment-transaction-gateway
+                liquibaseSchemaName: $(prod-db-pgs-schema)
+                defaultSchemaName: $(prod-db-pgs-schema)
+                schema: $(prod-db-pgs-schema)
+                args: "-Dversion=${{ parameters.version }}"
+                liquibaseTablespaceName: $(prod-db-pgs-tablespace)
+                title: "Update DB AGID_USER - PROD"
+                databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
+                databaseChangelogTableName: "DATABASECHANGELOG_PGS"
+                contexts: "tag,insert-prod,incremental-prod"

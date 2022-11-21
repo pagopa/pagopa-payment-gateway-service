@@ -9,7 +9,7 @@ parameters:
 variables:
   vmImageNameDefault: 'ubuntu-latest'
   poolName: 'pm-agent-pool-prod'
-  azureSubscription: 'U87-PAGOPA-PCI'
+  azureSubscription: 'U87-PAGOPA-PCI(b276d890-671c-4927-a8d9-48a25b4a5df2)'
   KeyVaultName: 'U87-KMN-PM-pci-prod'
   definitionId: 134
 

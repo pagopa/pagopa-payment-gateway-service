@@ -14,7 +14,7 @@
 	<changeSet id="V11__PM_1102_ADD_COLUMN_ERROR_MESSAGE" author="liquibase" failOnError="true" context="incremental">
         <sqlFile path="../scripts/table-creation/V11__PM_1102_ADD_COLUMN_ERROR_MESSAGE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
     </changeSet>
-	<changeSet id="V12__PM_1102_ADD_COLUMN_ERROR_CODE" author="liquibase" failOnError="true" context="incremental-uat">
+	<changeSet id="V12__PM_1102_ADD_COLUMN_ERROR_CODE" author="liquibase" failOnError="true" context="incremental">
         <sqlFile path="../scripts/table-creation/V12__PM_1102_ADD_COLUMN_ERROR_CODE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
     </changeSet>
 </databaseChangeLog>

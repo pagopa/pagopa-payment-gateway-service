@@ -14,6 +14,7 @@ public class ApiPaths {
     private static final String BPAY = "/bancomatpay";
     private static final String POSTEPAY = "/postepay";
     private static final String XPAY = "/xpay";
+    private static final String CREDIT_CARD = "/creditCard";
 
     // path parameters
     public static final String REQUEST_ID = "/{requestId}";
@@ -30,5 +31,8 @@ public class ApiPaths {
     // XPay
     public static final String REQUEST_PAYMENTS_XPAY = REQUEST_PAYMENTS + XPAY;
     public static final String XPAY_RESUME = REQUEST_ID + "/resume";
+
+    //CreditCard
+    public static final String REQUEST_PAYMENTS_CREDIT_CARD = REQUEST_PAYMENTS + CREDIT_CARD;
 
 }

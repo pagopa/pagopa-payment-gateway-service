@@ -11,4 +11,5 @@
   <include file="./incremental-changelogs/V4_PM_917-changelog.xml" relativeToChangelogFile="true"></include>
   <include file="./incremental-changelogs/V5_PM_988-changelog.xml" relativeToChangelogFile="true"></include>
   <include file="./incremental-changelogs/V6_PM_1102-changelog.xml" relativeToChangelogFile="true"></include>
+  <include file="./incremental-changelogs/V7_PM_1215-changelog.xml" relativeToChangelogFile="true"></include>
 </databaseChangeLog>

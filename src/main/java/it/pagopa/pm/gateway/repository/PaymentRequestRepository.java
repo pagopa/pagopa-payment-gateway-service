@@ -4,6 +4,8 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface PaymentRequestRepository extends JpaRepository<PaymentRequestEntity, Long> {
 
@@ -12,5 +14,7 @@ public interface PaymentRequestRepository extends JpaRepository<PaymentRequestEn
     PaymentRequestEntity findByCorrelationIdAndRequestEndpoint(String correlationId, String requestEndpoint);
 
     PaymentRequestEntity findByGuid(String guid);
+
+    Optional<PaymentRequestEntity> findByGuidAndRequestEndpoint(String guid, String reuqestEndpoint);
 
 }

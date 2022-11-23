@@ -76,4 +76,10 @@ public class PaymentRequestEntity {
     @Column(name = "ERROR_MESSAGE")
     private String errorMessage;
 
+    @Column(name = "IS_FIRST_PAYMENT")
+    private Boolean isFirstPayment;
+
+    @Column(name = "RESPONSE_TYPE")
+    private String responseType;
+
 }

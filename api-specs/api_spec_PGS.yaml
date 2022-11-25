@@ -575,6 +575,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayRefundResponse500'
+  /request-payments/creditCard/{requestId}:
+    get:
+      summary: retrieve CreditCard payment request
+      tags:
+        - Credit Card
+      parameters:
+        - in: path
+          required: true
+          name: requestId
+          description: Id of the request
+          example: "41bc2409-5926-4aa9-afcc-797c7054e467"
+          schema:
+            type: string
+        - in: header
+          name: MDC-Fields
+          description: MDC information
+          example: 97g10t83x7bb0437bbc50sdf58e970gt
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CcPaymentInfoResponse'
+        "404":
+          "description": Not Found
 components:
   schemas:
     AuthMessage:
@@ -959,3 +988,14 @@ components:
           example: "RequestId 77e1c83b-7bb0-437b-bc50-a7a58e5660ac has not been found"
       required:
         - correlationId
+    CcPaymentInfoResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        responseType:
+          type: string
+        requestId:
+          type: string
+        acsUrl:
+          type: string

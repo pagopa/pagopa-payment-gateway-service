@@ -15,6 +15,6 @@ public interface PaymentRequestRepository extends JpaRepository<PaymentRequestEn
 
     PaymentRequestEntity findByGuid(String guid);
 
-    Optional<PaymentRequestEntity> findByGuidAndRequestEndpoint(String guid, String reuqestEndpoint);
+    Optional<PaymentRequestEntity> findByGuidAndRequestEndpoint(String guid, String requestEndpoint);
 
 }

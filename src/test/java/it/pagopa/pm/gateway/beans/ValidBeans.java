@@ -1,8 +1,11 @@
 package it.pagopa.pm.gateway.beans;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
+import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.ACKMessage;
 import it.pagopa.pm.gateway.dto.AuthMessage;
 import it.pagopa.pm.gateway.dto.PatchRequest;
@@ -11,10 +14,15 @@ import it.pagopa.pm.gateway.dto.bancomatpay.BPayInfoResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
+import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
 import it.pagopa.pm.gateway.dto.postepay.*;
+import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
+import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Authorization;
+import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
+import it.pagopa.pm.gateway.dto.vpos.ThreeDS2ResponseElement;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.BPayPaymentResponseEntity;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
@@ -23,7 +31,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.openapitools.client.model.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.SerializationUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -33,9 +45,12 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
 import static it.pagopa.pm.gateway.constant.XPayParams.*;
+import static it.pagopa.pm.gateway.dto.enums.CardCircuit.MASTERCARD;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.AUTHORIZATION;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
 public class ValidBeans {
@@ -698,6 +713,91 @@ public class ValidBeans {
                 978L,
                 String.valueOf(System.currentTimeMillis()),
                 "mac");
+    }
+
+    public static Step0CreditCardRequest createStep0Request() {
+        return new Step0CreditCardRequest(
+                "123456",
+                "reqRefNumber",
+                BigInteger.valueOf(123455),
+                "3456567899754",
+                "123",
+                "12/23",
+                "holder",
+                MASTERCARD,
+                "threeDsData",
+                "email@emal.com",
+                false,
+                "idPsp13");
+    }
+
+    public static PaymentRequestEntity createEntityVpos(Step0CreditCardRequest request) throws JsonProcessingException {
+        String requestJson = OBJECT_MAPPER.writeValueAsString(request);
+        PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setIdTransaction(request.getIdTransaction());
+        entity.setGuid(UUID.randomUUID().toString());
+        entity.setRequestEndpoint(REQUEST_PAYMENTS_CREDIT_CARD);
+        entity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
+        entity.setJsonRequest(requestJson);
+        return entity;
+    }
+
+    public static HttpClientResponse createHttpClientResponseVPos() throws IOException {
+        HttpClientResponse httpClientResponse = new HttpClientResponse();
+        httpClientResponse.setStatus(200);
+        ThreeDS2Response response = createThreeDS2ResponseStep0Authorization();
+        String json = OBJECT_MAPPER.writeValueAsString(response);
+        byte[] entity = convertToBytes(json);
+        httpClientResponse.setEntity(entity);
+        return  httpClientResponse;
+    }
+
+    private static byte[] convertToBytes(Object object) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(object);
+            return bos.toByteArray();
+        }
+    }
+
+    public static ThreeDS2Response createThreeDS2ResponseStep0Authorization() {
+        ThreeDS2Response response = new ThreeDS2Response();
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+        response.setTimestamp(timeStamp);
+        response.setResultCode("00");
+        response.setResponseType(AUTHORIZATION);
+        ThreeDS2ResponseElement threeDS2ResponseElement = createteThreeDs2Method(timeStamp);
+        response.setThreeDS2ResponseElement(threeDS2ResponseElement);
+        return  response;
+    }
+
+    private static ThreeDS2Authorization createteThreeDs2Method(String timeStamp) {
+        ThreeDS2Authorization authorization = new ThreeDS2Authorization();
+        authorization.setPaymentType("PaymenyType");
+        authorization.setAuthorizationType("AuthType");
+        authorization.setTransactionId("idTrans");
+        authorization.setNetwork(MASTERCARD);
+        authorization.setOrderId("orderId");
+        authorization.setTransactionAmount(12344L);
+        authorization.setAuthorizedAmount(1234L);
+        authorization.setCurrency("978");
+        authorization.setExponent("exponent");
+        authorization.setAccountedAmount(1234L);
+        authorization.setRefundedAmount(1234L);
+        authorization.setTransactionResult("result");
+        authorization.setTimestamp(timeStamp);
+        authorization.setAuthorizationNumber("authNumb");
+        authorization.setMerchantId("merchantId");
+        authorization.setTransactionStatus("status");
+        authorization.setResponseCodeIso("00");
+        authorization.setRrn("rrn");
+        return  authorization;
+    }
+
+    public static AuthResponse createVPosAuthResponse() {
+        AuthResponse response = new AuthResponse();
+        response.setResultCode("00");
+        return  response;
     }
 }
 

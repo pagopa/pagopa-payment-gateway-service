@@ -43,7 +43,6 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Slf4j
 public class CCRequestPaymentsService {
 
-    public static final String CAUSE = " cause: ";
     @Value("${vpos.response.urlredirect}")
     private String responseUrlRedirect;
 
@@ -57,6 +56,7 @@ public class CCRequestPaymentsService {
     private static final String RESULT_CODE_AUTHORIZED = "00";
     private static final String RESULT_CODE_METHOD = "25";
     private static final String RESULT_CODE_CHALLENGE = "26";
+    private static final String CAUSE = " cause: ";
 
     @Autowired
     private PaymentRequestRepository paymentRequestRepository;
@@ -69,6 +69,9 @@ public class CCRequestPaymentsService {
 
     @Autowired
     private VPosResponseUtils vPosResponseUtils;
+
+    @Autowired
+    private HttpClient httpClient;
 
     public ResponseEntity<Step0CreditCardResponse> getRequestPayments(String clientId, String mdcFields, Step0CreditCardRequest request) {
         if (!VALID_CLIENT_ID.contains(clientId)) {
@@ -178,7 +181,6 @@ public class CCRequestPaymentsService {
     }
 
     private HttpClientResponse callVPos(Map<String, String> params) throws IOException {
-        HttpClient httpClient = new HttpClient();
         HttpClientResponse clientResponse = httpClient.post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
         if (clientResponse.getStatus() != HttpStatus.OK.value()) {
             log.error("HTTP Response Status: " + clientResponse.getStatus());

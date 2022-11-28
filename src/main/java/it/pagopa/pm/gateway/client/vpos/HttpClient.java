@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,6 +26,7 @@ import java.util.Map.Entry;
 
 
 @Slf4j
+@Component
 public class HttpClient {
 
     private static final String VPOS_TIMEOUT_STRING = "VPOS_TIMEOUT";

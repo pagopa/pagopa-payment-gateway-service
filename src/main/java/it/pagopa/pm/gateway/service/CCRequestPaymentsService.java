@@ -38,11 +38,11 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_AUTHORIZED_BY_PGS;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
+import static it.pagopa.pm.gateway.utils.VPosUtils.*;
 
 @Service
 @Slf4j
 public class CCRequestPaymentsService {
-
     @Value("${vpos.response.urlredirect}")
     private String responseUrlRedirect;
 
@@ -53,9 +53,6 @@ public class CCRequestPaymentsService {
     private static final String WEB_ORIGIN = "WEB";
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String RESULT_CODE_AUTHORIZED = "00";
-    private static final String RESULT_CODE_METHOD = "25";
-    private static final String RESULT_CODE_CHALLENGE = "26";
     private static final String CAUSE = " cause: ";
 
     @Autowired
@@ -74,48 +71,44 @@ public class CCRequestPaymentsService {
     private HttpClient httpClient;
 
     public ResponseEntity<Step0CreditCardResponse> getRequestPayments(String clientId, String mdcFields, Step0CreditCardRequest request) {
+        setMdcFields(mdcFields);
+        log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
         if (!VALID_CLIENT_ID.contains(clientId)) {
-            log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
             log.error(String.format("Client id %s is not valid", clientId));
-            return createStep0CreditCardResponse(BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
         }
 
-        if (ObjectUtils.anyNull(request) || request.getAmount().equals(BigInteger.ZERO)) {
-            log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
+        if (ObjectUtils.isEmpty(request) || request.getAmount().equals(BigInteger.ZERO)) {
             log.error(BAD_REQUEST_MSG);
-            return createStep0CreditCardResponse(BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null);
         }
 
         String idTransaction = request.getIdTransaction();
         log.info(String.format("START - POST %s for idTransaction %s", REQUEST_PAYMENTS_CREDIT_CARD, idTransaction));
-        setMdcFields(mdcFields);
-
         if ((Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction)))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createStep0CreditCardResponse(TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
+            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
         }
 
         ResponseEntity<Step0CreditCardResponse> response;
         try {
-            response = createStep0AuthPaymentCreditCard(request, clientId, mdcFields);
+            response = processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
             log.error(String.format("Error constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
-            return createStep0CreditCardResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
         return response;
     }
 
-    private ResponseEntity<Step0CreditCardResponse> createStep0AuthPaymentCreditCard(Step0CreditCardRequest request, String clientId, String mdcFields) throws IOException {
-        String idTransaction = request.getIdTransaction();
-
-        PaymentRequestEntity entity = generateEntity(clientId, mdcFields, idTransaction, request);
-        Map<String, String> params = vPosRequestUtils.generateRequestForStep0(request, entity.getGuid());
-        executeStep0(params, entity, request);
-        return createStep0CreditCardResponse(null, HttpStatus.OK, entity.getGuid());
+    private ResponseEntity<Step0CreditCardResponse> processStepZero(Step0CreditCardRequest request, String clientId, String mdcFields) throws IOException {
+        PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
+        Map<String, String> params = vPosRequestUtils.createStepZeroRequest(request, entity.getGuid());
+        executeStepZeroAuth(params, entity, request);
+        return createStepZeroResponse(null, HttpStatus.OK, entity.getGuid());
     }
 
     @Async
-    private void executeStep0(Map<String, String> params, PaymentRequestEntity entity, Step0CreditCardRequest pgsRequest) {
+    private void executeStepZeroAuth(Map<String, String> params, PaymentRequestEntity entity, Step0CreditCardRequest pgsRequest) {
         ThreeDS2Response response;
         try {
             log.info("Calling VPOS - Step 0 - for requestId: " + entity.getGuid());
@@ -189,7 +182,7 @@ public class CCRequestPaymentsService {
         return clientResponse;
     }
 
-    private ResponseEntity<Step0CreditCardResponse> createStep0CreditCardResponse(String errorMessage, HttpStatus httpStatus, String requestId) {
+    private ResponseEntity<Step0CreditCardResponse> createStepZeroResponse(String errorMessage, HttpStatus httpStatus, String requestId) {
         Step0CreditCardResponse response = new Step0CreditCardResponse();
 
         if (StringUtils.isNotBlank(requestId)) {
@@ -208,7 +201,7 @@ public class CCRequestPaymentsService {
         return ResponseEntity.status(httpStatus).body(response);
     }
 
-    private PaymentRequestEntity generateEntity(String clientId, String mdcFields, String idTransaction, Step0CreditCardRequest request) throws JsonProcessingException {
+    private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, Step0CreditCardRequest request) throws JsonProcessingException {
         String requestJson = OBJECT_MAPPER.writeValueAsString(request);
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setClientId(clientId);

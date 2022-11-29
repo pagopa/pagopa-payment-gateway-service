@@ -12,9 +12,6 @@ import java.time.Instant;
 
 @Slf4j
 class CloseableHttpClientWrapper {
-
-    private static final String MODULE_NAME = "pp-vpos-client";
-
     private final CloseableHttpClient client;
 
     CloseableHttpClientWrapper(CloseableHttpClient client) {
@@ -28,17 +25,12 @@ class CloseableHttpClientWrapper {
         } finally {
             Instant finish = Instant.now();
             long timeElapsed = Duration.between(start, finish).toMillis();
-
-            log.info(createLogginElapsedString( request.getURI().toString(), timeElapsed));
+            log.info(String.format("PGS-VPos-client: %s ms elapsed for request %s", timeElapsed, request.getURI().toString()));
         }
     }
 
     void close() throws IOException {
         client.close();
-    }
-
-    private static String createLogginElapsedString(String serviceName, long timeElapsed) {
-        return String.format("elapsed|%s|%s:%s", MODULE_NAME, serviceName, timeElapsed);
     }
 
 }

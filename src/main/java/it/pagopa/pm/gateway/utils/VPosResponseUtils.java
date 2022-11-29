@@ -177,7 +177,7 @@ public class VPosResponseUtils {
     }
 
     private String getConfigMac(Step0CreditCardRequest pgsRequest) {
-        List<String> variables = vPosUtils.getVariables(pgsRequest.getIdPsp());
+        List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
         if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
             return variables.get(4);
         } else {

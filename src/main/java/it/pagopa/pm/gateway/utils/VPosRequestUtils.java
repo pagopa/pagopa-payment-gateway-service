@@ -5,7 +5,6 @@ import it.pagopa.pm.gateway.dto.enums.VposRequestEnum;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import oracle.sql.REF;
 import org.apache.commons.lang3.BooleanUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -23,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.dto.enums.VposRequestEnum.*;
+import static it.pagopa.pm.gateway.utils.VPosUtils.*;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -47,21 +47,21 @@ public class VPosRequestUtils {
     @Autowired
     VPosUtils vPosUtils;
 
-    public Map<String, String> generateRequestForStep0(Step0CreditCardRequest pgsRequest, String requestId) throws IOException {
+    public Map<String, String> createStepZeroRequest(Step0CreditCardRequest pgsRequest, String requestId) throws IOException {
         Map<String, String> params;
         try {
-            List<String> variables = vPosUtils.getVariables(pgsRequest.getIdPsp());
             String shopId;
-            String terminalId ;
-            String mac ;
+            String terminalId;
+            String mac;
+            List<String> shopParameters = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                shopId =  variables.get(2);
-                terminalId =  variables.get(3);
-                mac =  variables.get(4);
+                shopId = shopParameters.get(SHOP_ID_FIRST_PAY_POSITION);
+                terminalId = shopParameters.get(TERMINAL_ID_FIRST_PAY_POSITION);
+                mac = shopParameters.get(MAC_FIRST_PAY_POSITION);
             } else {
-                shopId =  variables.get(5);
-                terminalId =  variables.get(6);
-                mac =  variables.get(7);
+                shopId = shopParameters.get(SHOP_ID_NEXT_PAY_POSITION);
+                terminalId = shopParameters.get(TERMINAL_ID_NEXT_PAY_POSITION);
+                mac = shopParameters.get(MAC_NEXT_PAY_POSITION);
             }
             params = getParams(buildRequestStep0(pgsRequest, shopId, terminalId, mac, requestId));
         } catch (Exception e) {
@@ -74,18 +74,18 @@ public class VPosRequestUtils {
     public Map<String, String> generateRequestForAccount(Step0CreditCardRequest pgsRequest) throws IOException {
         Map<String, String> params;
         try {
-            List<String> variables = vPosUtils.getVariables(pgsRequest.getIdPsp());
+            List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
             String shopId;
-            String terminalId ;
-            String mac ;
+            String terminalId;
+            String mac;
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                shopId =  variables.get(2);
-                terminalId =  variables.get(3);
-                mac =  variables.get(4);
+                shopId = variables.get(2);
+                terminalId = variables.get(3);
+                mac = variables.get(4);
             } else {
-                shopId =  variables.get(5);
-                terminalId =  variables.get(6);
-                mac =  variables.get(7);
+                shopId = variables.get(5);
+                terminalId = variables.get(6);
+                mac = variables.get(7);
             }
             params = getParams(buildRequestForAccount(pgsRequest, shopId, terminalId, mac));
         } catch (Exception e) {
@@ -98,18 +98,18 @@ public class VPosRequestUtils {
     public Map<String, String> generateRequestForRevert(Step0CreditCardRequest pgsRequest) throws IOException {
         Map<String, String> params;
         try {
-            List<String> variables = vPosUtils.getVariables(pgsRequest.getIdPsp());
+            List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
             String shopId;
-            String terminalId ;
-            String mac ;
+            String terminalId;
+            String mac;
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                shopId =  variables.get(2);
-                terminalId =  variables.get(3);
-                mac =  variables.get(4);
+                shopId = variables.get(2);
+                terminalId = variables.get(3);
+                mac = variables.get(4);
             } else {
-                shopId =  variables.get(5);
-                terminalId =  variables.get(6);
-                mac =  variables.get(7);
+                shopId = variables.get(5);
+                terminalId = variables.get(6);
+                mac = variables.get(7);
             }
             params = getParams(buildRequestForRevert(pgsRequest, shopId, terminalId, mac));
         } catch (Exception e) {

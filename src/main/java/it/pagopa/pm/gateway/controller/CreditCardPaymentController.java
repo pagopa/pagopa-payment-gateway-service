@@ -18,7 +18,7 @@ import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 public class CreditCardPaymentController {
 
     @Autowired
-    CCRequestPaymentsService requestPaymentsService;
+    private CCRequestPaymentsService requestPaymentsService;
 
     @PostMapping()
     public ResponseEntity<Step0CreditCardResponse> requestPaymentsCreditCard(@RequestHeader(value = X_CLIENT_ID) String clientId,

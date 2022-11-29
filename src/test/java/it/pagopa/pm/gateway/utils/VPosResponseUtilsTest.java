@@ -88,12 +88,41 @@ public class VPosResponseUtilsTest {
     }
 
     @Test
-    public void build3ds2Response_Test() throws IOException, JDOMException {
+    public void build3ds2Response_Test_Authorization() throws IOException, JDOMException {
         ThreeDS2Response threeDS2Response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        Document document = ValidBeans.createThreeDs2ResponseDocument(threeDS2Response);
+        Document document = ValidBeans.createThreeDs2AuthorizationResponseDocument(threeDS2Response);
         byte[] clientResponse = ValidBeans.convertToByte(document);
         ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse);
         assertEquals(threeDS2Response.getResponseType(), response.getResponseType());
         assertEquals(threeDS2Response.getThreeDS2ResponseElement(), response.getThreeDS2ResponseElement());
+    }
+
+    @Test
+    public void build3ds2Response_Test_Method() throws IOException, JDOMException {
+        ThreeDS2Response threeDS2Response = ValidBeans.createThreeDS2ResponseStep0Method();
+        Document document = ValidBeans.createThreeDs2MethodResponseDocument(threeDS2Response);
+        byte[] clientResponse = ValidBeans.convertToByte(document);
+        ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse);
+        assertEquals(threeDS2Response.getResponseType(), response.getResponseType());
+        assertEquals(threeDS2Response.getThreeDS2ResponseElement(), response.getThreeDS2ResponseElement());
+    }
+
+    @Test
+    public void build3ds2Response_Test_Challege() throws IOException, JDOMException {
+        ThreeDS2Response threeDS2Response = ValidBeans.createThreeDS2ResponseStep0Challenge();
+        Document document = ValidBeans.createThreeDs2ChallengeResponseDocument(threeDS2Response);
+        byte[] clientResponse = ValidBeans.convertToByte(document);
+        ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse);
+        assertEquals(threeDS2Response.getResponseType(), response.getResponseType());
+        assertEquals(threeDS2Response.getThreeDS2ResponseElement(), response.getThreeDS2ResponseElement());
+    }
+
+    @Test
+    public void buildAuthResponse_Test_OK() throws IOException, JDOMException {
+        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
+        Document document = ValidBeans.createAuthResponseDocument(authResponse);
+        byte[] clientResponse = ValidBeans.convertToByte(document);
+        AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse);
+        assertEquals(authResponse, response);
     }
 }

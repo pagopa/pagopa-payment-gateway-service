@@ -40,7 +40,7 @@ public class VPosResponseUtilsTest {
         List<String> variables = ValidBeans.generateVariable(true);
         variables.set(4, mac);
         threeDS2Response.setResultMac(mac);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         doCallRealMethod().when(vPosResponseUtils).validateResponseMac3ds2(threeDS2Response, request);
         vPosResponseUtils.validateResponseMac3ds2(threeDS2Response, request);
         verify(vPosResponseUtils).validateResponseMac3ds2(threeDS2Response, request);
@@ -54,7 +54,7 @@ public class VPosResponseUtilsTest {
         String mac = ValidBeans.createConfigMacStep0(threeDS2Response);
         List<String> variables = ValidBeans.generateVariable(true);
         variables.set(4, mac);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         doCallRealMethod().when(vPosResponseUtils).validateResponseMac3ds2(threeDS2Response, request);
         vPosResponseUtils.validateResponseMac3ds2(threeDS2Response, request);
         verify(vPosResponseUtils).validateResponseMac3ds2(threeDS2Response, request);
@@ -68,7 +68,7 @@ public class VPosResponseUtilsTest {
         List<String> variables = ValidBeans.generateVariable(false);
         variables.set(7, mac);
         response.setResultMac(mac);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         doCallRealMethod().when(vPosResponseUtils).validateResponseMac(response, request);
         vPosResponseUtils.validateResponseMac(response, request);
         verify(vPosResponseUtils).validateResponseMac(response, request);
@@ -81,7 +81,7 @@ public class VPosResponseUtilsTest {
         String mac = ValidBeans.createConfigMacAuth(response);
         List<String> variables = ValidBeans.generateVariable(false);
         variables.set(7, mac);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         doCallRealMethod().when(vPosResponseUtils).validateResponseMac(response, request);
         vPosResponseUtils.validateResponseMac(response, request);
         verify(vPosResponseUtils).validateResponseMac(response, request);

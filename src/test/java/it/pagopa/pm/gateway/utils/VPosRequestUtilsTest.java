@@ -43,8 +43,8 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = true;
         Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
-        assertNotNull(vPosRequestUtils.generateRequestForStep0(pgsRequest, "requestId"));
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
+        assertNotNull(vPosRequestUtils.createStepZeroRequest(pgsRequest, "requestId"));
     }
 
     @Test
@@ -52,8 +52,8 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = false;
         Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
-        assertNotNull(vPosRequestUtils.generateRequestForStep0(pgsRequest, "requestId"));
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
+        assertNotNull(vPosRequestUtils.createStepZeroRequest(pgsRequest, "requestId"));
     }
 
     @Test
@@ -61,7 +61,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = true;
         Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForAccount(pgsRequest));
     }
 
@@ -70,7 +70,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = false;
         Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForAccount(pgsRequest));
     }
 
@@ -79,7 +79,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = true;
         Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForRevert(pgsRequest));
     }
 
@@ -88,7 +88,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = false;
         Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForRevert(pgsRequest));
     }
 

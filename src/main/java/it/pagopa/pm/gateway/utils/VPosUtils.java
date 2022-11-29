@@ -26,7 +26,7 @@ public class VPosUtils {
 
     // IDPSP|ABI|SHOP_ID_F|TERMINAL_ID_F|MAC_F|SHOP_ID_S|TERMINAL_ID_S|MAC_S*IDPSP|....
     @PostConstruct
-    private void getVposShop() {
+    public void getVposShop() {
         List<String> allShops = getConfig(vposShops, ASTERISK_SPLIT_CHAR);
         for (String shop : allShops) {
             List<String> singleShop = getConfig(shop, PIPE_SPLIT_CHAR);

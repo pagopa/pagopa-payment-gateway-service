@@ -46,13 +46,8 @@ public class HttpClient {
             if (contentType != null) {
                 request.addHeader(HttpHeaders.CONTENT_TYPE, contentType);
             }
-            if (!requestHeaders.isEmpty()) {
-                for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
-                    if (contentType != null && entry.getKey().equals(HttpHeaders.CONTENT_TYPE)) {
-                        continue;
-                    }
-                    request.setHeader(entry.getKey(), entry.getValue());
-                }
+            if (contentType != null) {
+                request.setHeader(HttpHeaders.CONTENT_TYPE, requestHeaders.getOrDefault(HttpHeaders.CONTENT_TYPE, contentType));
             }
             if (params != null) {
                 List<NameValuePair> values = new ArrayList<>();

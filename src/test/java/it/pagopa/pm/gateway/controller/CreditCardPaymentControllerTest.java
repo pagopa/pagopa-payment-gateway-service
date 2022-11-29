@@ -41,7 +41,7 @@ public class CreditCardPaymentControllerTest {
 
     @Test
     public void getPaymentInfoTest() throws Exception {
-        Step0CreditCardRequest requestOK = ValidBeans.createStep0Request();
+        Step0CreditCardRequest requestOK = ValidBeans.createStep0Request(true);
         when(ccRequestPaymentsService.getRequestPayments(any(), any(), any())).thenReturn(ResponseEntity.ok().body(new Step0CreditCardResponse()));
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)

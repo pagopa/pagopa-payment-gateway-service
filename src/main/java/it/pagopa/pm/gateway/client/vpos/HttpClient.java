@@ -35,8 +35,6 @@ public class HttpClient {
     private static final int VPOS_TIMEOUT = getTimeout();
     private static final Charset DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
 
-    private final Map<String, String> requestHeaders = new HashMap<>();
-
     public HttpClientResponse post(String url, String contentType, Map<String, String> params) throws IOException {
         String trace = String.format("POST - %s", url);
         log.info("INIT " + trace);
@@ -45,7 +43,6 @@ public class HttpClient {
             URIBuilder uriBuilder = new URIBuilder(url);
             HttpPost request = new HttpPost(uriBuilder.build());
             addContentType(contentType, request);
-            addRequestHeaders(contentType, request);
             addRequestParams(params, request);
             HttpResponse response = client.execute(request);
             return initResponse(response);
@@ -64,13 +61,6 @@ public class HttpClient {
     private void addContentType(String contentType, HttpPost request) {
         if (StringUtils.isNotBlank(contentType)) {
             request.addHeader(HttpHeaders.CONTENT_TYPE, contentType);
-        }
-    }
-
-    private void addRequestHeaders(String contentType, HttpPost request) {
-        if (ObjectUtils.isNotEmpty(requestHeaders) && StringUtils.isNotBlank(contentType)) {
-            String headerValue = requestHeaders.getOrDefault(HttpHeaders.CONTENT_TYPE, contentType);
-            request.setHeader(HttpHeaders.CONTENT_TYPE, headerValue);
         }
     }
 

@@ -34,11 +34,11 @@ import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
 import static it.pagopa.pm.gateway.constant.Messages.*;
+import static it.pagopa.pm.gateway.constant.VposConstant.*;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_AUTHORIZED_BY_PGS;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
-import static it.pagopa.pm.gateway.utils.VPosUtils.*;
 
 @Service
 @Slf4j
@@ -88,14 +88,12 @@ public class VposService {
             return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
         }
 
-        ResponseEntity<StepZeroResponse> response;
         try {
-            response = processStepZero(request, clientId, mdcFields);
+            return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
             log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
             return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
-        return response;
     }
 
     private ResponseEntity<StepZeroResponse> processStepZero(StepZeroRequest request, String clientId, String mdcFields) throws IOException {
@@ -125,14 +123,12 @@ public class VposService {
         }
     }
 
-    @Async
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
-        AuthResponse response;
         try {
             log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
             Map<String, String> params = vPosRequestUtils.createAccountingRequest(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
-            response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
+            AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkAccountResultCode(response, entity);
         } catch (Exception e) {
@@ -142,12 +138,11 @@ public class VposService {
     }
 
     private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
-        AuthResponse response;
         try {
             log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
             Map<String, String> params = vPosRequestUtils.createRevertRequest(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
-            response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
+            AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkRevertResultCode(response, entity);
         } catch (Exception e) {

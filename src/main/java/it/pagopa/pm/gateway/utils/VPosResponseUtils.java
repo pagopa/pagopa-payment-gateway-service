@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -18,28 +19,22 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static it.pagopa.pm.gateway.constant.VposConstant.*;
 import static it.pagopa.pm.gateway.dto.enums.VPosResponseEnum.*;
-import static it.pagopa.pm.gateway.utils.VPosUtils.MAC_FIRST_PAY_POSITION;
-import static it.pagopa.pm.gateway.utils.VPosUtils.MAC_NEXT_PAY_POSITION;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Component
 public class VPosResponseUtils {
 
-    private static final Charset DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
     private static final String NULL_STRING = "null";
     private static final String APACHE_FEATURES_BASE_URL = "http://apache.org/xml/features/";
     private static final String XML_FEATURES_BASE_URL = "http://xml.org/sax/features/";
     private static final String DISALLOW_DOCTYPE_DECL = APACHE_FEATURES_BASE_URL + "disallow-doctype-decl";
     private static final String EXTERNAL_GENERAL_ENTITIES = XML_FEATURES_BASE_URL + "external-general-entities";
     private static final String EXTERNAL_PARAMETER_ENTITIES = XML_FEATURES_BASE_URL + "external-parameter-entities";
-
-    private static final String WRONG_MAC_MSG = "WARNING! EXPECTED RESPONSE MAC: %s, BUT WAS: %s";
 
     @Autowired
     VPosUtils vPosUtils;
@@ -113,7 +108,8 @@ public class VPosResponseUtils {
         authorization.setPaymentType(getValue(authorizationElem, PAYMENT_TYPE));
         authorization.setAuthorizationType(getValue(authorizationElem, AUTHORIZATION_TYPE));
         authorization.setTransactionId(getValue(authorizationElem, TRANSACTION_ID));
-        authorization.setNetwork(CardCircuit.fromCode(getValue(authorizationElem, NETWORK_RESPONSE)));
+        CardCircuit network = CardCircuit.fromCode(getValue(authorizationElem, NETWORK_RESPONSE));
+        authorization.setNetwork(ObjectUtils.isEmpty(network) ? CardCircuit.UNKNOWN : network);
         authorization.setOrderId(getValue(authorizationElem, ORDER_ID_RESPONSE));
         authorization.setTransactionAmount(Long.parseLong(getValue(authorizationElem, TRANSACTION_AMOUNT)));
         authorization.setCurrency(getValue(authorizationElem, CURRENCY_RESPONSE));
@@ -205,7 +201,8 @@ public class VPosResponseUtils {
             authResponse.setPaymentType(getValue(authorization, PAYMENT_TYPE));
             authResponse.setAuthorizationType(getValue(authorization, AUTHORIZATION_TYPE));
             authResponse.setAcquirerTransactionId(getValue(authorization, TRANSACTION_ID));
-            authResponse.setCircuit(CardCircuit.fromCode(getValue(authorization, NETWORK_RESPONSE)));
+            CardCircuit network = CardCircuit.fromCode(getValue(authorization, NETWORK_RESPONSE));
+            authResponse.setCircuit(ObjectUtils.isEmpty(network) ? CardCircuit.UNKNOWN : network);
             authResponse.setOrderNumber(getValue(authorization, ORDER_ID_RESPONSE));
             authResponse.setAmount(Long.parseLong(getValue(authorization, TRANSACTION_AMOUNT)));
             String authorizationAmount = getValue(authorization, AUTHORIZED_AMOUNT);

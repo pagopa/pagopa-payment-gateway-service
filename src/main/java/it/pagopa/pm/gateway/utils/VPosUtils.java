@@ -12,21 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static it.pagopa.pm.gateway.constant.VposConstant.ID_PSP_POSITION;
+
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Component
 public class VPosUtils {
-    public static final int ID_PSP_POSITION = 0;
-    public static final int ABI_POSITION = 1;
-    public static final int SHOP_ID_FIRST_PAY_POSITION = 2;
-    public static final int TERMINAL_ID_FIRST_PAY_POSITION = 3;
-    public static final int MAC_FIRST_PAY_POSITION = 4;
-    public static final int SHOP_ID_NEXT_PAY_POSITION = 5;
-    public static final int TERMINAL_ID_NEXT_PAY_POSITION = 6;
-    public static final int MAC_NEXT_PAY_POSITION = 7;
-    public static final String RESULT_CODE_AUTHORIZED = "00";
-    public static final String RESULT_CODE_METHOD = "25";
-    public static final String RESULT_CODE_CHALLENGE = "26";
+
     private static final String ASTERISK_SPLIT_CHAR = "\\*";
     private static final String PIPE_SPLIT_CHAR = "\\|";
     private final Map<String, List<String>> vposShopMap = new HashMap<>();

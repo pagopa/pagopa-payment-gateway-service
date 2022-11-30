@@ -16,28 +16,16 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static it.pagopa.pm.gateway.constant.VposConstant.*;
 import static it.pagopa.pm.gateway.dto.enums.VposRequestEnum.*;
-import static it.pagopa.pm.gateway.utils.VPosUtils.*;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Component
 public class VPosRequestUtils {
-
-    private static final String RELEASE_VALUE = "02";
-    private static final Charset DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
-    private static final String PARAM_DATA = "data";
-    private static final String OPERATION_AUTH_REQUEST_3DS2_STEP_0 = "THREEDSAUTHORIZATION0";
-    private static final String CURRENCY_VALUE = "978";
-    private static final String ACCOUNT_DEFERRED = "D";
-    private static final String FAKE_DESCRIPTION = "Pagamenti PA";
-    private static final String OPERATION_ACCOUNTING = "ACCOUNTING";
-    public static final String OPERATION_REFUND = "REFUND";
 
     @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;

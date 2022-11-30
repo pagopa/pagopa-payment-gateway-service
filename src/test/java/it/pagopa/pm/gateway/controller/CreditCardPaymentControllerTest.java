@@ -40,7 +40,7 @@ public class CreditCardPaymentControllerTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    public void getPaymentInfoTest() throws Exception {
+    public void startCreditCardPayment_Test() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.ok().body(new StepZeroResponse()));
 

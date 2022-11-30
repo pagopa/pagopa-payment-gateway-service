@@ -10,8 +10,7 @@ import java.math.BigInteger;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Step0CreditCardRequest {
-
+public class StepZeroRequest {
     private String idTransaction;
     private String reqRefNumber;
     private BigInteger amount;

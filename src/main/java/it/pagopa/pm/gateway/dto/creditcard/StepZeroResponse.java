@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Step0CreditCardResponse {
-
+public class StepZeroResponse {
     private String urlRedirect;
     private String error;
     private String requestId;

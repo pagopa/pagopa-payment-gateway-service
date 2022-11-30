@@ -2,7 +2,7 @@ package it.pagopa.pm.gateway.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,54 +41,54 @@ public class VPosRequestUtilsTest {
     @Test
     public void generateRequestForStep0_FirstPayment_Test() throws IOException {
         Boolean isFisrtPayment = true;
-        Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
-        assertNotNull(vPosRequestUtils.generateRequestForStep0(pgsRequest, "requestId"));
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
+        assertNotNull(vPosRequestUtils.createStepZeroRequest(pgsRequest, "requestId"));
     }
 
     @Test
     public void generateRequestForStep0_Not_FirstPayment_Test() throws IOException {
         Boolean isFisrtPayment = false;
-        Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
-        assertNotNull(vPosRequestUtils.generateRequestForStep0(pgsRequest, "requestId"));
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
+        assertNotNull(vPosRequestUtils.createStepZeroRequest(pgsRequest, "requestId"));
     }
 
     @Test
     public void generateRequestForAccount_FirstPayment_Test() throws IOException {
         Boolean isFisrtPayment = true;
-        Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForAccount(pgsRequest));
     }
 
     @Test
     public void generateRequestForAccount_Not_FirstPayment_Test() throws IOException {
         Boolean isFisrtPayment = false;
-        Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForAccount(pgsRequest));
     }
 
     @Test
     public void generateRequestForRevert_FirstPayment_Test() throws IOException {
         Boolean isFisrtPayment = true;
-        Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForRevert(pgsRequest));
     }
 
     @Test
     public void generateRequestForRevert_Not_FirstPayment_Test() throws IOException {
         Boolean isFisrtPayment = false;
-        Step0CreditCardRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         List<String> variables = ValidBeans.generateVariable(isFisrtPayment);
-        when(vPosUtils.getVariables(any())).thenReturn(variables);
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(variables);
         assertNotNull(vPosRequestUtils.generateRequestForRevert(pgsRequest));
     }
 

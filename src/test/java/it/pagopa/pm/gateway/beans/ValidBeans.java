@@ -12,7 +12,7 @@ import it.pagopa.pm.gateway.dto.bancomatpay.BPayInfoResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
@@ -712,8 +712,8 @@ public class ValidBeans {
                 "mac");
     }
 
-    public static Step0CreditCardRequest createStep0Request(Boolean isFirstPayment) {
-        return new Step0CreditCardRequest(
+    public static StepZeroRequest createStep0Request(Boolean isFirstPayment) {
+        return new StepZeroRequest(
                 "123456",
                 "reqRefNumber",
                 BigInteger.valueOf(123455),

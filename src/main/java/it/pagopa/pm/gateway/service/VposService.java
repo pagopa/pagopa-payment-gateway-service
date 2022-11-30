@@ -6,8 +6,8 @@ import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.PatchRequest;
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardResponse;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Challenge;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Method;
@@ -42,16 +42,14 @@ import static it.pagopa.pm.gateway.utils.VPosUtils.*;
 
 @Service
 @Slf4j
-public class CCRequestPaymentsService {
+public class VposService {
     @Value("${vpos.response.urlredirect}")
     private String responseUrlRedirect;
 
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
-    private static final String APP_ORIGIN = "APP";
-    private static final String WEB_ORIGIN = "WEB";
-    private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
+    private static final List<String> VALID_CLIENT_ID = Arrays.asList("APP", "WEB");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String CAUSE = " cause: ";
 
@@ -70,7 +68,7 @@ public class CCRequestPaymentsService {
     @Autowired
     private HttpClient httpClient;
 
-    public ResponseEntity<Step0CreditCardResponse> getRequestPayments(String clientId, String mdcFields, Step0CreditCardRequest request) {
+    public ResponseEntity<StepZeroResponse> startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
         log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
         if (!VALID_CLIENT_ID.contains(clientId)) {
@@ -90,7 +88,7 @@ public class CCRequestPaymentsService {
             return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
         }
 
-        ResponseEntity<Step0CreditCardResponse> response;
+        ResponseEntity<StepZeroResponse> response;
         try {
             response = processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
@@ -100,7 +98,7 @@ public class CCRequestPaymentsService {
         return response;
     }
 
-    private ResponseEntity<Step0CreditCardResponse> processStepZero(Step0CreditCardRequest request, String clientId, String mdcFields) throws IOException {
+    private ResponseEntity<StepZeroResponse> processStepZero(StepZeroRequest request, String clientId, String mdcFields) throws IOException {
         PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
         Map<String, String> params = vPosRequestUtils.createStepZeroRequest(request, entity.getGuid());
         executeStepZeroAuth(params, entity, request);
@@ -108,13 +106,13 @@ public class CCRequestPaymentsService {
     }
 
     @Async
-    private void executeStepZeroAuth(Map<String, String> params, PaymentRequestEntity entity, Step0CreditCardRequest pgsRequest) {
+    private void executeStepZeroAuth(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         ThreeDS2Response response;
         try {
             log.info("Calling VPOS - Step 0 - for requestId: " + entity.getGuid());
             HttpClientResponse clientResponse = callVPos(params);
             response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
-            vPosResponseUtils.validateResponseMac3ds2(response, pgsRequest);
+            vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
                 executeRevert(entity, pgsRequest);
             } else {
@@ -129,14 +127,14 @@ public class CCRequestPaymentsService {
     }
 
     @Async
-    private void executeAccount(PaymentRequestEntity entity, Step0CreditCardRequest pgsRequest) {
+    private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         AuthResponse response;
         try {
             log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
             Map<String, String> params = vPosRequestUtils.generateRequestForAccount(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
             response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
-            vPosResponseUtils.validateResponseMac(response, pgsRequest);
+            vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkAccountResultCode(response, entity);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
@@ -144,14 +142,14 @@ public class CCRequestPaymentsService {
         executePatchTransaction(entity);
     }
 
-    private void executeRevert(PaymentRequestEntity entity, Step0CreditCardRequest pgsRequest) {
+    private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         AuthResponse response;
         try {
             log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
             Map<String, String> params = vPosRequestUtils.generateRequestForRevert(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
             response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
-            vPosResponseUtils.validateResponseMac(response, pgsRequest);
+            vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkRevertResultCode(response, entity);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
@@ -182,8 +180,8 @@ public class CCRequestPaymentsService {
         return clientResponse;
     }
 
-    private ResponseEntity<Step0CreditCardResponse> createStepZeroResponse(String errorMessage, HttpStatus httpStatus, String requestId) {
-        Step0CreditCardResponse response = new Step0CreditCardResponse();
+    private ResponseEntity<StepZeroResponse> createStepZeroResponse(String errorMessage, HttpStatus httpStatus, String requestId) {
+        StepZeroResponse response = new StepZeroResponse();
 
         if (StringUtils.isNotBlank(requestId)) {
             response.setRequestId(requestId);
@@ -201,7 +199,7 @@ public class CCRequestPaymentsService {
         return ResponseEntity.status(httpStatus).body(response);
     }
 
-    private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, Step0CreditCardRequest request) throws JsonProcessingException {
+    private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, StepZeroRequest request) throws JsonProcessingException {
         String requestJson = OBJECT_MAPPER.writeValueAsString(request);
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setClientId(clientId);

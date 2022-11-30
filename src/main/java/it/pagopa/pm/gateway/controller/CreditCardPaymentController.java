@@ -1,8 +1,8 @@
 package it.pagopa.pm.gateway.controller;
 
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardResponse;
-import it.pagopa.pm.gateway.service.CCRequestPaymentsService;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
+import it.pagopa.pm.gateway.service.VposService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +18,13 @@ import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 public class CreditCardPaymentController {
 
     @Autowired
-    private CCRequestPaymentsService requestPaymentsService;
+    private VposService vposService;
 
     @PostMapping()
-    public ResponseEntity<Step0CreditCardResponse> requestPaymentsCreditCard(@RequestHeader(value = X_CLIENT_ID) String clientId,
-                                                                             @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                                             @RequestBody Step0CreditCardRequest request) {
-        return requestPaymentsService.getRequestPayments(clientId, mdcFields, request);
+    public ResponseEntity<StepZeroResponse> startCreditCardPayment(@RequestHeader(value = X_CLIENT_ID) String clientId,
+                                                                   @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
+                                                                   @RequestBody StepZeroRequest request) {
+        return vposService.startCreditCardPayment(clientId, mdcFields, request);
     }
 
 

@@ -39,6 +39,6 @@ public class VPosUtilsTest {
     @Test
     public void getVariables_Test() {
         List<String> variables = ValidBeans.getVariables(propertyVPosShop);
-        assertEquals(variables, vPosUtils.getVariables("123"));
+        assertEquals(variables, vPosUtils.getVposShopByIdPsp("123"));
     }
 }

@@ -3,9 +3,9 @@ package it.pagopa.pm.gateway.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.constant.Headers;
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardResponse;
-import it.pagopa.pm.gateway.service.CCRequestPaymentsService;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
+import it.pagopa.pm.gateway.service.VposService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CreditCardPaymentControllerTest {
 
     @MockBean
-    private CCRequestPaymentsService ccRequestPaymentsService;
+    private VposService vposService;
 
     @Autowired
     private MockMvc mvc;
@@ -41,8 +41,8 @@ public class CreditCardPaymentControllerTest {
 
     @Test
     public void getPaymentInfoTest() throws Exception {
-        Step0CreditCardRequest requestOK = ValidBeans.createStep0Request(true);
-        when(ccRequestPaymentsService.getRequestPayments(any(), any(), any())).thenReturn(ResponseEntity.ok().body(new Step0CreditCardResponse()));
+        StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.ok().body(new StepZeroResponse()));
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
                 .header(Headers.X_CLIENT_ID, APP_ORIGIN)

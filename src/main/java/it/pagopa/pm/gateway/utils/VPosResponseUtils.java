@@ -1,6 +1,6 @@
 package it.pagopa.pm.gateway.utils;
 
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.CardCircuit;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
 import it.pagopa.pm.gateway.dto.enums.VPosResponseEnum;
@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static it.pagopa.pm.gateway.dto.enums.VPosResponseEnum.*;
+import static it.pagopa.pm.gateway.utils.VPosUtils.MAC_FIRST_PAY_POSITION;
+import static it.pagopa.pm.gateway.utils.VPosUtils.MAC_NEXT_PAY_POSITION;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -31,6 +33,13 @@ public class VPosResponseUtils {
 
     private static final Charset DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
     private static final String NULL_STRING = "null";
+    private static final String APACHE_FEATURES_BASE_URL = "http://apache.org/xml/features/";
+    private static final String XML_FEATURES_BASE_URL = "http://xml.org/sax/features/";
+    private static final String DISALLOW_DOCTYPE_DECL = APACHE_FEATURES_BASE_URL + "disallow-doctype-decl";
+    private static final String EXTERNAL_GENERAL_ENTITIES = XML_FEATURES_BASE_URL + "external-general-entities";
+    private static final String EXTERNAL_PARAMETER_ENTITIES = XML_FEATURES_BASE_URL + "external-parameter-entities";
+
+    private static final String WRONG_MAC_MSG = "WARNING! EXPECTED RESPONSE MAC: %s, BUT WAS: %s";
 
     @Autowired
     VPosUtils vPosUtils;
@@ -39,9 +48,9 @@ public class VPosResponseUtils {
         ThreeDS2Response threeDS2Response;
         try {
             SAXBuilder saxBuilder = new SAXBuilder();
-            saxBuilder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            saxBuilder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            saxBuilder.setFeature(DISALLOW_DOCTYPE_DECL, true);
+            saxBuilder.setFeature(EXTERNAL_GENERAL_ENTITIES, false);
+            saxBuilder.setFeature(EXTERNAL_PARAMETER_ENTITIES, false);
             Document responseDocument = saxBuilder.build(new ByteArrayInputStream(clientResponse));
             Element root = responseDocument.getRootElement();
             threeDS2Response = create3DS2ResponseWithHeaders(root);
@@ -137,61 +146,39 @@ public class VPosResponseUtils {
         return element.getChildText(authResponseEnum.getTagName());
     }
 
-    public void validateResponseMac3ds2(ThreeDS2Response response, Step0CreditCardRequest pgsRequest) {
-        String configMac = getConfigMac(pgsRequest);
-        VPosMacBuilder macBuilder = new VPosMacBuilder();
-        macBuilder.addString(response.getTimestamp());
-        macBuilder.addString(response.getResultCode());
-        macBuilder.addString(configMac);
-        String mac = macBuilder.toSha1Hex(DEFAULT_CHARSET);
-        if (response.getResultMac() == null || !response.getResultMac().equalsIgnoreCase(mac)) {
-            macBuilder = new VPosMacBuilder();
-            macBuilder.addString(response.getTimestamp());
-            macBuilder.addString(response.getResultCode());
-            macBuilder.addString(NULL_STRING);
-            mac = macBuilder.toSha1Hex(DEFAULT_CHARSET);
-            if (response.getResultMac() == null || !response.getResultMac().equalsIgnoreCase(mac)) {
-                log.warn(String.format("WARNING! EXPECTED RESPONSE MAC: %s, BUT WAS: %s", mac, response.getResultMac()));
+    public void validateResponseMac(String timestamp, String resultCode, String resultMac, StepZeroRequest pgsRequest) {
+        List<String> vposShopData = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
+        String configMac = BooleanUtils.isTrue(pgsRequest.getIsFirstPayment()) ?
+                vposShopData.get(MAC_FIRST_PAY_POSITION) :
+                vposShopData.get(MAC_NEXT_PAY_POSITION);
+        String mac = calculateMac(timestamp, resultCode, configMac);
+        if (isMacDifferent(mac, resultMac)) {
+            String macWithoutShopKey = calculateMac(timestamp, resultCode, NULL_STRING);
+            if (isMacDifferent(macWithoutShopKey, resultMac)) {
+                log.warn(String.format(WRONG_MAC_MSG, macWithoutShopKey, resultMac));
             }
         }
     }
 
-    public void validateResponseMac(AuthResponse response, Step0CreditCardRequest pgsRequest) {
-        String configMac = getConfigMac(pgsRequest);
-        VPosMacBuilder macBuilder = new VPosMacBuilder();
-        macBuilder.addString(response.getTimestamp());
-        macBuilder.addString(response.getResultCode());
-        macBuilder.addString(configMac);
-        String mac = macBuilder.toSha1Hex(DEFAULT_CHARSET);
-        if (response.getResultMac() == null || !response.getResultMac().equalsIgnoreCase(mac)) {
-            macBuilder = new VPosMacBuilder();
-            macBuilder.addString(response.getTimestamp());
-            macBuilder.addString(response.getResultCode());
-            macBuilder.addString(NULL_STRING);
-            mac = macBuilder.toSha1Hex(DEFAULT_CHARSET);
-            if (response.getResultMac() == null || !response.getResultMac().equalsIgnoreCase(mac)) {
-                log.warn(
-                        String.format("WARNING! EXPECTED RESPONSE MAC: %s, BUT WAS: %s", mac, response.getResultMac()));
-            }
-        }
+    private String calculateMac(String timestamp, String resultCode, String mac) {
+        VPosMacBuilder vposMacBuilder = new VPosMacBuilder();
+        vposMacBuilder.addString(timestamp);
+        vposMacBuilder.addString(resultCode);
+        vposMacBuilder.addString(mac);
+        return vposMacBuilder.toSha1Hex(DEFAULT_CHARSET);
     }
 
-    private String getConfigMac(Step0CreditCardRequest pgsRequest) {
-        List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
-        if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-            return variables.get(4);
-        } else {
-            return variables.get(7);
-        }
+    private boolean isMacDifferent(String mac, String responseMac) {
+        return StringUtils.isNotBlank(responseMac) || !StringUtils.equalsIgnoreCase(responseMac, mac);
     }
 
     public AuthResponse buildAuthResponse(byte[] clientResponse) throws IOException {
         AuthResponse authResponse;
         try {
             SAXBuilder saxBuilder = new SAXBuilder();
-            saxBuilder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            saxBuilder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            saxBuilder.setFeature(DISALLOW_DOCTYPE_DECL, true);
+            saxBuilder.setFeature(EXTERNAL_GENERAL_ENTITIES, false);
+            saxBuilder.setFeature(EXTERNAL_PARAMETER_ENTITIES, false);
             Document responseDocument = saxBuilder.build(new ByteArrayInputStream(clientResponse));
             Element root = responseDocument.getRootElement();
             authResponse = new AuthResponse();

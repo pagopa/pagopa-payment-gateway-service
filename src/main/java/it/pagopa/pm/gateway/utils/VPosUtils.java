@@ -38,9 +38,9 @@ public class VPosUtils {
      * A VPos shop is identified by the following parameters:
      * idPsp, ABI, shopId, terminalId, MAC
      * where shopId, terminalId and MAC are different for first (F) or subsequent (S) payments.
-     * Each property in the config environment property is separated by a | and each shop is separated by a *
+     * Each shop property in the config environment variable is separated by a | and each shop is separated by a *
      * following this schema:
-     * idPsp|ABI|shopId(F)|terminalId(F)|MAC(F)|shopId(S)|terminalId(S)|mac(S)*idPsp|... ...terminalId(S)|mac(S)
+     * idPsp|ABI|shopId(F)|terminalId(F)|MAC(F)|shopId(S)|terminalId(S)|MAC(S)*idPsp|... ...terminalId(S)|mac(S)
      */
     @PostConstruct
     public void getVposShop() {

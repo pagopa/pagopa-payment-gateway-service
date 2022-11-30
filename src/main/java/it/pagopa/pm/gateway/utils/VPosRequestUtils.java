@@ -1,6 +1,6 @@
 package it.pagopa.pm.gateway.utils;
 
-import it.pagopa.pm.gateway.dto.creditcard.Step0CreditCardRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.VposRequestEnum;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -47,7 +47,7 @@ public class VPosRequestUtils {
     @Autowired
     VPosUtils vPosUtils;
 
-    public Map<String, String> createStepZeroRequest(Step0CreditCardRequest pgsRequest, String requestId) throws IOException {
+    public Map<String, String> createStepZeroRequest(StepZeroRequest pgsRequest, String requestId) throws IOException {
         Map<String, String> params;
         try {
             String shopId;
@@ -71,7 +71,7 @@ public class VPosRequestUtils {
         return params;
     }
 
-    public Map<String, String> generateRequestForAccount(Step0CreditCardRequest pgsRequest) throws IOException {
+    public Map<String, String> generateRequestForAccount(StepZeroRequest pgsRequest) throws IOException {
         Map<String, String> params;
         try {
             List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
@@ -95,7 +95,7 @@ public class VPosRequestUtils {
         return params;
     }
 
-    public Map<String, String> generateRequestForRevert(Step0CreditCardRequest pgsRequest) throws IOException {
+    public Map<String, String> generateRequestForRevert(StepZeroRequest pgsRequest) throws IOException {
         Map<String, String> params;
         try {
             List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
@@ -119,7 +119,7 @@ public class VPosRequestUtils {
         return params;
     }
 
-    private Document buildRequestStep0(Step0CreditCardRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
+    private Document buildRequestStep0(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
         String notifyUrl = String.format(vposResponseUrl, requestId);
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
         try {
@@ -165,7 +165,7 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-    private Document buildRequestForAccount(Step0CreditCardRequest pgsRequest, String shopId, String terminalId, String mac) {
+    private Document buildRequestForAccount(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac) {
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
         try {
             Date date = new Date();
@@ -200,7 +200,7 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-    private Document buildRequestForRevert(Step0CreditCardRequest pgsRequest, String shopId, String terminalId, String mac) {
+    private Document buildRequestForRevert(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac) {
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
         try {
             Date date = new Date();
@@ -235,7 +235,7 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-    private VPosMacBuilder calculateMacStep0(Date date, String shopId, Step0CreditCardRequest pgsRequest, String terminalId, String mac, String notifyUrl) {
+    private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
@@ -260,7 +260,7 @@ public class VPosRequestUtils {
         return macBuilder;
     }
 
-    private VPosMacBuilder calculateMac(Date date, String shopId, Step0CreditCardRequest pgsRequest, String terminalId, String mac, VposRequestEnum operation) {
+    private VPosMacBuilder calculateMac(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, VposRequestEnum operation) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, operation);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());

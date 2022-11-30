@@ -601,9 +601,15 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/CcPaymentInfoResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/CcPaymentInfoAcceptedResponse'
+                  - $ref: '#/components/schemas/CcPaymentInfoAcsResponse'
         "404":
-          "description": Not Found
+          description: Not Found
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CcPaymentInfoError'
 components:
   schemas:
     AuthMessage:
@@ -988,7 +994,7 @@ components:
           example: "RequestId 77e1c83b-7bb0-437b-bc50-a7a58e5660ac has not been found"
       required:
         - correlationId
-    CcPaymentInfoResponse:
+    CcPaymentInfoAcceptedResponse:
       type: object
       properties:
         status:
@@ -999,3 +1005,29 @@ components:
           type: string
         acsUrl:
           type: string
+      required:
+        - status
+        - responseType
+        - requestId
+    CcPaymentInfoAcsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        responseType:
+          type: string
+        requestId:
+          type: string
+        acsUrl:
+          type: string
+      required:
+        - status
+        - responseType
+        - requestId
+        - acsUrl
+    CcPaymentInfoError:
+      type: object
+      properties:
+        reason:
+          type: string
+          example: "RequestId non trovato"

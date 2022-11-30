@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -31,22 +32,28 @@ public class CcPaymentInfoServiceTest {
     @Test
     public void getPaymentInfoSuccessTest() {
         PaymentRequestEntity paymentInfo = new PaymentRequestEntity();
+        paymentInfo.setStatus("status");
+        paymentInfo.setResponseType("type");
+        paymentInfo.setGuid("guid");
+        paymentInfo.setAuthorizationUrl("url");
 
         when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any()))
-                .thenReturn(Optional.of( new PaymentRequestEntity()));
+                .thenReturn(Optional.of(paymentInfo));
 
         CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
-        assertNotNull(response);
+        assertNotNull(response.getStatus());
+        assertNotNull(response.getRequestId());
+        assertNotNull(response.getResponseType());
+        assertNotNull(response.getAcsUrl());
     }
 
     @Test
     public void getPaymentInfo404Test() {
         when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any())).thenReturn(Optional.empty());
 
-        try {
-            ccPaymentInfoService.getPaymentoInfo("123");
-        } catch (CcHttpException e) {
-            assertEquals(e.getStatus(), HttpStatus.NOT_FOUND);
-        }
+        CcHttpException exception = assertThrows(CcHttpException.class,
+                () -> ccPaymentInfoService.getPaymentoInfo("123"));
+
+        assertEquals(exception.getStatus(), HttpStatus.NOT_FOUND);
     }
 }

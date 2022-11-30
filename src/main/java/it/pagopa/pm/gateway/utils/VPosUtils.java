@@ -3,7 +3,8 @@ package it.pagopa.pm.gateway.utils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -23,8 +24,8 @@ public class VPosUtils {
     private static final String PIPE_SPLIT_CHAR = "\\|";
     private final Map<String, List<String>> vposShopMap = new HashMap<>();
 
-    @Value("${vpos.vposShops}")
-    private String vposShops;
+    @Autowired
+    private Environment environment;
 
     /*
      * A VPos shop is identified by the following parameters:
@@ -36,10 +37,18 @@ public class VPosUtils {
      */
     @PostConstruct
     public void getVposShop() {
-        List<String> allShops = getConfig(vposShops, ASTERISK_SPLIT_CHAR);
-        for (String shop : allShops) {
-            List<String> singleShop = getConfig(shop, PIPE_SPLIT_CHAR);
-            vposShopMap.put(singleShop.get(ID_PSP_POSITION), singleShop);
+        String vposShops = environment.getProperty("vpos.vposShops");
+        if(vposShops != null) {
+            List<String> allShops = getConfig(vposShops, ASTERISK_SPLIT_CHAR);
+            for (String shop : allShops) {
+                List<String> singleShop = getConfig(shop, PIPE_SPLIT_CHAR);
+                String idPsp = singleShop.get(ID_PSP_POSITION);
+                if (singleShop.size() != 8) {
+                    log.error("Wrong shop number for idpsp: " + idPsp);
+                } else {
+                    vposShopMap.put(idPsp, singleShop);
+                }
+            }
         }
     }
 

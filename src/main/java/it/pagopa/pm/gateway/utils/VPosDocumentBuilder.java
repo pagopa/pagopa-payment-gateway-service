@@ -90,10 +90,10 @@ public class VPosDocumentBuilder {
         return request;
     }
 
-    private Element findRoot(VposRequestEnum elementRoot) {
+    private Element findRoot(VposRequestEnum element) {
         Element rootElement = this.root;
-        if (elementRoot != null) {
-            rootElement = children.get(elementRoot.getTagName());
+        if (element != null) {
+            rootElement = children.get(element.getTagName());
             if (rootElement == null) {
                 throw new IllegalArgumentException("element root invalid");
             }

@@ -38,8 +38,6 @@ public class VPosRequestUtils {
     private static final String FAKE_DESCRIPTION = "Pagamenti PA";
     private static final String OPERATION_ACCOUNTING = "ACCOUNTING";
     public static final String OPERATION_REFUND = "REFUND";
-    public static final String ERROR_MSG = "Error";
-    public static final String ERROR_CONSTRUCTING_REQUEST_BODY = "Error constructing requestBody";
 
     @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;
@@ -47,191 +45,139 @@ public class VPosRequestUtils {
     @Autowired
     VPosUtils vPosUtils;
 
+    private String shopId;
+    private String terminalId;
+    private String mac;
+
+    private void retrieveShopInformation(StepZeroRequest pgsRequest) {
+        List<String> shopParameters = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
+        if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
+            shopId = shopParameters.get(SHOP_ID_FIRST_PAY_POSITION);
+            terminalId = shopParameters.get(TERMINAL_ID_FIRST_PAY_POSITION);
+            mac = shopParameters.get(MAC_FIRST_PAY_POSITION);
+        } else {
+            shopId = shopParameters.get(SHOP_ID_NEXT_PAY_POSITION);
+            terminalId = shopParameters.get(TERMINAL_ID_NEXT_PAY_POSITION);
+            mac = shopParameters.get(MAC_NEXT_PAY_POSITION);
+        }
+    }
+
     public Map<String, String> createStepZeroRequest(StepZeroRequest pgsRequest, String requestId) throws IOException {
-        Map<String, String> params;
-        try {
-            String shopId;
-            String terminalId;
-            String mac;
-            List<String> shopParameters = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
-            if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                shopId = shopParameters.get(SHOP_ID_FIRST_PAY_POSITION);
-                terminalId = shopParameters.get(TERMINAL_ID_FIRST_PAY_POSITION);
-                mac = shopParameters.get(MAC_FIRST_PAY_POSITION);
-            } else {
-                shopId = shopParameters.get(SHOP_ID_NEXT_PAY_POSITION);
-                terminalId = shopParameters.get(TERMINAL_ID_NEXT_PAY_POSITION);
-                mac = shopParameters.get(MAC_NEXT_PAY_POSITION);
-            }
-            params = getParams(buildRequestStep0(pgsRequest, shopId, terminalId, mac, requestId));
-        } catch (Exception e) {
-            log.error(ERROR_CONSTRUCTING_REQUEST_BODY);
-            throw e;
-        }
-        return params;
+        retrieveShopInformation(pgsRequest);
+        Document stepZeroRequest = buildStepZeroRequest(pgsRequest, shopId, terminalId, mac, requestId);
+        return getParams(stepZeroRequest);
     }
 
-    public Map<String, String> generateRequestForAccount(StepZeroRequest pgsRequest) throws IOException {
-        Map<String, String> params;
-        try {
-            List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
-            String shopId;
-            String terminalId;
-            String mac;
-            if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                shopId = variables.get(2);
-                terminalId = variables.get(3);
-                mac = variables.get(4);
-            } else {
-                shopId = variables.get(5);
-                terminalId = variables.get(6);
-                mac = variables.get(7);
-            }
-            params = getParams(buildRequestForAccount(pgsRequest, shopId, terminalId, mac));
-        } catch (Exception e) {
-            log.error(ERROR_CONSTRUCTING_REQUEST_BODY);
-            throw e;
-        }
-        return params;
+    public Map<String, String> createAccountingRequest(StepZeroRequest pgsRequest) throws IOException {
+        retrieveShopInformation(pgsRequest);
+        Document accountingRequest = buildAccountingRequest(pgsRequest, shopId, terminalId, mac);
+        return getParams(accountingRequest);
     }
 
-    public Map<String, String> generateRequestForRevert(StepZeroRequest pgsRequest) throws IOException {
-        Map<String, String> params;
-        try {
-            List<String> variables = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
-            String shopId;
-            String terminalId;
-            String mac;
-            if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                shopId = variables.get(2);
-                terminalId = variables.get(3);
-                mac = variables.get(4);
-            } else {
-                shopId = variables.get(5);
-                terminalId = variables.get(6);
-                mac = variables.get(7);
-            }
-            params = getParams(buildRequestForRevert(pgsRequest, shopId, terminalId, mac));
-        } catch (Exception e) {
-            log.error(ERROR_CONSTRUCTING_REQUEST_BODY);
-            throw e;
-        }
-        return params;
+    public Map<String, String> createRevertRequest(StepZeroRequest pgsRequest) throws IOException {
+        retrieveShopInformation(pgsRequest);
+        Document revertRequest = buildRevertRequest(pgsRequest, shopId, terminalId, mac);
+        return getParams(revertRequest);
     }
 
-    private Document buildRequestStep0(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
+    private Document buildStepZeroRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
         String notifyUrl = String.format(vposResponseUrl, requestId);
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
-        try {
-            Date date = new Date();
-            Element macElement = new Element(MAC.getTagName());
-            documentBuilder.addElement(RELEASE, RELEASE_VALUE);
-            //REQUEST
-            documentBuilder.addBodyElement(REQUEST);
-            documentBuilder.addElement(REQUEST, OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
-            documentBuilder.addElement(REQUEST, TIMESTAMP, date);
-            documentBuilder.addElement(REQUEST, macElement);
-            //DATA
-            documentBuilder.addBodyElement(DATA);
-            documentBuilder.addBodyElement(DATA, AUTH_REQUEST_3DS2_STEP_0);
-            //HEADER
-            documentBuilder.addBodyElement(AUTH_REQUEST_3DS2_STEP_0, HEADER);
-            documentBuilder.addElement(HEADER, SHOP_ID, shopId);
-            documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
-            documentBuilder.addElement(HEADER, REQ_REF_NUM, pgsRequest.getReqRefNumber());
-            //AUTH_REQUEST_3DS2_STEP_0
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ORDER_ID, pgsRequest.getIdTransaction());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, PAN, pgsRequest.getPan());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, CVV2, pgsRequest.getSecurityCode());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, EXP_DATE, pgsRequest.getExpireDate());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, AMOUNT, pgsRequest.getAmount());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, CURRENCY, CURRENCY_VALUE);
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ACCOUNTING_MODE, ACCOUNT_DEFERRED);
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NETWORK, pgsRequest.getCircuit().getCode());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_DATA, pgsRequest.getThreeDsData());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl);
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl);
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());
-            documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, EMAIL_CH, pgsRequest.getEmailCH());
-            //MAC
-            VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, mac, notifyUrl);
-            macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
-        } catch (Exception e) {
-            log.error(ERROR_MSG);
-            throw e;
-        }
+        Date date = new Date();
+        Element macElement = new Element(MAC.getTagName());
+        documentBuilder.addElement(RELEASE, RELEASE_VALUE);
+        //REQUEST
+        documentBuilder.addBodyElement(REQUEST);
+        documentBuilder.addElement(REQUEST, OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
+        documentBuilder.addElement(REQUEST, TIMESTAMP, date);
+        documentBuilder.addElement(REQUEST, macElement);
+        //DATA
+        documentBuilder.addBodyElement(DATA);
+        documentBuilder.addBodyElement(DATA, AUTH_REQUEST_3DS2_STEP_0);
+        //HEADER
+        documentBuilder.addBodyElement(AUTH_REQUEST_3DS2_STEP_0, HEADER);
+        documentBuilder.addElement(HEADER, SHOP_ID, shopId);
+        documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
+        documentBuilder.addElement(HEADER, REQ_REF_NUM, pgsRequest.getReqRefNumber());
+        //AUTH_REQUEST_3DS2_STEP_0
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ORDER_ID, pgsRequest.getIdTransaction());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, PAN, pgsRequest.getPan());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, CVV2, pgsRequest.getSecurityCode());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, EXP_DATE, pgsRequest.getExpireDate());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, AMOUNT, pgsRequest.getAmount());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, CURRENCY, CURRENCY_VALUE);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ACCOUNTING_MODE, ACCOUNT_DEFERRED);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NETWORK, pgsRequest.getCircuit().getCode());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_DATA, pgsRequest.getThreeDsData());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, EMAIL_CH, pgsRequest.getEmailCH());
+        //MAC
+        VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, mac, notifyUrl);
+        macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
 
-    private Document buildRequestForAccount(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac) {
+    private Document buildAccountingRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac) {
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
-        try {
-            Date date = new Date();
-            Element macElement = new Element(MAC.getTagName());
-            documentBuilder.addElement(VposRequestEnum.RELEASE, RELEASE_VALUE);
-            //REQUEST
-            documentBuilder.addBodyElement(REQUEST);
-            documentBuilder.addElement(REQUEST, OPERATION, OPERATION_ACCOUNTING);
-            documentBuilder.addElement(REQUEST, TIMESTAMP, date);
-            documentBuilder.addElement(REQUEST, macElement);
-            //DATA
-            documentBuilder.addBodyElement(DATA);
-            documentBuilder.addBodyElement(DATA, ACCOUNTING);
-            documentBuilder.addBodyElement(ACCOUNTING, HEADER);
-            //HEADER
-            documentBuilder.addElement(HEADER, SHOP_ID, shopId);
-            documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
-            documentBuilder.addElement(HEADER, REQ_REF_NUM, pgsRequest.getReqRefNumber());
-            //ACCOUNTING
-            documentBuilder.addElement(ACCOUNTING, TRANSACTION_ID, pgsRequest.getIdTransaction());
-            documentBuilder.addElement(ACCOUNTING, ORDER_ID, pgsRequest.getIdTransaction());
-            documentBuilder.addElement(ACCOUNTING, AMOUNT, pgsRequest.getAmount());
-            documentBuilder.addElement(ACCOUNTING, CURRENCY, CURRENCY_VALUE);
-            documentBuilder.addElement(ACCOUNTING, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
-            //MAC
-            VPosMacBuilder macBuilder = calculateMac(date, shopId, pgsRequest, terminalId, mac, ACCOUNTING);
-            macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
-        } catch (Exception e) {
-            log.error(ERROR_MSG);
-            throw e;
-        }
+        Date date = new Date();
+        Element macElement = new Element(MAC.getTagName());
+        documentBuilder.addElement(VposRequestEnum.RELEASE, RELEASE_VALUE);
+        //REQUEST
+        documentBuilder.addBodyElement(REQUEST);
+        documentBuilder.addElement(REQUEST, OPERATION, OPERATION_ACCOUNTING);
+        documentBuilder.addElement(REQUEST, TIMESTAMP, date);
+        documentBuilder.addElement(REQUEST, macElement);
+        //DATA
+        documentBuilder.addBodyElement(DATA);
+        documentBuilder.addBodyElement(DATA, ACCOUNTING);
+        documentBuilder.addBodyElement(ACCOUNTING, HEADER);
+        //HEADER
+        documentBuilder.addElement(HEADER, SHOP_ID, shopId);
+        documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
+        documentBuilder.addElement(HEADER, REQ_REF_NUM, pgsRequest.getReqRefNumber());
+        //ACCOUNTING
+        documentBuilder.addElement(ACCOUNTING, TRANSACTION_ID, pgsRequest.getIdTransaction());
+        documentBuilder.addElement(ACCOUNTING, ORDER_ID, pgsRequest.getIdTransaction());
+        documentBuilder.addElement(ACCOUNTING, AMOUNT, pgsRequest.getAmount());
+        documentBuilder.addElement(ACCOUNTING, CURRENCY, CURRENCY_VALUE);
+        documentBuilder.addElement(ACCOUNTING, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
+        //MAC
+        VPosMacBuilder macBuilder = calculateMac(date, shopId, pgsRequest, terminalId, mac, ACCOUNTING);
+        macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
 
-    private Document buildRequestForRevert(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac) {
+    private Document buildRevertRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac) {
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
-        try {
-            Date date = new Date();
-            Element macElement = new Element(MAC.getTagName());
-            documentBuilder.addElement(VposRequestEnum.RELEASE, RELEASE_VALUE);
-            //REQUEST
-            documentBuilder.addBodyElement(REQUEST);
-            documentBuilder.addElement(REQUEST, OPERATION, OPERATION_REFUND);
-            documentBuilder.addElement(REQUEST, TIMESTAMP, date);
-            documentBuilder.addElement(REQUEST, macElement);
-            //DATA
-            documentBuilder.addBodyElement(DATA);
-            documentBuilder.addBodyElement(DATA, REFUND);
-            documentBuilder.addBodyElement(REFUND, HEADER);
-            //HEADER
-            documentBuilder.addElement(HEADER, SHOP_ID, shopId);
-            documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
-            documentBuilder.addElement(HEADER, REQ_REF_NUM, pgsRequest.getReqRefNumber());
-            //ACCOUNTING
-            documentBuilder.addElement(REFUND, TRANSACTION_ID, pgsRequest.getIdTransaction());
-            documentBuilder.addElement(REFUND, ORDER_ID, pgsRequest.getIdTransaction());
-            documentBuilder.addElement(REFUND, AMOUNT, pgsRequest.getAmount());
-            documentBuilder.addElement(REFUND, CURRENCY, CURRENCY_VALUE);
-            documentBuilder.addElement(REFUND, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
-            //MAC
-            VPosMacBuilder macBuilder = calculateMac(date, shopId, pgsRequest, terminalId, mac, REFUND);
-            macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
-        } catch (Exception e) {
-            log.error(ERROR_MSG);
-            throw e;
-        }
+        Date date = new Date();
+        Element macElement = new Element(MAC.getTagName());
+        documentBuilder.addElement(VposRequestEnum.RELEASE, RELEASE_VALUE);
+        //REQUEST
+        documentBuilder.addBodyElement(REQUEST);
+        documentBuilder.addElement(REQUEST, OPERATION, OPERATION_REFUND);
+        documentBuilder.addElement(REQUEST, TIMESTAMP, date);
+        documentBuilder.addElement(REQUEST, macElement);
+        //DATA
+        documentBuilder.addBodyElement(DATA);
+        documentBuilder.addBodyElement(DATA, REFUND);
+        documentBuilder.addBodyElement(REFUND, HEADER);
+        //HEADER
+        documentBuilder.addElement(HEADER, SHOP_ID, shopId);
+        documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
+        documentBuilder.addElement(HEADER, REQ_REF_NUM, pgsRequest.getReqRefNumber());
+        //ACCOUNTING
+        documentBuilder.addElement(REFUND, TRANSACTION_ID, pgsRequest.getIdTransaction());
+        documentBuilder.addElement(REFUND, ORDER_ID, pgsRequest.getIdTransaction());
+        documentBuilder.addElement(REFUND, AMOUNT, pgsRequest.getAmount());
+        documentBuilder.addElement(REFUND, CURRENCY, CURRENCY_VALUE);
+        documentBuilder.addElement(REFUND, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
+        //MAC
+        VPosMacBuilder macBuilder = calculateMac(date, shopId, pgsRequest, terminalId, mac, REFUND);
+        macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
 

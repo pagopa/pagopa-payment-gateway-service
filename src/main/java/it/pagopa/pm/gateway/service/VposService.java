@@ -92,7 +92,7 @@ public class VposService {
         try {
             response = processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
-            log.error(String.format("Error constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
+            log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
             return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
         return response;
@@ -109,17 +109,16 @@ public class VposService {
     private void executeStepZeroAuth(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         ThreeDS2Response response;
         try {
-            log.info("Calling VPOS - Step 0 - for requestId: " + entity.getGuid());
+            String requestId = entity.getGuid();
+            log.info("Calling VPOS - Step 0 - for requestId: " + requestId);
             HttpClientResponse clientResponse = callVPos(params);
             response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
+                log.info(String.format("RequestId %s is for a first payment with credit card. Reverting", requestId));
                 executeRevert(entity, pgsRequest);
-            } else {
-                Boolean isToAccount = checkResultCode(response, entity);
-                if (BooleanUtils.isTrue(isToAccount)) {
-                    executeAccount(entity, pgsRequest);
-                }
+            } else if (checkResultCode(response, entity)) {
+                executeAccount(entity, pgsRequest);
             }
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
@@ -131,7 +130,7 @@ public class VposService {
         AuthResponse response;
         try {
             log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.generateRequestForAccount(pgsRequest);
+            Map<String, String> params = vPosRequestUtils.createAccountingRequest(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
             response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
@@ -146,7 +145,7 @@ public class VposService {
         AuthResponse response;
         try {
             log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.generateRequestForRevert(pgsRequest);
+            Map<String, String> params = vPosRequestUtils.createRevertRequest(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
             response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
@@ -212,7 +211,7 @@ public class VposService {
         return entity;
     }
 
-    private Boolean checkResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {
+    private boolean checkResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;

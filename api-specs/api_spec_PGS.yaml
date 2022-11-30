@@ -606,7 +606,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: '#/components/schemas/CreditCardAuthResponse'
         "400":
@@ -614,19 +614,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardAuthResponse400'
+                $ref: '#/components/schemas/CreditCardAuthResponseBadRequest'
         "401":
           description: transactionId already processed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardAuthResponse401'
+                $ref: '#/components/schemas/CreditCardAuthResponseUnauthorized'
         "500":
           description: generic error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCardAuthResponse500'
+                $ref: '#/components/schemas/CreditCardAuthResponseGenericError'
 components:
   schemas:
     AuthMessage:
@@ -1090,7 +1090,7 @@ components:
           type: string
           description: timeStamp
           example: 1667484646944
-    CreditCardAuthResponse400:
+    CreditCardAuthResponseBadRequest:
       type: object
       required:
         - error
@@ -1099,7 +1099,7 @@ components:
           type: string
           description: error description
           example: Bad Request - mandatory parameters missing
-    CreditCardAuthResponse401:
+    CreditCardAuthResponseUnauthorized:
       type: object
       required:
         - error
@@ -1108,7 +1108,7 @@ components:
           type: string
           description: error description
           example: Transaction already processed
-    CreditCardAuthResponse500:
+    CreditCardAuthResponseGenericError:
       type: object
       required:
         - error

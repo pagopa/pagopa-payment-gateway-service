@@ -80,7 +80,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/BPayOutcomeResponse'
         "400":
@@ -125,7 +125,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/BPayInfoResponse'
         "404":
@@ -161,7 +161,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/BPayOutcomeResponse'
         "400":
@@ -202,7 +202,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/PollingResponseEntity'
         "400":
@@ -313,7 +313,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/PostePayAuthResponseEntity'
         "400":
@@ -426,7 +426,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/XPayAuthResponseEntity'
         "400":
@@ -532,7 +532,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/XPayPollingResponseEntity'
         "404":
@@ -599,7 +599,7 @@ paths:
         "200":
           description: OK
           content:
-            '*/*':
+            'application/json':
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/CcPaymentInfoAcceptedResponse'
@@ -607,7 +607,7 @@ paths:
         "404":
           description: Not Found
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/CcPaymentInfoError'
 components:

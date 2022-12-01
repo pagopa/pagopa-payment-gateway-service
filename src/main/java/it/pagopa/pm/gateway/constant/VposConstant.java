@@ -9,14 +9,6 @@ import java.nio.charset.StandardCharsets;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class VposConstant {
 
-    public static final int ID_PSP_POSITION = 0;
-    public static final int SHOP_ID_FIRST_PAY_POSITION = 2;
-    public static final int TERMINAL_ID_FIRST_PAY_POSITION = 3;
-    public static final int MAC_FIRST_PAY_POSITION = 4;
-    public static final int SHOP_ID_NEXT_PAY_POSITION = 5;
-    public static final int TERMINAL_ID_NEXT_PAY_POSITION = 6;
-    public static final int MAC_NEXT_PAY_POSITION = 7;
-
     public static final String RESULT_CODE_AUTHORIZED = "00";
     public static final String RESULT_CODE_METHOD = "25";
     public static final String RESULT_CODE_CHALLENGE = "26";

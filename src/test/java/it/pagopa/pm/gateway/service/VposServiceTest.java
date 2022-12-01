@@ -221,7 +221,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_NoT_Authorized_METHOD_Test_OK() throws IOException {
+    public void getRequestPayment_Not_Authorized_METHOD_Test_OK() throws IOException {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Method();
         Map<String, String> params = new HashMap<>();

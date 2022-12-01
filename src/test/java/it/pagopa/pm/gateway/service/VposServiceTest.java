@@ -201,7 +201,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_No_To_Tccount_Test_OK() throws IOException {
+    public void getRequestPayment_No_To_Account_Test_OK() throws IOException {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         AuthResponse authResponse = ValidBeans.createVPosAuthResponse("12");

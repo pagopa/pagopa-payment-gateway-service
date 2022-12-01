@@ -38,8 +38,7 @@ public class HttpClient {
     public HttpClientResponse post(String url, String contentType, Map<String, String> params) throws IOException {
         String trace = String.format("POST - %s", url);
         log.info("INIT " + trace);
-        CloseableHttpClientWrapper client = createClient();
-        try {
+        try(CloseableHttpClientWrapper client = createClient()) {
             URIBuilder uriBuilder = new URIBuilder(url);
             HttpPost request = new HttpPost(uriBuilder.build());
             addContentType(contentType, request);
@@ -52,9 +51,6 @@ public class HttpClient {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new IOException(e);
-        } finally {
-            client.close();
-            log.info("END " + trace);
         }
     }
 

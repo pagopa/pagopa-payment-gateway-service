@@ -44,7 +44,7 @@ public class VPosRequestUtilsTest {
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
-        assertNotNull(vPosRequestUtils.createStepZeroRequest(pgsRequest, "requestId"));
+        assertNotNull(vPosRequestUtils.buildStepZeroRequestParams(pgsRequest, "requestId"));
     }
 
     @Test
@@ -53,7 +53,7 @@ public class VPosRequestUtilsTest {
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
-        assertNotNull(vPosRequestUtils.createStepZeroRequest(pgsRequest, "requestId"));
+        assertNotNull(vPosRequestUtils.buildStepZeroRequestParams(pgsRequest, "requestId"));
     }
 
     @Test

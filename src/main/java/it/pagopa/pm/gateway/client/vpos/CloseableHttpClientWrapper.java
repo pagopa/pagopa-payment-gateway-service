@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 @Slf4j
-class CloseableHttpClientWrapper {
+class CloseableHttpClientWrapper implements AutoCloseable {
     private final CloseableHttpClient client;
 
     CloseableHttpClientWrapper(CloseableHttpClient client) {
@@ -29,9 +29,11 @@ class CloseableHttpClientWrapper {
         }
     }
 
-    void close() throws IOException {
+    @Override
+    public void close() throws Exception {
         client.close();
     }
+
 
 }
 

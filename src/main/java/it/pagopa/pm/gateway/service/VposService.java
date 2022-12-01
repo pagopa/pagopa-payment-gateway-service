@@ -68,39 +68,39 @@ public class VposService {
     @Autowired
     private HttpClient httpClient;
 
-    public ResponseEntity<StepZeroResponse> startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
+    public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
         log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
-            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null);
         }
 
         if (ObjectUtils.anyNull(request) || request.getAmount().equals(BigInteger.ZERO)) {
             log.error(BAD_REQUEST_MSG);
-            return createStepZeroResponse(BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG, null);
         }
 
         String idTransaction = request.getIdTransaction();
         log.info(String.format("START - POST %s for idTransaction %s", REQUEST_PAYMENTS_CREDIT_CARD, idTransaction));
         if ((Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction)))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, HttpStatus.UNAUTHORIZED, null);
+            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null);
         }
 
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
             log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
-            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null);
         }
     }
 
-    private ResponseEntity<StepZeroResponse> processStepZero(StepZeroRequest request, String clientId, String mdcFields) throws IOException {
+    private StepZeroResponse processStepZero(StepZeroRequest request, String clientId, String mdcFields) throws IOException {
         PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
         Map<String, String> params = vPosRequestUtils.buildStepZeroRequestParams(request, entity.getGuid());
         executeStepZeroAuth(params, entity, request);
-        return createStepZeroResponse(null, HttpStatus.OK, entity.getGuid());
+        return createStepZeroResponse(null, entity.getGuid());
     }
 
     @Async
@@ -174,7 +174,7 @@ public class VposService {
         return clientResponse;
     }
 
-    private ResponseEntity<StepZeroResponse> createStepZeroResponse(String errorMessage, HttpStatus httpStatus, String requestId) {
+    private StepZeroResponse createStepZeroResponse(String errorMessage, String requestId) {
         StepZeroResponse response = new StepZeroResponse();
 
         if (StringUtils.isNotBlank(requestId)) {
@@ -190,7 +190,7 @@ public class VposService {
         }
 
         log.info(String.format("END - POST %s for requestId %s", REQUEST_PAYMENTS_CREDIT_CARD, requestId));
-        return ResponseEntity.status(httpStatus).body(response);
+        return response;
     }
 
     private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, StepZeroRequest request) throws JsonProcessingException {

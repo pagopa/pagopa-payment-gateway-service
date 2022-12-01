@@ -43,7 +43,8 @@ public class CreditCardPaymentControllerTest {
     @Test
     public void startCreditCardPayment_Test() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
-        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.ok().body(new StepZeroResponse()));
+        StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
                 .header(Headers.X_CLIENT_ID, APP_ORIGIN)
@@ -55,7 +56,8 @@ public class CreditCardPaymentControllerTest {
     @Test
     public void startCreditCardPayment_Test_400() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
-        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new StepZeroResponse()));
+        StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.BAD_REQUEST, null);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
@@ -67,7 +69,8 @@ public class CreditCardPaymentControllerTest {
     @Test
     public void startCreditCardPayment_Test_401() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
-        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new StepZeroResponse()));
+        StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.UNAUTHORIZED, null);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)
@@ -79,7 +82,8 @@ public class CreditCardPaymentControllerTest {
     @Test
     public void startCreditCardPayment_Test_500() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
-        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new StepZeroResponse()));
+        StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.INTERNAL_SERVER_ERROR, null);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
                         .header(Headers.X_CLIENT_ID, APP_ORIGIN)

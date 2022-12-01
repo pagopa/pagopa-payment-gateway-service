@@ -13,6 +13,7 @@ import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
+import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
@@ -30,6 +31,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.openapitools.client.model.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -44,6 +46,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
+import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.XPayParams.*;
 import static it.pagopa.pm.gateway.dto.enums.CardCircuit.MASTERCARD;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
@@ -993,6 +996,22 @@ public class ValidBeans {
         xmlOutput.setFormat(format);
         xmlOutput.output(document, outputStream);
         return outputStream.toByteArray();
+    }
+
+    public static StepZeroResponse createStepzeroResponse(HttpStatus httpStatus, String idTransaction) {
+        StepZeroResponse response = new StepZeroResponse();
+        if(httpStatus.is2xxSuccessful()) {
+            response.setRequestId("requestId");
+            response.setUrlRedirect("http://localhost:8080/payment-gateway/\"");
+            response.setStatus(CREATED.name());
+        } else if(httpStatus.value() == 400) {
+            response.setError(BAD_REQUEST_MSG);
+        } else if(httpStatus.value() == 401) {
+            response.setError(TRANSACTION_ALREADY_PROCESSED_MSG);
+        } else {
+            response.setError(GENERIC_ERROR_MSG + idTransaction);
+        }
+        return response;
     }
 }
 

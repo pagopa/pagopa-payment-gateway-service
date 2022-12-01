@@ -1,8 +1,13 @@
 package it.pagopa.pm.gateway.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pm.gateway.dto.vpos.Shop;
+import it.pagopa.pm.gateway.dto.vpos.VposShops;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -13,8 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static it.pagopa.pm.gateway.constant.VposConstant.ID_PSP_POSITION;
-
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Component
@@ -22,7 +25,8 @@ public class VPosUtils {
 
     private static final String ASTERISK_SPLIT_CHAR = "\\*";
     private static final String PIPE_SPLIT_CHAR = "\\|";
-    private final Map<String, List<String>> vposShopMap = new HashMap<>();
+    private final Map<String, Shop> vposShopMap = new HashMap<>();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Autowired
     private Environment environment;
@@ -36,28 +40,31 @@ public class VPosUtils {
      * idPsp|ABI|shopId(F)|terminalId(F)|MAC(F)|shopId(S)|terminalId(S)|MAC(S)*idPsp|... ...terminalId(S)|mac(S)
      */
     @PostConstruct
-    public void getVposShop() {
-        String vposShops = environment.getProperty("vpos.vposShops");
-        if(vposShops != null) {
-            List<String> allShops = getConfig(vposShops, ASTERISK_SPLIT_CHAR);
-            for (String shop : allShops) {
-                List<String> singleShop = getConfig(shop, PIPE_SPLIT_CHAR);
-                String idPsp = singleShop.get(ID_PSP_POSITION);
-                if (singleShop.size() != 8) {
+    public void getVposShop() throws JsonProcessingException {
+        String vposShopsString = environment.getProperty("vpos.vposShops");
+        if (vposShopsString != null) {
+            VposShops configShops = getConfigShops(vposShopsString);
+            List<Shop> allShops = configShops.getShops();
+            for (Shop shop : allShops) {
+                String idPsp = shop.getIdPsp();
+                if(ObjectUtils.anyNull(shop, shop.getIdPsp(), shop.getAbi(),
+                        shop.getShopIdFirstPayment(), shop.getTerminalIdFirstPayment(), shop.getMacFirstPayment(),
+                        shop.getShopIdSuccPayment(), shop.getTerminalIdSuccPayment(), shop.getMacSuccPayment())) {
                     log.error("Wrong shop number for idpsp: " + idPsp);
                 } else {
-                    vposShopMap.put(idPsp, singleShop);
+                    vposShopMap.put(idPsp, shop);
                 }
             }
         }
     }
 
-    private List<String> getConfig(String config, String splitChar) {
-        return Arrays.asList(config.split(splitChar));
+    private VposShops getConfigShops(String vposShopsString) throws JsonProcessingException {
+        return OBJECT_MAPPER.readValue(vposShopsString, VposShops.class);
     }
 
-    public List<String> getVposShopByIdPsp(String idPsp) {
+    public Shop getVposShopByIdPsp(String idPsp) {
         return vposShopMap.get(idPsp);
     }
+
 
 }

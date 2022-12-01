@@ -2,6 +2,7 @@ package it.pagopa.pm.gateway.utils;
 
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.VposRequestEnum;
+import it.pagopa.pm.gateway.dto.vpos.Shop;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,15 +39,15 @@ public class VPosRequestUtils {
     private String mac;
 
     private void retrieveShopInformation(StepZeroRequest pgsRequest) {
-        List<String> shopParameters = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
+        Shop shopParameters = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
         if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-            shopId = shopParameters.get(SHOP_ID_FIRST_PAY_POSITION);
-            terminalId = shopParameters.get(TERMINAL_ID_FIRST_PAY_POSITION);
-            mac = shopParameters.get(MAC_FIRST_PAY_POSITION);
+            shopId = shopParameters.getShopIdFirstPayment();
+            terminalId = shopParameters.getTerminalIdFirstPayment();
+            mac = shopParameters.getMacFirstPayment();
         } else {
-            shopId = shopParameters.get(SHOP_ID_NEXT_PAY_POSITION);
-            terminalId = shopParameters.get(TERMINAL_ID_NEXT_PAY_POSITION);
-            mac = shopParameters.get(MAC_NEXT_PAY_POSITION);
+            shopId = shopParameters.getShopIdSuccPayment();
+            terminalId = shopParameters.getTerminalIdSuccPayment();
+            mac = shopParameters.getMacSuccPayment();
         }
     }
 
@@ -56,13 +57,13 @@ public class VPosRequestUtils {
         return getParams(stepZeroRequest);
     }
 
-    public Map<String, String> createAccountingRequest(StepZeroRequest pgsRequest) throws IOException {
+    public Map<String, String> buildAccountingRequestParams(StepZeroRequest pgsRequest) throws IOException {
         retrieveShopInformation(pgsRequest);
         Document accountingRequest = buildAccountingRequest(pgsRequest, shopId, terminalId, mac);
         return getParams(accountingRequest);
     }
 
-    public Map<String, String> createRevertRequest(StepZeroRequest pgsRequest) throws IOException {
+    public Map<String, String> buildRevertRequestParams(StepZeroRequest pgsRequest) throws IOException {
         retrieveShopInformation(pgsRequest);
         Document revertRequest = buildRevertRequest(pgsRequest, shopId, terminalId, mac);
         return getParams(revertRequest);

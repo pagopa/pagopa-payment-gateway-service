@@ -880,14 +880,17 @@ public class ValidBeans {
         return variables;
     }
 
-    public static List<String> getVariables(String config, String idPsp) {
-        Map<String, List<String>> vposShopMap = new HashMap<>();
-        List<String> allShops = Arrays.asList(config.split("\\*"));
-        for (String shop : allShops) {
-            List<String> singleShop = Arrays.asList(shop.split("\\|"));
-            vposShopMap.put(idPsp, singleShop);
-        }
-        return vposShopMap.get(idPsp);
+    public static Shop generateShop(String idPsp) {
+        Shop shop = new Shop();
+        shop.setIdPsp(idPsp);
+        shop.setAbi("ABI");
+        shop.setShopIdFirstPayment("ShopId_F");
+        shop.setMacFirstPayment("mac_F");
+        shop.setTerminalIdFirstPayment("terminalId_F");
+        shop.setShopIdSuccPayment("shopId_S");
+        shop.setMacSuccPayment("mac_S");
+        shop.setTerminalIdSuccPayment("terminalId_S");
+        return shop;
     }
 
     public static Document createThreeDs2AuthorizationResponseDocument(ThreeDS2Response threeDS2Response) throws IOException, JDOMException {
@@ -968,7 +971,7 @@ public class ValidBeans {
                 "<BPWXmlResponse><Timestamp>" + authResponse.getTimestamp() + "</Timestamp><Result>" + authResponse.getResultCode() + "</Result><MAC>" + authResponse.getResultMac() + "</MAC>" +
                 "<Data><Operation><Authorization>" +
                 "<PaymentType>" + authResponse.getPaymentType() + "</PaymentType><AuthorizationType>" + authResponse.getAuthorizationType() + "</AuthorizationType>" +
-                "<TransactionID>" + authResponse.getAcquirerTransactionId() + "</TransactionID><Network>" + authResponse.getCircuit() + "</Network>" +
+                "<TransactionID>" + authResponse.getAcquirerTransactionId() + "</TransactionID><Network></Network>" +
                 "<OrderID>" + authResponse.getOrderNumber() + "</OrderID><TransactionAmount>" + authResponse.getAmount() + "</TransactionAmount>" +
                 "<AuthorizedAmount>" + authResponse.getAuthorizationAmount() + "</AuthorizedAmount><RefundedAmount>" + authResponse.getRefundAmount() + "</RefundedAmount>" +
                 "<AccountedAmount>" + authResponse.getAccountAmount() + "</AccountedAmount><Currency>" + authResponse.getCurrency() + "</Currency>" +

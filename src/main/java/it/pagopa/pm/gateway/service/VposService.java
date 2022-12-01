@@ -76,7 +76,7 @@ public class VposService {
             return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, HttpStatus.BAD_REQUEST, null);
         }
 
-        if (ObjectUtils.isEmpty(request) || request.getAmount().equals(BigInteger.ZERO)) {
+        if (ObjectUtils.anyNull(request) || request.getAmount().equals(BigInteger.ZERO)) {
             log.error(BAD_REQUEST_MSG);
             return createStepZeroResponse(BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST, null);
         }
@@ -105,12 +105,12 @@ public class VposService {
 
     @Async
     private void executeStepZeroAuth(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
-        ThreeDS2Response response;
+
         try {
             String requestId = entity.getGuid();
             log.info("Calling VPOS - Step 0 - for requestId: " + requestId);
             HttpClientResponse clientResponse = callVPos(params);
-            response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
+            ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
                 log.info(String.format("RequestId %s is for a first payment with credit card. Reverting", requestId));
@@ -126,7 +126,7 @@ public class VposService {
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
             log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.createAccountingRequest(pgsRequest);
+            Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
@@ -140,7 +140,7 @@ public class VposService {
     private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
             log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.createRevertRequest(pgsRequest);
+            Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(pgsRequest);
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);

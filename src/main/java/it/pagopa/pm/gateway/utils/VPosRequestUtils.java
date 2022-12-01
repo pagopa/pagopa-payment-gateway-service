@@ -51,7 +51,7 @@ public class VPosRequestUtils {
         }
     }
 
-    public Map<String, String> createStepZeroRequest(StepZeroRequest pgsRequest, String requestId) throws IOException {
+    public Map<String, String> buildStepZeroRequestParams(StepZeroRequest pgsRequest, String requestId) throws IOException {
         retrieveShopInformation(pgsRequest);
         Document stepZeroRequest = buildStepZeroRequest(pgsRequest, shopId, terminalId, mac, requestId);
         return getParams(stepZeroRequest);

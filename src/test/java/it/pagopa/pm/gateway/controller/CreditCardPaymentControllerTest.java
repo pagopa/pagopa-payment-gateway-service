@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -49,6 +50,42 @@ public class CreditCardPaymentControllerTest {
                 .content(mapper.writeValueAsString(requestOK))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void startCreditCardPayment_Test_400() throws Exception {
+        StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new StepZeroResponse()));
+
+        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .content(mapper.writeValueAsString(requestOK))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void startCreditCardPayment_Test_401() throws Exception {
+        StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new StepZeroResponse()));
+
+        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .content(mapper.writeValueAsString(requestOK))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void startCreditCardPayment_Test_500() throws Exception {
+        StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
+        when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new StepZeroResponse()));
+
+        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
+                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .content(mapper.writeValueAsString(requestOK))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
     }
 
 }

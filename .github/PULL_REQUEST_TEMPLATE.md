@@ -34,6 +34,11 @@
 
 - [ ] My change requires a change to the documentation.
 - [ ] I have updated the documentation accordingly.
+- [ ] I have created or updated an API interface.
+  - [ ] I have updated the OpenAPI spec
+- [ ] I have created or updated a database table
+  - [ ] I have updated both the Oracle and Postgres migrations
+- [ ] My PR is cohesive and self-contained (rule of thumb: less than 250 changed lines) <!-- If this is not the case please specify why it should not be split into more PRs -->
 
 ### Link to story
 

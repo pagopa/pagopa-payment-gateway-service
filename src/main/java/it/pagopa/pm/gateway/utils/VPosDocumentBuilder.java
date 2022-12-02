@@ -26,15 +26,18 @@ public class VPosDocumentBuilder {
         this.request = new Document(root);
     }
 
+    //used to add a child tag
     public void addElement(VposRequestEnum tag, Object value) {
         addElement(null, tag, value);
     }
 
+    //used to add a child tag
     public void addElement(VposRequestEnum elementRoot, Element element) {
         Element rootElement = findRoot(elementRoot);
         rootElement.addContent(element);
     }
 
+    //used to add a child tag
     public void addElement(VposRequestEnum elementRoot, VposRequestEnum tag, Object value) {
         Element rootElement = findRoot(elementRoot);
         if (tag != null) {
@@ -71,10 +74,12 @@ public class VPosDocumentBuilder {
         }
     }
 
+    //used to add a parent tag
     public void addBodyElement(VposRequestEnum tag) {
         addElement(null, tag, null);
     }
 
+    //used to add a parent tag
     public void addBodyElement(VposRequestEnum elementRoot, VposRequestEnum tag) {
         Element rootElement = children.get(elementRoot.getTagName());
         if (rootElement == null) {

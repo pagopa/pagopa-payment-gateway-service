@@ -23,8 +23,6 @@ import java.util.Map;
 @Component
 public class VPosUtils {
 
-    private static final String ASTERISK_SPLIT_CHAR = "\\*";
-    private static final String PIPE_SPLIT_CHAR = "\\|";
     private final Map<String, Shop> vposShopMap = new HashMap<>();
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

@@ -13,7 +13,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,16 +23,13 @@ import java.util.Map;
 public class VPosUtils {
 
     private final Map<String, Shop> vposShopMap = new HashMap<>();
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Autowired
     private Environment environment;
 
-    /*
-     * A VPos shop is identified by the following parameters:
-     * idPsp, ABI, shopId, terminalId, MAC
-     * where shopId, terminalId and MAC are different for first or subsequent (payments.
-     */
+    @Autowired
+    ObjectMapper objectMapper;
+
     @PostConstruct
     public void getVposShop() throws JsonProcessingException {
         String vposShopsString = environment.getProperty("vpos.vposShops");
@@ -42,7 +38,7 @@ public class VPosUtils {
             List<Shop> allShops = configShops.getShops();
             for (Shop shop : allShops) {
                 String idPsp = shop.getIdPsp();
-                if(ObjectUtils.anyNull(shop, shop.getIdPsp(), shop.getAbi(),
+                if (ObjectUtils.anyNull(shop, shop.getIdPsp(), shop.getAbi(),
                         shop.getShopIdFirstPayment(), shop.getTerminalIdFirstPayment(), shop.getMacFirstPayment(),
                         shop.getShopIdSuccPayment(), shop.getTerminalIdSuccPayment(), shop.getMacSuccPayment())) {
                     log.error("Wrong shop number for idpsp: " + idPsp);
@@ -54,7 +50,7 @@ public class VPosUtils {
     }
 
     private VposShops getConfigShops(String vposShopsString) throws JsonProcessingException {
-        return OBJECT_MAPPER.readValue(vposShopsString, VposShops.class);
+        return objectMapper.readValue(vposShopsString, VposShops.class);
     }
 
     public Shop getVposShopByIdPsp(String idPsp) {

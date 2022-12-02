@@ -896,6 +896,16 @@ public class ValidBeans {
         return shop;
     }
 
+    public static Shop generateKOShop(String idPsp) {
+        Shop shop = new Shop();
+        shop.setIdPsp(idPsp);
+        shop.setShopIdFirstPayment("ShopId_F");
+        shop.setTerminalIdFirstPayment("terminalId_F");
+        shop.setShopIdSuccPayment("shopId_S");
+        shop.setMacSuccPayment("mac_S");
+        return shop;
+    }
+
     public static Document createThreeDs2AuthorizationResponseDocument(ThreeDS2Response threeDS2Response) throws IOException, JDOMException {
         ThreeDS2Authorization authorization = (ThreeDS2Authorization) threeDS2Response.getThreeDS2ResponseElement();
         String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -1000,13 +1010,13 @@ public class ValidBeans {
 
     public static StepZeroResponse createStepzeroResponse(HttpStatus httpStatus, String idTransaction) {
         StepZeroResponse response = new StepZeroResponse();
-        if(httpStatus.is2xxSuccessful()) {
+        if (httpStatus.is2xxSuccessful()) {
             response.setRequestId("requestId");
             response.setUrlRedirect("http://localhost:8080/payment-gateway/\"");
             response.setStatus(CREATED.name());
-        } else if(httpStatus.value() == 400) {
+        } else if (httpStatus.value() == 400) {
             response.setError(BAD_REQUEST_MSG);
-        } else if(httpStatus.value() == 401) {
+        } else if (httpStatus.value() == 401) {
             response.setError(TRANSACTION_ALREADY_PROCESSED_MSG);
         } else {
             response.setError(GENERIC_ERROR_MSG + idTransaction);

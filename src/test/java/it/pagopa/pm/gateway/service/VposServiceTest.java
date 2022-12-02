@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
@@ -56,6 +57,8 @@ public class VposServiceTest {
     private VPosResponseUtils vPosResponseUtils;
     @Mock
     private HttpClient httpClient;
+    @Mock
+    private ObjectMapper objectMapper;
 
     @Test
     public void getRequestPayment_Invalid_ClientId_Test_400() {

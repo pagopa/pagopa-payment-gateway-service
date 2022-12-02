@@ -50,7 +50,6 @@ public class VposService {
     private String vposUrl;
 
     private static final List<String> VALID_CLIENT_ID = Arrays.asList("APP", "WEB");
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String CAUSE = " cause: ";
 
     @Autowired
@@ -67,6 +66,10 @@ public class VposService {
 
     @Autowired
     private HttpClient httpClient;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
@@ -194,7 +197,7 @@ public class VposService {
     }
 
     private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, StepZeroRequest request) throws JsonProcessingException {
-        String requestJson = OBJECT_MAPPER.writeValueAsString(request);
+        String requestJson = objectMapper.writeValueAsString(request);
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setClientId(clientId);
         entity.setMdcInfo(mdcFields);

@@ -631,7 +631,7 @@ paths:
     get:
       summary: retrieve CreditCard payment request
       tags:
-        - Credit Card
+        - CreditCard
       parameters:
         - in: path
           required: true

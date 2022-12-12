@@ -15,7 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static it.pagopa.pm.gateway.controller.XPayPaymentController.*;
+import static it.pagopa.pm.gateway.controller.XPayPaymentController.EUR_CURRENCY;
+import static it.pagopa.pm.gateway.controller.XPayPaymentController.OBJECT_MAPPER;
 
 @Service
 @Slf4j
@@ -34,11 +35,10 @@ public class XPayUtils {
         String xpayNonce = xPay3DSResponse.getXpayNonce();
         String pgsMac = hashMac(String.format("esito=%sidOperazione=%sxpayNonce=%stimeStamp=%s%s",
                 outcome.name(), operationId, xpayNonce, timeStamp, secretKey));
-
         return xPayMac.equals(pgsMac);
     }
 
-    public String createMacForRevert(String codTrans, String timeStamp) {
+    public String createMacForOrderStatus(String codTrans, String timeStamp) {
         String macString = String.format("apiKey=%scodiceTransazione=%stimeStamp=%s%s",
                 apiKey, codTrans, timeStamp, secretKey);
         return hashMac(macString);
@@ -50,11 +50,15 @@ public class XPayUtils {
         return hashMac(macString);
     }
 
+    public String createPaymentMac(String codTrans, BigInteger importo, String timeStamp, String xpayNonce) {
+        String macString = String.format("apiKey=%scodiceTransazione=%simporto=%sdivisa=%sxpayNonce=%stimeStamp=%s%s",
+                apiKey, codTrans, importo, EUR_CURRENCY, xpayNonce, timeStamp, secretKey);
+        return hashMac(macString);
+    }
 
     public BigInteger getGrandTotalForMac(PaymentRequestEntity entity) throws JsonProcessingException {
         String json = entity.getJsonRequest();
         AuthPaymentXPayRequest authRequest = OBJECT_MAPPER.readValue(json, AuthPaymentXPayRequest.class);
-
         return authRequest.getImporto();
     }
 

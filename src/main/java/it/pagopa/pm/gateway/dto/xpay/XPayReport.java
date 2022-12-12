@@ -2,6 +2,8 @@ package it.pagopa.pm.gateway.dto.xpay;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class XPayReport {
 
@@ -16,7 +18,7 @@ public class XPayReport {
     private String tipoTransazione;
     private String parametri;
     private String stato;
-    private XPayDetails dettaglio;
+    private List<XPayDetails> dettaglio;
     private String tipoProdotto;
     private String nazione;
     private String numOrdinePm;

@@ -8,10 +8,7 @@ import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
-import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
-import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Challenge;
-import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Method;
-import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
+import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
@@ -24,7 +21,6 @@ import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -115,10 +111,11 @@ public class VposService {
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
+            boolean toAccount = checkResultCode(response, entity);
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
                 log.info(String.format("RequestId %s is for a first payment with credit card. Reverting", requestId));
                 executeRevert(entity, pgsRequest);
-            } else if (checkResultCode(response, entity)) {
+            } else if (toAccount) {
                 executeAccount(entity, pgsRequest);
             }
         } catch (Exception e) {
@@ -129,7 +126,7 @@ public class VposService {
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
             log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest);
+            Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest, entity.getCorrelationId());
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
@@ -143,7 +140,7 @@ public class VposService {
     private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
             log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(pgsRequest);
+            Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(pgsRequest, entity.getCorrelationId());
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
@@ -214,24 +211,29 @@ public class VposService {
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;
         String acsUrl = StringUtils.EMPTY;
+        String correlationId = StringUtils.EMPTY;
         boolean isToAccount = false;
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
                 responseType = response.getResponseType().name();
                 isToAccount = true;
+                correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
                 break;
             case RESULT_CODE_METHOD:
                 responseType = response.getResponseType().name();
                 acsUrl = ((ThreeDS2Method) response.getThreeDS2ResponseElement()).getThreeDSMethodUrl();
+                correlationId = ((ThreeDS2Method) response.getThreeDS2ResponseElement()).getThreeDSTransId();
                 break;
             case RESULT_CODE_CHALLENGE:
                 responseType = response.getResponseType().name();
                 acsUrl = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getAcsUrl();
+                correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();
                 break;
             default:
                 log.error(String.format("Error resultCode %s from Vpos for requestId %s", resultCode, entity.getGuid()));
                 status = DENIED.name();
         }
+        entity.setCorrelationId(correlationId);
         entity.setStatus(status);
         entity.setAuthorizationUrl(acsUrl);
         entity.setResponseType(responseType);
@@ -242,12 +244,15 @@ public class VposService {
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
+        boolean authorizationOutcome = true;
         if (!resultCode.equals(RESULT_CODE_AUTHORIZED)) {
             status = DENIED.name();
+            authorizationOutcome = false;
         }
+        entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
         paymentRequestRepository.save(entity);
-        log.info("END - XPay Request Payment Account for requestId " + entity.getGuid());
+        log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());
     }
 
     private void checkRevertResultCode(AuthResponse response, PaymentRequestEntity entity) {
@@ -257,7 +262,7 @@ public class VposService {
             entity.setIsRefunded(true);
             paymentRequestRepository.save(entity);
         }
-        log.info("END - XPay Request Payment Revert for requestId " + entity.getGuid());
+        log.info("END - VPos Request Payment Revert for requestId " + entity.getGuid());
     }
 
 }

@@ -24,5 +24,6 @@ public class VposConstant {
     public static final String FAKE_DESCRIPTION = "Pagamenti PA";
     public static final String OPERATION_ACCOUNTING = "ACCOUNTING";
     public static final String OPERATION_REFUND = "REFUND";
+    public static final String OPERATION_AUTH_REQUEST_3DS2_STEP_1 = "THREEDSAUTHORIZATION1";
 
 }

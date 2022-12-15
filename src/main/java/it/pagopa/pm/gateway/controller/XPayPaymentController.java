@@ -113,11 +113,11 @@ public class XPayPaymentController {
         return createXPayAuthPollingResponse(HttpStatus.OK, null, entity);
     }
 
-    @GetMapping(XPAY_RESUME)
+    @GetMapping(REQUEST_PAYMENTS_RESUME)
     public ResponseEntity<String> resumeXPayPayment(@PathVariable String requestId,
                                                     @RequestParam Map<String, String> params) {
 
-        log.info(String.format("START - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
+        log.info(String.format("START - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + REQUEST_PAYMENTS_RESUME, requestId));
         log.info("Params received from XPay: " + params);
 
         XPay3DSResponse xPay3DSResponse = buildXPay3DSResponse(params);
@@ -140,7 +140,7 @@ public class XPayPaymentController {
             paymentRequestRepository.save(entity);
         }
 
-        log.info(String.format("END - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
+        log.info(String.format("END - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + REQUEST_PAYMENTS_RESUME, requestId));
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 

@@ -1,20 +1,24 @@
 package it.pagopa.pm.gateway.controller;
 
+import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.service.CcPaymentInfoService;
+import it.pagopa.pm.gateway.service.CcResumeService;
 import it.pagopa.pm.gateway.service.VposService;
 import it.pagopa.pm.gateway.utils.MdcUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_ID;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
+import java.net.URI;
+
+import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
 import static it.pagopa.pm.gateway.constant.Headers.X_CLIENT_ID;
 import static it.pagopa.pm.gateway.constant.Messages.*;
@@ -23,8 +27,18 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 @Slf4j
 @RequestMapping(REQUEST_PAYMENTS_CREDIT_CARD)
 public class CreditCardPaymentController {
+
+    @Value("${vpos.response.urlredirect}")
+    private String responseUrlRedirect;
+
     @Autowired
     private CcPaymentInfoService ccPaymentInfoService;
+
+    @Autowired
+    private VposService vposService;
+
+    @Autowired
+    private CcResumeService ccResumeService;
 
     @GetMapping(REQUEST_ID)
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,
@@ -35,9 +49,6 @@ public class CreditCardPaymentController {
         CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo(requestId);
         return ResponseEntity.ok(response);
     }
-
-    @Autowired
-    private VposService vposService;
 
     @PostMapping()
     public ResponseEntity<StepZeroResponse> startCreditCardPayment(@RequestHeader(value = X_CLIENT_ID) String clientId,
@@ -64,5 +75,16 @@ public class CreditCardPaymentController {
         return ResponseEntity.status(httpStatus).body(stepZeroResponse);
     }
 
+    @PostMapping(REQUEST_PAYMENTS_RESUME)
+    public ResponseEntity<String> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
+                                                          @PathVariable String requestId,
+                                                          @RequestBody(required = false) CreditCardResumeRequest request) {
+        log.info(String.format("START - POST %s info for requestId: %s ", REQUEST_PAYMENTS_CREDIT_CARD + REQUEST_PAYMENTS_RESUME, requestId));
+        MdcUtils.setMdcFields(mdcFields);
+        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+        ccResumeService.startResume(request, requestId);
+        log.info(String.format("START - POST %s info for requestId: %s ", REQUEST_PAYMENTS_CREDIT_CARD + REQUEST_PAYMENTS_RESUME, requestId));
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
+    }
 
 }

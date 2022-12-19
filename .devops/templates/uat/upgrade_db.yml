@@ -95,3 +95,7 @@ jobs:
                 databaseChangelogLockTableName: "DATABASECHANGELOGLOCK_PGS"
                 databaseChangelogTableName: "DATABASECHANGELOG_PGS"
                 contexts: "tag,incremental-uat,insert-uat"
+
+            - publish: '$(Pipeline.Workspace)/${{ parameters.version }}-liquibase-script'
+              artifact: ${{ parameters.version }}-liquibase-script
+              displayName: Publish Liquibase Scripts

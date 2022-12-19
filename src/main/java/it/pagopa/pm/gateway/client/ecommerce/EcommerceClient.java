@@ -1,17 +1,25 @@
 package it.pagopa.pm.gateway.client.ecommerce;
 
+import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
+import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 
 @Slf4j
+@Component
 public class EcommerceClient {
 
     private static final String CONTEXT = "ECOMMERCE_CLIENT_";
@@ -20,6 +28,13 @@ public class EcommerceClient {
     private static final String REQUEST_TIMEOUT_MSEC = System.getProperty(CONTEXT + "REQUEST_TIMEOUT");
     private static final String CONNECTION_TIMEOUT_MSEC = System.getProperty(CONTEXT + "CONNECT_TIMEOUT");
     private static final String SOCKET_TIMEOUT_MSEC = System.getProperty(CONTEXT + "SOCKET_TIMEOUT");
+    private static final String OCP_APIM_SUBSCRIPTION_KEY = "Ocp-Apim-Subscription-Key";
+
+    @Value("${transaction.patch.url}")
+    private String transactionPatchUrl;
+
+    @Value("${pgs.xpay.azure.apiKey}")
+    private String azureApiKey;
 
     private RestTemplate eCommerceRestTemplate;
 
@@ -57,5 +72,16 @@ public class EcommerceClient {
 
     private int getIntFromValue(String value, int defaultValue) {
         return StringUtils.isNotBlank(value) && NumberUtils.isParsable(value) ? Integer.parseInt(value) : defaultValue;
+    }
+
+    public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId) {
+        log.info("Calling PATCH to update transaction " + transactionId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(OCP_APIM_SUBSCRIPTION_KEY, azureApiKey);
+        HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
+        transactionPatchUrl = transactionPatchUrl.replace("%s", transactionId);
+
+        return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }
 }

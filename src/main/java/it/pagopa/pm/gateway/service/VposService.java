@@ -2,12 +2,14 @@ package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
-import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
+import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
+import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
+import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Challenge;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Method;
@@ -24,20 +26,19 @@ import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.VposConstant.*;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_AUTHORIZED_BY_PGS;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @Service
@@ -56,7 +57,7 @@ public class VposService {
     private PaymentRequestRepository paymentRequestRepository;
 
     @Autowired
-    private RestapiCdClientImpl restapiCdClient;
+    private EcommerceClient ecommerceClient;
 
     @Autowired
     private VPosRequestUtils vPosRequestUtils;
@@ -156,12 +157,14 @@ public class VposService {
     private void executePatchTransaction(PaymentRequestEntity entity) {
         String requestId = entity.getGuid();
         log.info("START - PATCH updateTransaction for requestId: " + requestId);
-        Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
+        AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
         String authCode = entity.getAuthorizationCode();
-        PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+        String timestamp = ZonedDateTime.now().format(formatter);
+        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, timestamp, authCode);
         try {
-            String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
-            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
+            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction());
+            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
             log.info("Refunding payment with requestId: " + requestId);
@@ -246,6 +249,7 @@ public class VposService {
             status = DENIED.name();
         }
         entity.setStatus(status);
+        entity.setAuthorizationCode(response.getAuthorizationNumber());
         paymentRequestRepository.save(entity);
         log.info("END - XPay Request Payment Account for requestId " + entity.getGuid());
     }

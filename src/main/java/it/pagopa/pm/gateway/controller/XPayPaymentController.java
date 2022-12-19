@@ -117,7 +117,7 @@ public class XPayPaymentController {
     public ResponseEntity<String> resumeXPayPayment(@PathVariable String requestId,
                                                     @RequestParam Map<String, String> params) {
 
-        log.info(String.format("START - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + REQUEST_PAYMENTS_RESUME, requestId));
+        log.info("START - GET {}{} for requestId {}", REQUEST_PAYMENTS_XPAY, REQUEST_PAYMENTS_RESUME, requestId);
         log.info("Params received from XPay: " + params);
 
         XPay3DSResponse xPay3DSResponse = buildXPay3DSResponse(params);

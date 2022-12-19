@@ -79,11 +79,11 @@ public class CreditCardPaymentController {
     public ResponseEntity<String> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                           @PathVariable String requestId,
                                                           @RequestBody(required = false) CreditCardResumeRequest request) {
-        log.info(String.format("START - POST %s info for requestId: %s ", REQUEST_PAYMENTS_CREDIT_CARD + REQUEST_PAYMENTS_RESUME, requestId));
+        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME, requestId);
         MdcUtils.setMdcFields(mdcFields);
         String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
         ccResumeService.startResume(request, requestId);
-        log.info(String.format("END - POST %s info for requestId: %s ", REQUEST_PAYMENTS_CREDIT_CARD + REQUEST_PAYMENTS_RESUME, requestId));
+        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME, requestId);
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 

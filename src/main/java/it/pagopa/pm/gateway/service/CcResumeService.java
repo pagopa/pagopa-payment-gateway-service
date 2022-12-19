@@ -89,7 +89,7 @@ public class CcResumeService {
                 executeStep1(params, entity, stepZeroRequest);
             }
         } catch (Exception e) {
-            log.error(String.format("error during execution of resume for requestId %s, stackTrace: %s ", requestId, Arrays.toString(e.getStackTrace())));
+            log.error("error during execution of resume for requestId {}", requestId, e);
         }
     }
 
@@ -105,14 +105,14 @@ public class CcResumeService {
                 executeAccount(entity, request);
             }
         } catch (Exception e) {
-            log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + " stackTrace: " + Arrays.toString(e.getStackTrace()));
+            log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }
     }
 
     private HttpClientResponse callVPos(Map<String, String> params) throws IOException {
         HttpClientResponse clientResponse = httpClient.post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
         if (clientResponse.getStatus() != HttpStatus.OK.value()) {
-            log.error("HTTP Response Status: " + clientResponse.getStatus());
+            log.error("HTTP Response Status: {}", clientResponse.getStatus());
             throw new IOException("Non-ok response from VPos. HTTP status: " + clientResponse.getStatus());
         }
         return clientResponse;
@@ -137,7 +137,7 @@ public class CcResumeService {
                 correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();
                 break;
             default:
-                log.error(String.format("Error resultCode %s from Vpos for requestId %s", resultCode, entity.getGuid()));
+                log.error("Error resultCode %s from Vpos for requestId {} {}", resultCode, entity.getGuid());
                 status = DENIED.name();
         }
         entity.setCorrelationId(correlationId);
@@ -150,7 +150,7 @@ public class CcResumeService {
 
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
-            log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
+            log.info("Calling VPOS - Accounting - for requestId: {}", entity.getGuid());
             Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest, entity.getCorrelationId());
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
@@ -173,21 +173,21 @@ public class CcResumeService {
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
         paymentRequestRepository.save(entity);
-        log.info("END - XPay Request Payment Account for requestId " + entity.getGuid());
+        log.info("END - XPay Request Payment Account for requestId {}", entity.getGuid());
     }
 
     private void executePatchTransaction(PaymentRequestEntity entity) {
         String requestId = entity.getGuid();
-        log.info("START - PATCH updateTransaction for requestId: " + requestId);
+        log.info("START - PATCH updateTransaction for requestId: {}", requestId);
         Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
         String authCode = entity.getAuthorizationCode();
         PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
         try {
             String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
-            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
+            log.info("Response from PATCH updateTransaction for requestId {} is {}", requestId, result);
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
-            log.info("Refunding payment with requestId: " + requestId);
+            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
         }
     }
 }

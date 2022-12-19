@@ -113,7 +113,7 @@ public class VposService {
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             boolean toAccount = checkResultCode(response, entity);
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                log.info(String.format("RequestId %s is for a first payment with credit card. Reverting", requestId));
+                log.info("RequestId {} is for a first payment with credit card. Reverting", requestId);
                 executeRevert(entity, pgsRequest);
             } else if (toAccount) {
                 executeAccount(entity, pgsRequest);

@@ -77,23 +77,20 @@ public class CcResumeService {
     }
 
     private void processResume(CreditCardResumeRequest request, PaymentRequestEntity entity, String requestId) {
-        String methodCompleted = request.getMethodCompletd();
+        String methodCompleted = request.getMethodCompleted();
+        String responseType = entity.getResponseType();
+        String correlationId = entity.getCorrelationId();
         try {
             StepZeroRequest stepZeroRequest = objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class);
             stepZeroRequest.setIsFirstPayment(false);
-            MethodCompletedEnum methodCompletedEnum = (StringUtils.isBlank(methodCompleted)) ? null : MethodCompletedEnum.valueOf(methodCompleted);
-            if (entity.getResponseType().equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
-                Map<String, String> params = createRequestForStep1(methodCompletedEnum, entity, stepZeroRequest);
+            MethodCompletedEnum methodCompletedEnum = StringUtils.isBlank(methodCompleted) ? null : MethodCompletedEnum.valueOf(methodCompleted);
+            if (Objects.nonNull(responseType) && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
+                Map<String, String> params = vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, stepZeroRequest, correlationId);
                 executeStep1(params, entity, stepZeroRequest);
             }
         } catch (Exception e) {
             log.error(String.format("error during execution of resume for requestId %s, stackTrace: %s ", requestId, Arrays.toString(e.getStackTrace())));
         }
-    }
-
-    private Map<String, String> createRequestForStep1(MethodCompletedEnum methodCompletedEnum, PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
-        String correlationId = entity.getCorrelationId();
-        return vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, stepZeroRequest, correlationId);
     }
 
     @Async
@@ -104,7 +101,7 @@ public class CcResumeService {
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), request);
-            if (checkStep1ResultCode(response, entity)) {
+            if (isStepOneResultCodeOk(response, entity)) {
                 executeAccount(entity, request);
             }
         } catch (Exception e) {
@@ -121,7 +118,7 @@ public class CcResumeService {
         return clientResponse;
     }
 
-    private boolean checkStep1ResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {
+    private boolean isStepOneResultCodeOk(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;

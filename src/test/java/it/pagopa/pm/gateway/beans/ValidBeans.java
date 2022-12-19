@@ -719,7 +719,6 @@ public class ValidBeans {
     public static StepZeroRequest createStep0Request(Boolean isFirstPayment) {
         return new StepZeroRequest(
                 "123456",
-                "reqRefNumber",
                 BigInteger.valueOf(123455),
                 "3456567899754",
                 "123",

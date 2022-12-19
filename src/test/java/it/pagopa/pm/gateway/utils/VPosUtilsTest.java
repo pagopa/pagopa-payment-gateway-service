@@ -23,8 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -128,5 +127,12 @@ public class VPosUtilsTest {
         when(objectMapper.readValue(anyString(), any(Class.class))).thenReturn(vposShops);
         vPosUtils.getVposShop();
         assertNull(vPosUtils.getVposShopByIdPsp("123"));
+    }
+
+    @Test
+    public void getReqRefNum_Test() {
+        String reqRefNum1 = vPosUtils.getReqRefNum();
+        String reqRefNum2 = vPosUtils.getReqRefNum();
+        assertNotEquals(reqRefNum1, reqRefNum2);
     }
 }

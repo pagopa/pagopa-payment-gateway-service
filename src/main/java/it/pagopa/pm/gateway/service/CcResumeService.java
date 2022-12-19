@@ -170,6 +170,7 @@ public class CcResumeService {
             status = DENIED.name();
             authorizationOutcome = false;
         }
+        entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
         paymentRequestRepository.save(entity);

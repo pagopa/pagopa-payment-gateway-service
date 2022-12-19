@@ -83,7 +83,7 @@ public class CcResumeService {
         try {
             StepZeroRequest stepZeroRequest = objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class);
             stepZeroRequest.setIsFirstPayment(false);
-            MethodCompletedEnum methodCompletedEnum = StringUtils.isBlank(methodCompleted) ? null : MethodCompletedEnum.valueOf(methodCompleted);
+            MethodCompletedEnum methodCompletedEnum = MethodCompletedEnum.valueOf(methodCompleted);
             if (Objects.nonNull(responseType) && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
                 Map<String, String> params = vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, stepZeroRequest, correlationId);
                 executeStep1(params, entity, stepZeroRequest);

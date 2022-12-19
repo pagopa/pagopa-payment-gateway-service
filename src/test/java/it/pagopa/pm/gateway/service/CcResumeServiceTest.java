@@ -108,15 +108,16 @@ public class CcResumeServiceTest {
     }
 
     @Test
-    public void startResume_Test_Execpetion_in_processResume() throws IOException {
-        CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
+    public void startResume_Test_MethodCompletedNull() throws IOException {
+        StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
+        CreditCardResumeRequest creditCardResumeRequest = new CreditCardResumeRequest(null);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         entity.setJsonRequest("jsonRequest");
 
 
-        when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenThrow(RuntimeException.class);
+        when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResume(creditCardResumeRequest, UUID_SAMPLE);

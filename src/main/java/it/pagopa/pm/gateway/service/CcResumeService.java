@@ -186,7 +186,6 @@ public class CcResumeService {
             String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
             log.info("Response from PATCH updateTransaction for requestId {} is {}", requestId, result);
         } catch (Exception e) {
-            log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
             log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
         }
     }

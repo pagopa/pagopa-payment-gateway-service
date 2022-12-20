@@ -30,7 +30,7 @@ public class ApiPaths {
 
     // XPay
     public static final String REQUEST_PAYMENTS_XPAY = REQUEST_PAYMENTS + XPAY;
-    public static final String XPAY_RESUME = REQUEST_ID + "/resume";
+    public static final String REQUEST_PAYMENTS_RESUME = REQUEST_ID + "/resume";
 
     //CreditCard
     public static final String REQUEST_PAYMENTS_CREDIT_CARD = REQUEST_PAYMENTS + CREDIT_CARD;

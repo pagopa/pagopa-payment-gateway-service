@@ -35,7 +35,7 @@ public class CcPaymentInfoService {
         response.setStatus(paymentInfo.getStatus());
         response.setResponseType(paymentInfo.getResponseType());
         response.setRequestId(paymentInfo.getGuid());
-        response.setAcsUrl(paymentInfo.getAuthorizationUrl());
+        response.setVposUrl(paymentInfo.getAuthorizationUrl());
 
         return response;
     }

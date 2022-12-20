@@ -9,5 +9,5 @@ public class CcPaymentInfoResponse {
     private String status;
     private String responseType;
     private String requestId;
-    private String acsUrl;
+    private String vposUrl;
 }

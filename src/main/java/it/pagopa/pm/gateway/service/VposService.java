@@ -210,8 +210,8 @@ public class VposService {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;
-        String acsUrl = StringUtils.EMPTY;
         String correlationId = StringUtils.EMPTY;
+        String vposUrl = StringUtils.EMPTY;
         boolean isToAccount = false;
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
@@ -221,13 +221,13 @@ public class VposService {
                 break;
             case RESULT_CODE_METHOD:
                 responseType = response.getResponseType().name();
-                acsUrl = ((ThreeDS2Method) response.getThreeDS2ResponseElement()).getThreeDSMethodUrl();
+                vposUrl = getMethodUrl(((ThreeDS2Method) response.getThreeDS2ResponseElement()));
                 correlationId = ((ThreeDS2Method) response.getThreeDS2ResponseElement()).getThreeDSTransId();
                 break;
             case RESULT_CODE_CHALLENGE:
                 responseType = response.getResponseType().name();
-                acsUrl = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getAcsUrl();
-                correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();
+                vposUrl = getChallengeUrl((ThreeDS2Challenge) response.getThreeDS2ResponseElement());
+                correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();               
                 break;
             default:
                 log.error(String.format("Error resultCode %s from Vpos for requestId %s", resultCode, entity.getGuid()));
@@ -235,10 +235,24 @@ public class VposService {
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
-        entity.setAuthorizationUrl(acsUrl);
+        entity.setAuthorizationUrl(vposUrl);
         entity.setResponseType(responseType);
         paymentRequestRepository.save(entity);
         return isToAccount;
+    }
+
+    private String getMethodUrl(ThreeDS2Method threeDS2Method) {
+        String url = threeDS2Method.getThreeDSMethodUrl();
+        String data = threeDS2Method.getThreeDSMethodData();
+
+        return url + "?threeDSMethodData=" + data;
+    }
+
+    private String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {
+        String url = threeDS2Challenge.getAcsUrl();
+        String creq = threeDS2Challenge.getCReq();
+
+        return url + "?creq=" + creq;
     }
 
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {

@@ -1190,7 +1190,7 @@ components:
           type: string
         requestId:
           type: string
-        acsUrl:
+        vposUrl:
           type: string
       required:
         - status
@@ -1205,13 +1205,13 @@ components:
           type: string
         requestId:
           type: string
-        acsUrl:
+        vposUrl:
           type: string
       required:
         - status
         - responseType
         - requestId
-        - acsUrl
+        - vposUrl
     CcPaymentInfoError:
       type: object
       properties:

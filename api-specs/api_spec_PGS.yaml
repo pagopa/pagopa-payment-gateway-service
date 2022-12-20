@@ -1078,7 +1078,6 @@ components:
     CreditCardAuthRequest:
       required:
         - idTransaction
-        - reqRefNumber
         - amount
         - pan
         - securitycode
@@ -1095,9 +1094,6 @@ components:
           type: string
           description: transaction id on Payment Manager
           example: "123456"
-        reqRefNumber:
-          type: string
-          example: "reqRefNumber"
         amount:
           type: number
           example: 12456

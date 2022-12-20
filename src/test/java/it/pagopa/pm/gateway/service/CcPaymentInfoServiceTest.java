@@ -44,7 +44,7 @@ public class CcPaymentInfoServiceTest {
         assertNotNull(response.getStatus());
         assertNotNull(response.getRequestId());
         assertNotNull(response.getResponseType());
-        assertNotNull(response.getAcsUrl());
+        assertNotNull(response.getVposUrl());
     }
 
     @Test
@@ -54,6 +54,6 @@ public class CcPaymentInfoServiceTest {
         CcHttpException exception = assertThrows(CcHttpException.class,
                 () -> ccPaymentInfoService.getPaymentoInfo("123"));
 
-        assertEquals(exception.getStatus(), HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
     }
 }

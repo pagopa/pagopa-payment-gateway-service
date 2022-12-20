@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+    <changeSet id="V14__PM_1266_MODIFY_AUTH_URL" author="liquibase" failOnError="true" context="incremental or incremental-uat or incremental-prod">
+        <sqlFile path="../scripts/table-creation/V14__PM_1266_MODIFY_AUTH_URL.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+    </changeSet>
+</databaseChangeLog>

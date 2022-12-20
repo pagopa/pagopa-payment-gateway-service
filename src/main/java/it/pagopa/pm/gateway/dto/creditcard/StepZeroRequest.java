@@ -12,7 +12,6 @@ import java.math.BigInteger;
 @NoArgsConstructor
 public class StepZeroRequest {
     private String idTransaction;
-    private String reqRefNumber;
     private BigInteger amount;
     private String pan;
     private String securityCode;

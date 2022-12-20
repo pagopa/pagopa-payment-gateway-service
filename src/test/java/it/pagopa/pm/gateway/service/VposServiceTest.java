@@ -107,7 +107,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
@@ -129,7 +129,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when(vPosRequestUtils.buildRevertRequestParams(any())).thenReturn(params);
+        when(vPosRequestUtils.buildRevertRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
@@ -173,7 +173,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         StepZeroResponse realResponse = service.startCreditCardPayment("APP", null, requestOK);
         assertEquals(mockResponse.getStatus(), realResponse.getStatus());
@@ -190,7 +190,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildRevertRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildRevertRequestParams(any(), any()))).thenReturn(params);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         StepZeroResponse realResponse = service.startCreditCardPayment("APP", null, requestOK);
         assertEquals(mockResponse.getStatus(), realResponse.getStatus());
@@ -208,7 +208,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenThrow(RuntimeException.class);
@@ -229,7 +229,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");

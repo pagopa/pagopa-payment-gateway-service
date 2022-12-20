@@ -662,6 +662,35 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CcPaymentInfoError'
+  /request-payments/creditCard/{requestId}/resume:
+    post:
+      summary: resume CreditCard payment request
+      tags:
+        - CreditCard
+      parameters:
+        - in: path
+          required: true
+          name: requestId
+          description: Id of the request
+          example: "41bc2409-5926-4aa9-afcc-797c7054e467"
+          schema:
+            type: string
+        - in: header
+          name: MDC-Fields
+          description: MDC information
+          example: "97g10t83x7bb0437bbc50sdf58e970gt"
+          schema:
+            type: string
+          required: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditCardResumeRequest'
+        required: false
+      responses:
+        "302":
+          description: "FOUND, Redirect to url"
 components:
   schemas:
     AuthMessage:
@@ -1189,3 +1218,9 @@ components:
         reason:
           type: string
           example: "RequestId non trovato"
+    CreditCardResumeRequest:
+      type: object
+      properties:
+        methodCompleted:
+          type: string
+          example: "Y"

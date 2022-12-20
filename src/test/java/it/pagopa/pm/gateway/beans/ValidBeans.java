@@ -1027,9 +1027,9 @@ public class ValidBeans {
     public static CreditCardResumeRequest createCreditCardResumeRequest(boolean isValid) {
         CreditCardResumeRequest request = new CreditCardResumeRequest();
         if(isValid) {
-            request.setMethodCompletd("Y");
+            request.setMethodCompleted("Y");
         } else {
-            request.setMethodCompletd("N");
+            request.setMethodCompleted("N");
         }
         return request;
     }

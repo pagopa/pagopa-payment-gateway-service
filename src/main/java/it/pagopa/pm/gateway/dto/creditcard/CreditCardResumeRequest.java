@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreditCardResumeRequest {
 
-    private String methodCompletd;
+    private String methodCompleted;
 }

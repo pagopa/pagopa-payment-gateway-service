@@ -77,23 +77,20 @@ public class CcResumeService {
     }
 
     private void processResume(CreditCardResumeRequest request, PaymentRequestEntity entity, String requestId) {
-        String methodCompleted = request.getMethodCompletd();
+        String methodCompleted = request.getMethodCompleted();
+        String responseType = entity.getResponseType();
+        String correlationId = entity.getCorrelationId();
         try {
             StepZeroRequest stepZeroRequest = objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class);
             stepZeroRequest.setIsFirstPayment(false);
-            MethodCompletedEnum methodCompletedEnum = (StringUtils.isBlank(methodCompleted)) ? null : MethodCompletedEnum.valueOf(methodCompleted);
-            if (entity.getResponseType().equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
-                Map<String, String> params = createRequestForStep1(methodCompletedEnum, entity, stepZeroRequest);
+            MethodCompletedEnum methodCompletedEnum = MethodCompletedEnum.valueOf(methodCompleted);
+            if (Objects.nonNull(responseType) && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
+                Map<String, String> params = vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, stepZeroRequest, correlationId);
                 executeStep1(params, entity, stepZeroRequest);
             }
         } catch (Exception e) {
-            log.error(String.format("error during execution of resume for requestId %s, stackTrace: %s ", requestId, Arrays.toString(e.getStackTrace())));
+            log.error("error during execution of resume for requestId {}", requestId, e);
         }
-    }
-
-    private Map<String, String> createRequestForStep1(MethodCompletedEnum methodCompletedEnum, PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
-        String correlationId = entity.getCorrelationId();
-        return vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, stepZeroRequest, correlationId);
     }
 
     @Async
@@ -104,24 +101,24 @@ public class CcResumeService {
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), request);
-            if (checkStep1ResultCode(response, entity)) {
+            if (isStepOneResultCodeOk(response, entity)) {
                 executeAccount(entity, request);
             }
         } catch (Exception e) {
-            log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + " stackTrace: " + Arrays.toString(e.getStackTrace()));
+            log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }
     }
 
     private HttpClientResponse callVPos(Map<String, String> params) throws IOException {
         HttpClientResponse clientResponse = httpClient.post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
         if (clientResponse.getStatus() != HttpStatus.OK.value()) {
-            log.error("HTTP Response Status: " + clientResponse.getStatus());
+            log.error("HTTP Response Status: {}", clientResponse.getStatus());
             throw new IOException("Non-ok response from VPos. HTTP status: " + clientResponse.getStatus());
         }
         return clientResponse;
     }
 
-    private boolean checkStep1ResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {
+    private boolean isStepOneResultCodeOk(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;
@@ -140,7 +137,7 @@ public class CcResumeService {
                 correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();
                 break;
             default:
-                log.error(String.format("Error resultCode %s from Vpos for requestId %s", resultCode, entity.getGuid()));
+                log.error("Error resultCode %s from Vpos for requestId {} {}", resultCode, entity.getGuid());
                 status = DENIED.name();
         }
         entity.setCorrelationId(correlationId);
@@ -153,7 +150,7 @@ public class CcResumeService {
 
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
-            log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
+            log.info("Calling VPOS - Accounting - for requestId: {}", entity.getGuid());
             Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest, entity.getCorrelationId());
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
@@ -173,24 +170,24 @@ public class CcResumeService {
             status = DENIED.name();
             authorizationOutcome = false;
         }
+        entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
         paymentRequestRepository.save(entity);
-        log.info("END - XPay Request Payment Account for requestId " + entity.getGuid());
+        log.info("END - XPay Request Payment Account for requestId {}", entity.getGuid());
     }
 
     private void executePatchTransaction(PaymentRequestEntity entity) {
         String requestId = entity.getGuid();
-        log.info("START - PATCH updateTransaction for requestId: " + requestId);
+        log.info("START - PATCH updateTransaction for requestId: {}", requestId);
         Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
         String authCode = entity.getAuthorizationCode();
         PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
         try {
             String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
-            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
+            log.info("Response from PATCH updateTransaction for requestId {} is {}", requestId, result);
         } catch (Exception e) {
-            log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
-            log.info("Refunding payment with requestId: " + requestId);
+            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
         }
     }
 }

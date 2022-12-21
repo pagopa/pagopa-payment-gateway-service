@@ -5,7 +5,6 @@ import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.PatchRequest;
-import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;

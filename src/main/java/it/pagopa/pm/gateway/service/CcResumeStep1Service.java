@@ -39,6 +39,7 @@ import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 @Slf4j
 public class CcResumeStep1Service {
 
+    private static final String CREQ_QUERY_PARAM = "?creq=";
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
@@ -125,14 +126,15 @@ public class CcResumeStep1Service {
         String responseVposUrl = StringUtils.EMPTY;
         String correlationId = StringUtils.EMPTY;
         boolean isToAccount = false;
+        ThreeDS2ResponseElement threeDS2ResponseElement = response.getThreeDS2ResponseElement();
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
                 responseType = response.getResponseType().name();
                 isToAccount = true;
-                correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
+                correlationId = ((ThreeDS2Authorization) threeDS2ResponseElement).getTransactionId();
                 break;
             case RESULT_CODE_CHALLENGE:
-                ThreeDS2Challenge challengeResponse = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement());
+                ThreeDS2Challenge challengeResponse = (ThreeDS2Challenge) threeDS2ResponseElement;
                 responseType = response.getResponseType().name();
                 responseVposUrl = getChallengeUrl(challengeResponse);
                 correlationId = (challengeResponse.getThreeDSTransId());
@@ -152,8 +154,7 @@ public class CcResumeStep1Service {
     private String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {
         String url = threeDS2Challenge.getAcsUrl();
         String creq = threeDS2Challenge.getCReq();
-
-        return url + "?creq=" + creq;
+        return StringUtils.join(url, CREQ_QUERY_PARAM, creq);
     }
 
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {

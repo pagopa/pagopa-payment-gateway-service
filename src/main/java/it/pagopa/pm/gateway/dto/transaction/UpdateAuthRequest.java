@@ -1,14 +1,14 @@
 package it.pagopa.pm.gateway.dto.transaction;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class UpdateAuthRequest {
     @NotNull
@@ -19,4 +19,12 @@ public class UpdateAuthRequest {
 
     @NotBlank
     private String authorizationCode;
+
+    public UpdateAuthRequest(AuthResultEnum authorizationResult, String authorizationCode) {
+        this.authorizationResult = authorizationResult;
+        this.authorizationCode = authorizationCode;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+        this.timestampOperation = ZonedDateTime.now().format(formatter);
+    }
 }

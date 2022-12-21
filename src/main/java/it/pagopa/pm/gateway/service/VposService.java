@@ -10,10 +10,7 @@ import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
 import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
-import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
-import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Challenge;
-import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Method;
-import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
+import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
@@ -31,8 +28,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
@@ -160,9 +155,7 @@ public class VposService {
         log.info("START - PATCH updateTransaction for requestId: " + requestId);
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
         String authCode = entity.getAuthorizationCode();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-        String timestamp = ZonedDateTime.now().format(formatter);
-        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, timestamp, authCode);
+        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
             TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction());
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));

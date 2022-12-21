@@ -3,7 +3,6 @@ package it.pagopa.pm.gateway.client.ecommerce;
 import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -71,7 +70,7 @@ public class EcommerceClient {
     }
 
     private int getIntFromValue(String value, int defaultValue) {
-        return StringUtils.isNotBlank(value) && NumberUtils.isParsable(value) ? Integer.parseInt(value) : defaultValue;
+        return NumberUtils.isParsable(value) ? Integer.parseInt(value) : defaultValue;
     }
 
     public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId) {
@@ -80,7 +79,7 @@ public class EcommerceClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(OCP_APIM_SUBSCRIPTION_KEY, azureApiKey);
         HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
-        transactionPatchUrl = transactionPatchUrl.replace("%s", transactionId);
+        transactionPatchUrl = String.format(transactionPatchUrl, transactionId);
 
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }

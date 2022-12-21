@@ -42,7 +42,7 @@
 				<column name="ID_TRANSACTION" type="VARCHAR(36) NOT NULL"></column>
 				<column name="CORRELATION_ID" type="VARCHAR(50)"></column>
 				<column name="AUTH_OUTCOME" type="BOOLEAN"></column>
-				<column name="AUTH_URL" type="VARCHAR(50) NOT NULL"></column>
+				<column name="AUTH_URL" type="VARCHAR(500) NOT NULL"></column>
 				<column name="AUTH_CODE" type="VARCHAR(50)"></column>
 				<column name="REQUEST" type="VARCHAR(500)"></column>
 				<column name="RESOURCE_PATH" type="VARCHAR(150)"></column>

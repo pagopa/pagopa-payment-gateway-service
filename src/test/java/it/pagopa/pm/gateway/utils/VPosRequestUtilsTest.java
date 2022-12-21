@@ -44,6 +44,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = true;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildStepZeroRequestParams(pgsRequest, "requestId"));
     }
@@ -53,6 +54,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = false;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildStepZeroRequestParams(pgsRequest, "requestId"));
     }
@@ -62,6 +64,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = true;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildAccountingRequestParams(pgsRequest, CORRELATION_ID));
     }
@@ -71,6 +74,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = false;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildAccountingRequestParams(pgsRequest, CORRELATION_ID));
     }
@@ -80,6 +84,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = true;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildRevertRequestParams(pgsRequest, "correlationId"));
     }
@@ -89,6 +94,7 @@ public class VPosRequestUtilsTest {
         Boolean isFisrtPayment = false;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildRevertRequestParams(pgsRequest, CORRELATION_ID));
     }
@@ -99,6 +105,7 @@ public class VPosRequestUtilsTest {
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
         MethodCompletedEnum methodCompletedEnum = MethodCompletedEnum.Y;
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, pgsRequest, "correlationId"));
     }
@@ -109,6 +116,7 @@ public class VPosRequestUtilsTest {
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
         MethodCompletedEnum methodCompletedEnum = MethodCompletedEnum.Y;
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
         assertNotNull(vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, pgsRequest, "correlationId"));
     }

@@ -13,9 +13,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -23,6 +23,7 @@ import java.util.Map;
 public class VPosUtils {
 
     private final Map<String, Shop> vposShopMap = new HashMap<>();
+    private static final String REQ_REF_NUM_FORMAT = "yyyyMMddHHmmssSSS";
 
     @Autowired
     private Environment environment;
@@ -57,5 +58,12 @@ public class VPosUtils {
         return vposShopMap.get(idPsp);
     }
 
+    public String getReqRefNum() {
+        Date date = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat(REQ_REF_NUM_FORMAT);
+        String guid = String.format("%040d", new BigInteger(UUID.randomUUID().toString().replace("-", ""), 16));
+        String reqRefNum = dateFormat.format(date) + guid;
+        return reqRefNum.substring(0, 32);
+    }
 
 }

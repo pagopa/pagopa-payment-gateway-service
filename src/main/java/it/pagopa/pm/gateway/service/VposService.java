@@ -211,7 +211,7 @@ public class VposService {
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;
         String correlationId = StringUtils.EMPTY;
-        String vposUrl = StringUtils.EMPTY;
+        String responseVposUrl = StringUtils.EMPTY;
         boolean isToAccount = false;
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
@@ -220,14 +220,16 @@ public class VposService {
                 correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
                 break;
             case RESULT_CODE_METHOD:
+                ThreeDS2Method methodResponse = (ThreeDS2Method) response.getThreeDS2ResponseElement();
                 responseType = response.getResponseType().name();
-                vposUrl = getMethodUrl(((ThreeDS2Method) response.getThreeDS2ResponseElement()));
-                correlationId = ((ThreeDS2Method) response.getThreeDS2ResponseElement()).getThreeDSTransId();
+                responseVposUrl = getMethodUrl(methodResponse);
+                correlationId = (methodResponse.getThreeDSTransId());
                 break;
             case RESULT_CODE_CHALLENGE:
+                ThreeDS2Challenge challengeResponse =  ((ThreeDS2Challenge) response.getThreeDS2ResponseElement());
                 responseType = response.getResponseType().name();
-                vposUrl = getChallengeUrl((ThreeDS2Challenge) response.getThreeDS2ResponseElement());
-                correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();               
+                responseVposUrl = getChallengeUrl(challengeResponse);
+                correlationId = (challengeResponse.getThreeDSTransId());
                 break;
             default:
                 log.error(String.format("Error resultCode %s from Vpos for requestId %s", resultCode, entity.getGuid()));
@@ -235,7 +237,7 @@ public class VposService {
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
-        entity.setAuthorizationUrl(vposUrl);
+        entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
         paymentRequestRepository.save(entity);
         return isToAccount;

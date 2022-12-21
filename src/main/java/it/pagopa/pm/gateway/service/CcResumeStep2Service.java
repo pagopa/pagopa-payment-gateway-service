@@ -8,7 +8,9 @@ import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
-import it.pagopa.pm.gateway.dto.vpos.*;
+import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
+import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Authorization;
+import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
@@ -30,14 +32,13 @@ import java.util.Objects;
 import static it.pagopa.pm.gateway.constant.Messages.GENERIC_ERROR_MSG;
 import static it.pagopa.pm.gateway.constant.Messages.PATCH_CLOSE_PAYMENT_ERROR;
 import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_AUTHORIZED;
-import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_CHALLENGE;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_AUTHORIZED_BY_PGS;
 import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 
 @Service
 @Slf4j
-public class CcResumeService {
+public class CcResumeStep2Service {
 
     @Value("${vpos.requestUrl}")
     private String vposUrl;
@@ -60,7 +61,7 @@ public class CcResumeService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public void startResume(CreditCardResumeRequest request, String requestId) {
+    public void startResumeStep2(String requestId) {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
 
         if (Objects.isNull(entity)) {
@@ -73,20 +74,18 @@ public class CcResumeService {
             entity.setErrorMessage("requestId already processed");
             return;
         }
-        processResume(request, entity, requestId);
+        processResume(entity, requestId);
     }
 
-    private void processResume(CreditCardResumeRequest request, PaymentRequestEntity entity, String requestId) {
-        String methodCompleted = request.getMethodCompleted();
+    private void processResume(PaymentRequestEntity entity, String requestId) {
         String responseType = entity.getResponseType();
         String correlationId = entity.getCorrelationId();
         try {
             StepZeroRequest stepZeroRequest = objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class);
             stepZeroRequest.setIsFirstPayment(false);
-            MethodCompletedEnum methodCompletedEnum = MethodCompletedEnum.valueOf(methodCompleted);
-            if (Objects.nonNull(responseType) && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
-                Map<String, String> params = vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, stepZeroRequest, correlationId);
-                executeStep1(params, entity, stepZeroRequest);
+            if (Objects.nonNull(responseType) && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.CHALLENGE.name())) {
+                Map<String, String> params = vPosRequestUtils.buildStepTwoRequestParams(stepZeroRequest, correlationId);
+                executeStep2(params, entity, stepZeroRequest);
             }
         } catch (Exception e) {
             log.error("error during execution of resume for requestId {}", requestId, e);
@@ -94,14 +93,14 @@ public class CcResumeService {
     }
 
     @Async
-    private void executeStep1(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
+    private void executeStep2(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
         try {
             String requestId = entity.getGuid();
-            log.info("Calling VPOS - Step 1 - for requestId: " + requestId);
+            log.info("Calling VPOS - Step 2 - for requestId: " + requestId);
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), request);
-            if (isStepOneResultCodeOk(response, entity)) {
+            if (isStepTwoResultCodeOk(response, entity)) {
                 executeAccount(entity, request);
             }
         } catch (Exception e) {
@@ -118,31 +117,22 @@ public class CcResumeService {
         return clientResponse;
     }
 
-    private boolean isStepOneResultCodeOk(ThreeDS2Response response, PaymentRequestEntity entity) {
+    private boolean isStepTwoResultCodeOk(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;
-        String acsUrl = StringUtils.EMPTY;
         String correlationId = StringUtils.EMPTY;
         boolean isToAccount = false;
-        switch (resultCode) {
-            case RESULT_CODE_AUTHORIZED:
-                responseType = response.getResponseType().name();
-                isToAccount = true;
-                correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
-                break;
-            case RESULT_CODE_CHALLENGE:
-                responseType = response.getResponseType().name();
-                acsUrl = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getAcsUrl();
-                correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();
-                break;
-            default:
-                log.error("Error resultCode %s from Vpos for requestId {} {}", resultCode, entity.getGuid());
-                status = DENIED.name();
+        if (RESULT_CODE_AUTHORIZED.equals(resultCode)) {
+            responseType = response.getResponseType().name();
+            isToAccount = true;
+            correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
+        } else {
+            log.error("Error resultCode {} from Vpos for requestId {}", resultCode, entity.getGuid());
+            status = DENIED.name();
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
-        entity.setAuthorizationUrl(acsUrl);
         entity.setResponseType(responseType);
         paymentRequestRepository.save(entity);
         return isToAccount;

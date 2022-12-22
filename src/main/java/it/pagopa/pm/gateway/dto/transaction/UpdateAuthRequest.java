@@ -5,8 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 
 @Data
 @NoArgsConstructor
@@ -14,8 +13,8 @@ public class UpdateAuthRequest {
     @NotNull
     private AuthResultEnum authorizationResult;
 
-    @NotBlank
-    private String timestampOperation; //2022-02-11T13:00:00+01:00
+    @NotNull
+    private OffsetDateTime timestampOperation;
 
     @NotBlank
     private String authorizationCode;
@@ -23,8 +22,6 @@ public class UpdateAuthRequest {
     public UpdateAuthRequest(AuthResultEnum authorizationResult, String authorizationCode) {
         this.authorizationResult = authorizationResult;
         this.authorizationCode = authorizationCode;
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-        this.timestampOperation = ZonedDateTime.now().format(formatter);
+        this.timestampOperation = OffsetDateTime.now();
     }
 }

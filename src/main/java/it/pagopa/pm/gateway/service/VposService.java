@@ -2,12 +2,14 @@ package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
-import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
+import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
+import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
+import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -32,8 +34,6 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CAR
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.VposConstant.*;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_AUTHORIZED_BY_PGS;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @Service
@@ -52,7 +52,7 @@ public class VposService {
     private PaymentRequestRepository paymentRequestRepository;
 
     @Autowired
-    private RestapiCdClientImpl restapiCdClient;
+    private EcommerceClient ecommerceClient;
 
     @Autowired
     private VPosRequestUtils vPosRequestUtils;
@@ -153,12 +153,12 @@ public class VposService {
     private void executePatchTransaction(PaymentRequestEntity entity) {
         String requestId = entity.getGuid();
         log.info("START - PATCH updateTransaction for requestId: " + requestId);
-        Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
+        AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
         String authCode = entity.getAuthorizationCode();
-        PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
+        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
-            String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
-            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, result));
+            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction());
+            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
             log.info("Refunding payment with requestId: " + requestId);
@@ -266,6 +266,7 @@ public class VposService {
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
+        entity.setAuthorizationCode(response.getAuthorizationNumber());
         paymentRequestRepository.save(entity);
         log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());
     }

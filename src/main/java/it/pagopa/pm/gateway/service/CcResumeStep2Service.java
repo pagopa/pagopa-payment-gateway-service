@@ -154,10 +154,9 @@ public class CcResumeStep2Service {
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
-        boolean authorizationOutcome = true;
-        if (!resultCode.equals(RESULT_CODE_AUTHORIZED)) {
+        boolean authorizationOutcome = resultCode.equals(RESULT_CODE_AUTHORIZED);
+        if (!authorizationOutcome) {
             status = DENIED.name();
-            authorizationOutcome = false;
         }
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);

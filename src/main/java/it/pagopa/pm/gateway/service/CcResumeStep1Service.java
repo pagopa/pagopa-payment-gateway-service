@@ -137,7 +137,7 @@ public class CcResumeStep1Service {
                 ThreeDS2Challenge challengeResponse = (ThreeDS2Challenge) threeDS2ResponseElement;
                 responseType = response.getResponseType().name();
                 responseVposUrl = getChallengeUrl(challengeResponse);
-                correlationId = (challengeResponse.getThreeDSTransId());
+                correlationId = challengeResponse.getThreeDSTransId();
                 break;
             default:
                 log.error("Error resultCode {} from Vpos for requestId {}", resultCode, entity.getGuid());

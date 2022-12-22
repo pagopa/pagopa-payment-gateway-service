@@ -223,10 +223,10 @@ public class VposService {
                 ThreeDS2Method methodResponse = (ThreeDS2Method) response.getThreeDS2ResponseElement();
                 responseType = response.getResponseType().name();
                 responseVposUrl = getMethodUrl(methodResponse);
-                correlationId = (methodResponse.getThreeDSTransId());
+                correlationId = methodResponse.getThreeDSTransId();
                 break;
             case RESULT_CODE_CHALLENGE:
-                ThreeDS2Challenge challengeResponse =  ((ThreeDS2Challenge) response.getThreeDS2ResponseElement());
+                ThreeDS2Challenge challengeResponse = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement());
                 responseType = response.getResponseType().name();
                 responseVposUrl = getChallengeUrl(challengeResponse);
                 correlationId = (challengeResponse.getThreeDSTransId());

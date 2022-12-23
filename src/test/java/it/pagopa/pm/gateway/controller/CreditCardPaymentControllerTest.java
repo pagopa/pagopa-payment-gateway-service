@@ -8,8 +8,8 @@ import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.service.CcPaymentInfoService;
-import it.pagopa.pm.gateway.service.CcResumeService;
-import it.pagopa.pm.gateway.service.CcResumeServiceTest;
+import it.pagopa.pm.gateway.service.CcResumeStep1Service;
+import it.pagopa.pm.gateway.service.CcResumeStep2Service;
 import it.pagopa.pm.gateway.service.VposService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +48,10 @@ public class CreditCardPaymentControllerTest {
     private VposService vposService;
 
     @MockBean
-    private CcResumeService resumeService;
+    private CcResumeStep1Service resumeStep1Service;
+
+    @MockBean
+    private CcResumeStep2Service resumeStep2Service;
 
     @Mock
     private Environment environment;
@@ -120,11 +123,19 @@ public class CreditCardPaymentControllerTest {
     }
 
     @Test
-    public void resumeCreditCardPayment_Test_302() throws Exception {
+    public void resumeCreditCardPayment_Step1_Test_302() throws Exception {
         CreditCardResumeRequest request = ValidBeans.createCreditCardResumeRequest(true);
         String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
-        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD + "/" + UUID_SAMPLE + "/resume/")
+        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD + "/" + UUID_SAMPLE + "/resume/method")
                         .content(mapper.writeValueAsString(request))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isFound());
+    }
+
+    @Test
+    public void resumeCreditCardPayment_Step2_Test_302() throws Exception {
+        String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD + "/" + UUID_SAMPLE + "/resume/challenge")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isFound());
     }

@@ -37,8 +37,9 @@ import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 
 @Service
 @Slf4j
-public class CcResumeService {
+public class CcResumeStep1Service {
 
+    private static final String CREQ_QUERY_PARAM = "?creq=";
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
@@ -60,7 +61,7 @@ public class CcResumeService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public void startResume(CreditCardResumeRequest request, String requestId) {
+    public void startResumeStep1(CreditCardResumeRequest request, String requestId) {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
 
         if (Objects.isNull(entity)) {
@@ -122,30 +123,38 @@ public class CcResumeService {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
         String responseType = StringUtils.EMPTY;
-        String acsUrl = StringUtils.EMPTY;
+        String responseVposUrl = StringUtils.EMPTY;
         String correlationId = StringUtils.EMPTY;
         boolean isToAccount = false;
+        ThreeDS2ResponseElement threeDS2ResponseElement = response.getThreeDS2ResponseElement();
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
                 responseType = response.getResponseType().name();
                 isToAccount = true;
-                correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
+                correlationId = ((ThreeDS2Authorization) threeDS2ResponseElement).getTransactionId();
                 break;
             case RESULT_CODE_CHALLENGE:
+                ThreeDS2Challenge challengeResponse = (ThreeDS2Challenge) threeDS2ResponseElement;
                 responseType = response.getResponseType().name();
-                acsUrl = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getAcsUrl();
-                correlationId = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement()).getThreeDSTransId();
+                responseVposUrl = getChallengeUrl(challengeResponse);
+                correlationId = challengeResponse.getThreeDSTransId();
                 break;
             default:
-                log.error("Error resultCode %s from Vpos for requestId {} {}", resultCode, entity.getGuid());
+                log.error("Error resultCode {} from Vpos for requestId {}", resultCode, entity.getGuid());
                 status = DENIED.name();
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
-        entity.setAuthorizationUrl(acsUrl);
+        entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
         paymentRequestRepository.save(entity);
         return isToAccount;
+    }
+
+    private String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {
+        String url = threeDS2Challenge.getAcsUrl();
+        String creq = threeDS2Challenge.getCReq();
+        return StringUtils.join(url, CREQ_QUERY_PARAM, creq);
     }
 
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {

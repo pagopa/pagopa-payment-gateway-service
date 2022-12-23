@@ -32,6 +32,8 @@ import static it.pagopa.pm.gateway.dto.enums.VposRequestEnum.*;
 @Component
 public class VPosRequestUtils {
 
+    private static final String CHALLENGE = "/challenge";
+    private static final String METHOD = "/method";
     @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;
 
@@ -79,6 +81,12 @@ public class VPosRequestUtils {
         return getParams(stepOneRequest);
     }
 
+    public Map<String, String> buildStepTwoRequestParams(StepZeroRequest pgsRequest, String correlationId) throws IOException {
+        retrieveShopInformation(pgsRequest);
+        Document stepTwoRequest = buildStepTwoRequest(correlationId);
+        return getParams(stepTwoRequest);
+    }
+
     private Document buildStepZeroRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
         String notifyUrl = String.format(vposResponseUrl, requestId);
         String reqRefNum = vPosUtils.getReqRefNum();
@@ -109,8 +117,8 @@ public class VPosRequestUtils {
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ACCOUNTING_MODE, ACCOUNT_DEFERRED);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NETWORK, pgsRequest.getCircuit().getCode());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_DATA, pgsRequest.getThreeDsData());
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl);
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + CHALLENGE);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl + METHOD);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());
@@ -185,7 +193,6 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-
     private Document buildStepOneRequest(MethodCompletedEnum methodCompletedEnum, String correlationId) {
         String reqRefNum = vPosUtils.getReqRefNum();
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
@@ -214,6 +221,33 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
+    private Document buildStepTwoRequest(String correlationId) {
+        String reqRefNum = vPosUtils.getReqRefNum();
+        VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
+        Date date = new Date();
+        Element macElement = new Element(MAC.getTagName());
+        documentBuilder.addElement(VposRequestEnum.RELEASE, RELEASE_VALUE);
+        //REQUEST
+        documentBuilder.addBodyElement(REQUEST);
+        documentBuilder.addElement(REQUEST, OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_2);
+        documentBuilder.addElement(REQUEST, TIMESTAMP, date);
+        documentBuilder.addElement(REQUEST, macElement);
+        //DATA
+        documentBuilder.addBodyElement(DATA);
+        documentBuilder.addBodyElement(DATA, AUTH_REQUEST_3DS2_STEP_2);
+        documentBuilder.addBodyElement(AUTH_REQUEST_3DS2_STEP_2, HEADER);
+        //HEADER
+        documentBuilder.addElement(HEADER, SHOP_ID, shopId);
+        documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
+        documentBuilder.addElement(HEADER, REQ_REF_NUM, reqRefNum);
+        //STEP2
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_2, THREEDS_TRANS_ID, correlationId);
+        //MAC
+        VPosMacBuilder macBuilder = calculateMacStep2(date, shopId, terminalId, mac, correlationId, reqRefNum);
+        macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
+        return documentBuilder.build();
+    }
+
     private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl, String reqRefNum) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
@@ -233,8 +267,8 @@ public class VPosRequestUtils {
         macBuilder.addElement(USER_ID, pgsRequest.getHolder());
         macBuilder.addElement(OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         macBuilder.addElement(THREEDS_DATA, pgsRequest.getThreeDsData());
-        macBuilder.addElement(NOTIF_URL, notifyUrl);
-        macBuilder.addElement(THREEDS_MTD_NOTIF_URL, notifyUrl);
+        macBuilder.addElement(NOTIF_URL, notifyUrl + CHALLENGE);
+        macBuilder.addElement(THREEDS_MTD_NOTIF_URL, notifyUrl + METHOD);
         macBuilder.addString(mac);
         return macBuilder;
     }
@@ -258,7 +292,7 @@ public class VPosRequestUtils {
 
     private VPosMacBuilder calculateMacStep1(Date date, String shopId, String terminalId, String mac, String correlationId, MethodCompletedEnum methodCompletedEnum, String reqRefNum) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
-        macBuilder.addElement(OPERATION, AUTH_REQUEST_3DS2_STEP_1);
+        macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_1);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
         macBuilder.addElement(TIMESTAMP, dateFormat.format(date));
         macBuilder.addElement(SHOP_ID, shopId);
@@ -266,6 +300,19 @@ public class VPosRequestUtils {
         macBuilder.addElement(REQ_REF_NUM, reqRefNum);
         macBuilder.addElement(THREEDS_TRANS_ID, correlationId);
         macBuilder.addElement(THREEDS_METHOD_COMPLETED, methodCompletedEnum.name());
+        macBuilder.addString(mac);
+        return macBuilder;
+    }
+
+    private VPosMacBuilder calculateMacStep2(Date date, String shopId, String terminalId, String mac, String correlationId, String reqRefNum) {
+        VPosMacBuilder macBuilder = new VPosMacBuilder();
+        macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_2);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
+        macBuilder.addElement(TIMESTAMP, dateFormat.format(date));
+        macBuilder.addElement(SHOP_ID, shopId);
+        macBuilder.addElement(OPERATOR_ID, terminalId);
+        macBuilder.addElement(REQ_REF_NUM, reqRefNum);
+        macBuilder.addElement(THREEDS_TRANS_ID, correlationId);
         macBuilder.addString(mac);
         return macBuilder;
     }

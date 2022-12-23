@@ -5,7 +5,8 @@ import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.service.CcPaymentInfoService;
-import it.pagopa.pm.gateway.service.CcResumeService;
+import it.pagopa.pm.gateway.service.CcResumeStep1Service;
+import it.pagopa.pm.gateway.service.CcResumeStep2Service;
 import it.pagopa.pm.gateway.service.VposService;
 import it.pagopa.pm.gateway.utils.MdcUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,10 @@ public class CreditCardPaymentController {
     private VposService vposService;
 
     @Autowired
-    private CcResumeService ccResumeService;
+    private CcResumeStep1Service resumeStep1Service;
+
+    @Autowired
+    private CcResumeStep2Service resumeStep2Service;
 
     @GetMapping(REQUEST_ID)
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,
@@ -75,15 +79,26 @@ public class CreditCardPaymentController {
         return ResponseEntity.status(httpStatus).body(stepZeroResponse);
     }
 
-    @PostMapping(REQUEST_PAYMENTS_RESUME)
+    @PostMapping(REQUEST_PAYMENTS_RESUME_METHOD)
     public ResponseEntity<String> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                           @PathVariable String requestId,
-                                                          @RequestBody(required = false) CreditCardResumeRequest request) {
-        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME, requestId);
+                                                          @RequestBody CreditCardResumeRequest request) {
+        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
         String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
-        ccResumeService.startResume(request, requestId);
-        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME, requestId);
+        resumeStep1Service.startResumeStep1(request, requestId);
+        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
+    }
+
+    @PostMapping(REQUEST_PAYMENTS_RESUME_CHALLENGE)
+    public ResponseEntity<String> resumeCreditCardPaymentStep2(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
+                                                               @PathVariable String requestId) {
+        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
+        MdcUtils.setMdcFields(mdcFields);
+        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+        resumeStep2Service.startResumeStep2(requestId);
+        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 

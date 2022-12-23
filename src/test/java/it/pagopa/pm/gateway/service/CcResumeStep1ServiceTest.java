@@ -31,12 +31,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-@SpringBootTest(classes = CcResumeService.class)
-public class CcResumeServiceTest {
+@SpringBootTest(classes = CcResumeStep1Service.class)
+public class CcResumeStep1ServiceTest {
 
     @Spy
     @InjectMocks
-    private CcResumeService service = new CcResumeService();
+    private CcResumeStep1Service service = new CcResumeStep1Service();
 
     @Before
     public void setUpProperties() {
@@ -62,8 +62,8 @@ public class CcResumeServiceTest {
     public void startResume_Test_EntityNull() {
         CreditCardResumeRequest request = ValidBeans.createCreditCardResumeRequest(true);
         when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
-        service.startResume(request, UUID_SAMPLE);
-        verify(service).startResume(request, UUID_SAMPLE);
+        service.startResumeStep1(request, UUID_SAMPLE);
+        verify(service).startResumeStep1(request, UUID_SAMPLE);
     }
 
     @Test
@@ -72,12 +72,12 @@ public class CcResumeServiceTest {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setAuthorizationOutcome(true);
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(request, UUID_SAMPLE);
-        verify(service).startResume(request, UUID_SAMPLE);
+        service.startResumeStep1(request, UUID_SAMPLE);
+        verify(service).startResumeStep1(request, UUID_SAMPLE);
     }
 
     @Test
-    public void startResume_Test_OK() throws IOException {
+    public void startResume_STEP_1_Test_OK() throws IOException {
         StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
@@ -103,12 +103,12 @@ public class CcResumeServiceTest {
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
-    public void startResume_Test_MethodCompletedNull() throws IOException {
+    public void startResume_STEP_1_Test_MethodCompletedNull() throws IOException {
         StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
         CreditCardResumeRequest creditCardResumeRequest = new CreditCardResumeRequest(null);
 
@@ -116,16 +116,15 @@ public class CcResumeServiceTest {
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         entity.setJsonRequest("jsonRequest");
 
-
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
-    public void startResume_Execpetion_in_executeStep1() throws IOException {
+    public void startResume_STEP_1_Execpetion_in_executeStep1() throws IOException {
         StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
@@ -145,8 +144,8 @@ public class CcResumeServiceTest {
         when(vPosResponseUtils.build3ds2Response(any())).thenThrow(RuntimeException.class);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
@@ -169,12 +168,12 @@ public class CcResumeServiceTest {
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
-    public void startResume_Test_OK_Challenge_Response() throws IOException {
+    public void startResume_STEP_1_Test_OK_Challenge_Response() throws IOException {
         StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
@@ -195,12 +194,12 @@ public class CcResumeServiceTest {
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
-    public void startResume_Test_OK_Error_Response() throws IOException {
+    public void startResume_STEP_1_Test_OK_Error_Response() throws IOException {
         StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
@@ -222,8 +221,8 @@ public class CcResumeServiceTest {
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
@@ -252,8 +251,8 @@ public class CcResumeServiceTest {
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
@@ -283,8 +282,8 @@ public class CcResumeServiceTest {
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
 
     @Test
@@ -314,7 +313,8 @@ public class CcResumeServiceTest {
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenThrow(RuntimeException.class);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResume(creditCardResumeRequest, UUID_SAMPLE);
-        verify(service).startResume(creditCardResumeRequest, UUID_SAMPLE);
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
+
 }

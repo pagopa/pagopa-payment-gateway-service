@@ -12,6 +12,7 @@ import it.pagopa.pm.gateway.dto.bancomatpay.BPayInfoResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
+import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
@@ -718,7 +719,6 @@ public class ValidBeans {
     public static StepZeroRequest createStep0Request(Boolean isFirstPayment) {
         return new StepZeroRequest(
                 "123456",
-                "reqRefNumber",
                 BigInteger.valueOf(123455),
                 "3456567899754",
                 "123",
@@ -1022,6 +1022,16 @@ public class ValidBeans {
             response.setError(GENERIC_ERROR_MSG + idTransaction);
         }
         return response;
+    }
+
+    public static CreditCardResumeRequest createCreditCardResumeRequest(boolean isValid) {
+        CreditCardResumeRequest request = new CreditCardResumeRequest();
+        if(isValid) {
+            request.setMethodCompleted("Y");
+        } else {
+            request.setMethodCompleted("N");
+        }
+        return request;
     }
 }
 

@@ -113,11 +113,11 @@ public class XPayPaymentController {
         return createXPayAuthPollingResponse(HttpStatus.OK, null, entity);
     }
 
-    @GetMapping(XPAY_RESUME)
+    @GetMapping(REQUEST_PAYMENTS_RESUME)
     public ResponseEntity<String> resumeXPayPayment(@PathVariable String requestId,
                                                     @RequestParam Map<String, String> params) {
 
-        log.info(String.format("START - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
+        log.info("START - GET {}{} for requestId {}", REQUEST_PAYMENTS_XPAY, REQUEST_PAYMENTS_RESUME, requestId);
         log.info("Params received from XPay: " + params);
 
         XPay3DSResponse xPay3DSResponse = buildXPay3DSResponse(params);
@@ -131,9 +131,7 @@ public class XPayPaymentController {
             return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
         }
 
-        boolean isToExecutePayment = checkResumeRequest(entity, requestId, xPay3DSResponse);
-
-        if (isToExecutePayment && outcome.equals(OK)) {
+        if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)) {
             executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
             executePatchTransactionV2(entity, requestId);
         } else {
@@ -142,7 +140,7 @@ public class XPayPaymentController {
             paymentRequestRepository.save(entity);
         }
 
-        log.info(String.format("END - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + XPAY_RESUME, requestId));
+        log.info(String.format("END - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + REQUEST_PAYMENTS_RESUME, requestId));
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 
@@ -286,14 +284,14 @@ public class XPayPaymentController {
     @Async
     private void executeXPayPaymentCall(String requestId, XPay3DSResponse xpay3DSResponse, PaymentRequestEntity entity) {
         log.info("START - executeXPayPaymentCall for requestId " + requestId);
-        entity.setXpayNonce(xpay3DSResponse.getXpayNonce());
-        String status = DENIED.name();
+        String xpayNonce = xpay3DSResponse.getXpayNonce();
+        entity.setXpayNonce(xpayNonce);
         int retryCount = 1;
         boolean isAuthorized = false;
         log.info("Calling XPay /paga3DS - requestId: " + requestId);
         while (!isAuthorized && retryCount <= MAX_RETRIES) {
             try {
-                PaymentXPayRequest xpayRequest = createXPayPaymentRequest(requestId, entity);
+                PaymentXPayRequest xpayRequest = createXPayPaymentRequest(requestId, entity, xpayNonce);
                 log.info(String.format("Attempt no.%s for requestId: %s", retryCount, requestId));
                 PaymentXPayResponse response = xpayService.callPaga3DS(xpayRequest);
                 if (ObjectUtils.isEmpty(response)) {
@@ -322,7 +320,6 @@ public class XPayPaymentController {
             }
         }
         entity.setTimeStamp(xpay3DSResponse.getTimestamp());
-        entity.setStatus(status);
         entity.setAuthorizationOutcome(isAuthorized);
         paymentRequestRepository.save(entity);
         log.info(String.format("END - executeXPayPaymentCall for requestId: %s. Status: %s " +
@@ -379,25 +376,23 @@ public class XPayPaymentController {
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {
         log.info("Building XPay3DSResponse ");
         XPay3DSResponse xPay3DSResponse = new XPay3DSResponse();
-        if (params.get(XPAY_KEY_RESUME_TYPE).equalsIgnoreCase(RESUME_TYPE_XPAY)) {
-            xPay3DSResponse.setOutcome(EsitoXpay.valueOf(params.get(XPAY_OUTCOME)));
-            xPay3DSResponse.setOperationId(params.get(XPAY_OPERATION_ID));
-            xPay3DSResponse.setTimestamp(params.get(XPAY_TIMESTAMP));
-            xPay3DSResponse.setMac(params.get(XPAY_MAC));
-            xPay3DSResponse.setXpayNonce(params.get(XPAY_NONCE));
-            xPay3DSResponse.setErrorCode(params.get(XPAY_ERROR_CODE));
-            xPay3DSResponse.setErrorMessage(params.get(XPAY_ERROR_MESSAGE));
-        }
+        xPay3DSResponse.setOutcome(EsitoXpay.valueOf(params.get(XPAY_OUTCOME)));
+        xPay3DSResponse.setOperationId(params.get(XPAY_OPERATION_ID));
+        xPay3DSResponse.setTimestamp(params.get(XPAY_TIMESTAMP));
+        xPay3DSResponse.setMac(params.get(XPAY_MAC));
+        xPay3DSResponse.setXpayNonce(params.get(XPAY_NONCE));
+        xPay3DSResponse.setErrorCode(params.get(XPAY_ERROR_CODE));
+        xPay3DSResponse.setErrorMessage(params.get(XPAY_ERROR_MESSAGE));
         return xPay3DSResponse;
     }
 
-    private PaymentXPayRequest createXPayPaymentRequest(String requestId, PaymentRequestEntity entity) throws JsonProcessingException {
+    private PaymentXPayRequest createXPayPaymentRequest(String requestId, PaymentRequestEntity entity, String xpayNonce) throws JsonProcessingException {
         String idTransaction = entity.getIdTransaction();
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
 
         BigInteger grandTotal = xPayUtils.getGrandTotalForMac(entity);
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = xPayUtils.createMac(codTrans, grandTotal, timeStamp);
+        String mac = xPayUtils.createPaymentMac(codTrans, grandTotal, timeStamp, xpayNonce);
 
         PaymentXPayRequest request = new PaymentXPayRequest();
         request.setDivisa(Long.valueOf(EUR_CURRENCY));
@@ -470,7 +465,7 @@ public class XPayPaymentController {
         String codTrans = StringUtils.leftPad(idTransaction, 2, ZERO_CHAR);
 
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = xPayUtils.createMacForRevert(codTrans, timeStamp);
+        String mac = xPayUtils.createMacForOrderStatus(codTrans, timeStamp);
 
         XPayOrderStatusRequest request = new XPayOrderStatusRequest();
         request.setApiKey(apiKey);
@@ -490,7 +485,7 @@ public class XPayPaymentController {
 
         BigInteger grandTotal = authRequest.getImporto();
         String timeStamp = String.valueOf(System.currentTimeMillis());
-        String mac = xPayUtils.createMacForRevert(codTrans, timeStamp);
+        String mac = xPayUtils.createMac(codTrans, grandTotal, timeStamp);
 
         XPayRevertRequest request = new XPayRevertRequest();
         request.setApiKey(apiKey);

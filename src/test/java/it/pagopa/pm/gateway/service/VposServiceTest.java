@@ -2,10 +2,11 @@ package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
-import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
+import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
@@ -50,7 +51,7 @@ public class VposServiceTest {
     @Mock
     private PaymentRequestRepository paymentRequestRepository;
     @Mock
-    private RestapiCdClientImpl restapiCdClient;
+    private EcommerceClient ecommerceClient;
     @Mock
     private VPosRequestUtils vPosRequestUtils;
     @Mock
@@ -107,10 +108,10 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
+        when(ecommerceClient.callPatchTransaction(any(), any())).thenReturn(new TransactionInfo());
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         StepZeroResponse realResponse = service.startCreditCardPayment("APP", null, requestOK);
         assertEquals(mockResponse.getStatus(), realResponse.getStatus());
@@ -129,7 +130,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when(vPosRequestUtils.buildRevertRequestParams(any())).thenReturn(params);
+        when(vPosRequestUtils.buildRevertRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
@@ -173,7 +174,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         StepZeroResponse realResponse = service.startCreditCardPayment("APP", null, requestOK);
         assertEquals(mockResponse.getStatus(), realResponse.getStatus());
@@ -190,7 +191,7 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildRevertRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildRevertRequestParams(any(), any()))).thenReturn(params);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         StepZeroResponse realResponse = service.startCreditCardPayment("APP", null, requestOK);
         assertEquals(mockResponse.getStatus(), realResponse.getStatus());
@@ -208,10 +209,10 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenThrow(RuntimeException.class);
+        when(ecommerceClient.callPatchTransaction(any(), any())).thenThrow(RuntimeException.class);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         StepZeroResponse realResponse = service.startCreditCardPayment("APP", null, requestOK);
         assertEquals(mockResponse.getStatus(), realResponse.getStatus());
@@ -229,10 +230,10 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any()))).thenReturn(params);
+        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
+        when(ecommerceClient.callPatchTransaction(any(), any())).thenReturn(new TransactionInfo());
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         StepZeroResponse realResponse = service.startCreditCardPayment("APP", null, requestOK);
         assertEquals(mockResponse.getStatus(), realResponse.getStatus());

@@ -31,8 +31,8 @@ public class ApiPaths {
     // XPay
     public static final String REQUEST_PAYMENTS_XPAY = REQUEST_PAYMENTS + XPAY;
     public static final String REQUEST_PAYMENTS_RESUME = REQUEST_ID + "/resume";
-    public static final String REQUEST_PAYMENTS_RESUME_STEP1 = REQUEST_PAYMENTS_RESUME + "/step1";
-    public static final String REQUEST_PAYMENTS_RESUME_STEP2 = REQUEST_PAYMENTS_RESUME + "/step2";
+    public static final String REQUEST_PAYMENTS_RESUME_METHOD = REQUEST_PAYMENTS_RESUME + "/method";
+    public static final String REQUEST_PAYMENTS_RESUME_CHALLENGE = REQUEST_PAYMENTS_RESUME + "/challenge";
 
     //CreditCard
     public static final String REQUEST_PAYMENTS_CREDIT_CARD = REQUEST_PAYMENTS + CREDIT_CARD;

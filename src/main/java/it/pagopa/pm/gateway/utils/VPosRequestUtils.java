@@ -32,8 +32,8 @@ import static it.pagopa.pm.gateway.dto.enums.VposRequestEnum.*;
 @Component
 public class VPosRequestUtils {
 
-    private static final String STEP_2 = "/step2";
-    private static final String STEP_1 = "/step1";
+    private static final String CHALLENGE = "/challenge";
+    private static final String METHOD = "/method";
     @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;
 
@@ -117,8 +117,8 @@ public class VPosRequestUtils {
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ACCOUNTING_MODE, ACCOUNT_DEFERRED);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NETWORK, pgsRequest.getCircuit().getCode());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_DATA, pgsRequest.getThreeDsData());
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + STEP_2);
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl + STEP_1);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + CHALLENGE);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl + METHOD);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());
@@ -267,8 +267,8 @@ public class VPosRequestUtils {
         macBuilder.addElement(USER_ID, pgsRequest.getHolder());
         macBuilder.addElement(OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         macBuilder.addElement(THREEDS_DATA, pgsRequest.getThreeDsData());
-        macBuilder.addElement(NOTIF_URL, notifyUrl + STEP_2);
-        macBuilder.addElement(THREEDS_MTD_NOTIF_URL, notifyUrl + STEP_1);
+        macBuilder.addElement(NOTIF_URL, notifyUrl + CHALLENGE);
+        macBuilder.addElement(THREEDS_MTD_NOTIF_URL, notifyUrl + METHOD);
         macBuilder.addString(mac);
         return macBuilder;
     }

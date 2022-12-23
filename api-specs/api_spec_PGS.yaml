@@ -662,7 +662,7 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CcPaymentInfoError'
-  /request-payments/creditCard/{requestId}/resume/step1:
+  /request-payments/creditCard/{requestId}/resume/method:
     post:
       summary: resume CreditCard payment request
       tags:
@@ -691,7 +691,7 @@ paths:
       responses:
         "302":
           description: "FOUND, Redirect to url"
-  /request-payments/creditCard/{requestId}/resume/step2:
+  /request-payments/creditCard/{requestId}/resume/challenge:
     post:
       summary: resume CreditCard payment request
       tags:

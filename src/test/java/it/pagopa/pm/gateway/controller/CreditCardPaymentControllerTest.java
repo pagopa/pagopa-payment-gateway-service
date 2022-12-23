@@ -126,7 +126,7 @@ public class CreditCardPaymentControllerTest {
     public void resumeCreditCardPayment_Step1_Test_302() throws Exception {
         CreditCardResumeRequest request = ValidBeans.createCreditCardResumeRequest(true);
         String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
-        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD + "/" + UUID_SAMPLE + "/resume/step1")
+        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD + "/" + UUID_SAMPLE + "/resume/method")
                         .content(mapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isFound());
@@ -135,7 +135,7 @@ public class CreditCardPaymentControllerTest {
     @Test
     public void resumeCreditCardPayment_Step2_Test_302() throws Exception {
         String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
-        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD + "/" + UUID_SAMPLE + "/resume/step2")
+        mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD + "/" + UUID_SAMPLE + "/resume/challenge")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isFound());
     }

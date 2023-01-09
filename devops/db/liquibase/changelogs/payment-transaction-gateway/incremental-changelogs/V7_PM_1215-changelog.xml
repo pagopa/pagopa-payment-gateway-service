@@ -2,7 +2,7 @@
 
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
-    <changeSet id="V13__PM_1215_ADD_IS_FIRST_PAYMENT_AND_COLUMN_RESPONSE_TYPE" author="liquibase" failOnError="true" context="incremental or incremental-uat or incremental-prod">
+    <changeSet id="V13__PM_1215_ADD_IS_FIRST_PAYMENT_AND_COLUMN_RESPONSE_TYPE" author="liquibase" failOnError="true" context="incremental or incremental-uat">
         <sqlFile path="../scripts/table-creation/V13__PM_1215_ADD_IS_FIRST_PAYMENT_AND_COLUMN_RESPONSE_TYPE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
     </changeSet>
 </databaseChangeLog>

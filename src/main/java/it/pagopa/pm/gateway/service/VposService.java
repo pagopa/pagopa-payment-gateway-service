@@ -209,9 +209,10 @@ public class VposService {
     private boolean checkResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
-        String responseType = StringUtils.EMPTY;
+        String responseType = "ERROR";
         String correlationId = StringUtils.EMPTY;
         String responseVposUrl = StringUtils.EMPTY;
+        String errorCode = StringUtils.EMPTY;
         boolean isToAccount = false;
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
@@ -233,12 +234,14 @@ public class VposService {
                 break;
             default:
                 log.error(String.format("Error resultCode %s from Vpos for requestId %s", resultCode, entity.getGuid()));
+                errorCode = resultCode;
                 status = DENIED.name();
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
         entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         return isToAccount;
     }
@@ -260,15 +263,18 @@ public class VposService {
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
+        String errorCode = StringUtils.EMPTY;
         boolean authorizationOutcome = true;
         if (!resultCode.equals(RESULT_CODE_AUTHORIZED)) {
             status = DENIED.name();
             authorizationOutcome = false;
+            errorCode = resultCode;
         }
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
         entity.setAuthorizationCode(response.getAuthorizationNumber());
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());
     }

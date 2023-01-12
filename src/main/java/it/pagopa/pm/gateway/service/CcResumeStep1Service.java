@@ -122,9 +122,10 @@ public class CcResumeStep1Service {
     private boolean isStepOneResultCodeOk(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
-        String responseType = StringUtils.EMPTY;
+        String responseType = entity.getResponseType();
         String responseVposUrl = StringUtils.EMPTY;
-        String correlationId = StringUtils.EMPTY;
+        String correlationId = entity.getCorrelationId();
+        String errorCode = StringUtils.EMPTY;
         boolean isToAccount = false;
         ThreeDS2ResponseElement threeDS2ResponseElement = response.getThreeDS2ResponseElement();
         switch (resultCode) {
@@ -141,12 +142,14 @@ public class CcResumeStep1Service {
                 break;
             default:
                 log.error("Error resultCode {} from Vpos for requestId {}", resultCode, entity.getGuid());
+                errorCode = resultCode;
                 status = DENIED.name();
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
         entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         return isToAccount;
     }
@@ -174,14 +177,17 @@ public class CcResumeStep1Service {
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
+        String errorCode = StringUtils.EMPTY;
         boolean authorizationOutcome = true;
         if (!resultCode.equals(RESULT_CODE_AUTHORIZED)) {
             status = DENIED.name();
             authorizationOutcome = false;
+            errorCode = resultCode;
         }
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         log.info("END - XPay Request Payment Account for requestId {}", entity.getGuid());
     }

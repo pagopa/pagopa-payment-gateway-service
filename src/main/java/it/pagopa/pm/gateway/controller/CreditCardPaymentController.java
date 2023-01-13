@@ -85,10 +85,9 @@ public class CreditCardPaymentController {
                                                           @RequestBody CreditCardResumeRequest request) {
         log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
-        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
         resumeStep1Service.startResumeStep1(request, requestId);
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping(REQUEST_PAYMENTS_RESUME_CHALLENGE)

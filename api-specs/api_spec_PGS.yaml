@@ -575,11 +575,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayRefundResponse500'
-  /request-payments/creditCard:
+  /request-payments/vpos:
     post:
       summary: payment authorization request to Vpos
       tags:
-        - CreditCard
+        - Vpos
       operationId: step0-creditCard
       parameters:
         - in: header
@@ -627,11 +627,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreditCardAuthResponseGenericError'
-  /request-payments/creditCard/{requestId}:
+  /request-payments/vpos/{requestId}:
     get:
       summary: retrieve CreditCard payment request
       tags:
-        - CreditCard
+        - Vpos
       parameters:
         - in: path
           required: true
@@ -662,11 +662,11 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CcPaymentInfoError'
-  /request-payments/creditCard/{requestId}/resume/method:
+  /request-payments/vpos/{requestId}/resume/method:
     post:
       summary: resume CreditCard payment request
       tags:
-        - CreditCard
+        - Vpos
       parameters:
         - in: path
           required: true
@@ -695,7 +695,7 @@ paths:
     post:
       summary: resume CreditCard payment request
       tags:
-        - CreditCard
+        - Vpos
       parameters:
         - in: path
           required: true

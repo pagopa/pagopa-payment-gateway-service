@@ -77,7 +77,9 @@ public class EcommerceClient {
     public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if(StringUtils.isNotBlank(transactionPatchApiKey)) headers.add(OCP_APIM_SUBSCRIPTION_KEY, transactionPatchApiKey);
+        if (StringUtils.isNotBlank(transactionPatchApiKey)) {
+            headers.add(OCP_APIM_SUBSCRIPTION_KEY, transactionPatchApiKey);
+        }
         HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
         transactionPatchUrl = String.format(transactionPatchUrl, transactionId);
 

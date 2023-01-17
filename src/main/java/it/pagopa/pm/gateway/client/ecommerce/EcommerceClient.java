@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.client.ecommerce;
 import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -27,9 +28,13 @@ public class EcommerceClient {
     private static final String REQUEST_TIMEOUT_MSEC = System.getProperty(CONTEXT + "REQUEST_TIMEOUT");
     private static final String CONNECTION_TIMEOUT_MSEC = System.getProperty(CONTEXT + "CONNECT_TIMEOUT");
     private static final String SOCKET_TIMEOUT_MSEC = System.getProperty(CONTEXT + "SOCKET_TIMEOUT");
+    private static final String OCP_APIM_SUBSCRIPTION_KEY = "Ocp-Apim-Subscription-Key";
 
     @Value("${transaction.patch.url}")
     private String transactionPatchUrl;
+
+    @Value("${transaction.patch.apiKey}")
+    private String transactionPatchApiKey;
 
     private RestTemplate eCommerceRestTemplate;
 
@@ -72,7 +77,7 @@ public class EcommerceClient {
     public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
+        if(StringUtils.isNotBlank(transactionPatchApiKey)) headers.add(OCP_APIM_SUBSCRIPTION_KEY, transactionPatchApiKey);
         HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
         transactionPatchUrl = String.format(transactionPatchUrl, transactionId);
 

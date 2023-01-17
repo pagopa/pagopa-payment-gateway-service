@@ -27,13 +27,9 @@ public class EcommerceClient {
     private static final String REQUEST_TIMEOUT_MSEC = System.getProperty(CONTEXT + "REQUEST_TIMEOUT");
     private static final String CONNECTION_TIMEOUT_MSEC = System.getProperty(CONTEXT + "CONNECT_TIMEOUT");
     private static final String SOCKET_TIMEOUT_MSEC = System.getProperty(CONTEXT + "SOCKET_TIMEOUT");
-    private static final String OCP_APIM_SUBSCRIPTION_KEY = "Ocp-Apim-Subscription-Key";
 
     @Value("${transaction.patch.url}")
     private String transactionPatchUrl;
-
-    @Value("${pgs.xpay.azure.apiKey}")
-    private String azureApiKey;
 
     private RestTemplate eCommerceRestTemplate;
 
@@ -74,13 +70,13 @@ public class EcommerceClient {
     }
 
     public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId) {
-        log.info("Calling PATCH to update transaction " + transactionId);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(OCP_APIM_SUBSCRIPTION_KEY, azureApiKey);
+
         HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
         transactionPatchUrl = String.format(transactionPatchUrl, transactionId);
 
+        log.info("Calling PATCH to update transaction " + transactionId + " at URL: " + transactionPatchUrl);
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }
 }

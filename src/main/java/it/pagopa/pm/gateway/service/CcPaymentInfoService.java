@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway.service;
 
+import it.pagopa.pm.gateway.dto.ClientConfig;
 import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
@@ -16,8 +17,13 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CAR
 @Slf4j
 @Service
 public class CcPaymentInfoService {
+    private static final String AUTHORIZED = "AUTHORIZED";
+
     @Autowired
     private PaymentRequestRepository paymentRequestRepository;
+
+    @Autowired
+    private ClientsConfigService clientsConfigService;
 
     public CcPaymentInfoResponse getPaymentoInfo(String requestId) {
         Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, REQUEST_PAYMENTS_CREDIT_CARD);
@@ -33,9 +39,15 @@ public class CcPaymentInfoService {
     private CcPaymentInfoResponse createInfoPaymentResponse(PaymentRequestEntity paymentInfo) {
         CcPaymentInfoResponse response = new CcPaymentInfoResponse();
         response.setStatus(paymentInfo.getStatus());
-        response.setResponseType(paymentInfo.getResponseType());
         response.setRequestId(paymentInfo.getGuid());
-        response.setVposUrl(paymentInfo.getAuthorizationUrl());
+
+        if(AUTHORIZED.equals(paymentInfo.getStatus())) {
+            ClientConfig clientConfig = clientsConfigService.getByKey(paymentInfo.getClientId());
+            response.setClientReturnUrl(clientConfig.getVpos().getClientReturnUrl());
+        } else {
+            response.setResponseType(paymentInfo.getResponseType());
+            response.setVposUrl(paymentInfo.getAuthorizationUrl());
+        }
 
         return response;
     }

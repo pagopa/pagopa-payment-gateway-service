@@ -28,7 +28,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
 import static it.pagopa.pm.gateway.constant.Messages.*;
@@ -45,7 +47,6 @@ public class VposService {
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
-    private static final List<String> VALID_CLIENT_ID = Arrays.asList("APP", "WEB");
     private static final String CAUSE = " cause: ";
 
     @Autowired
@@ -66,11 +67,13 @@ public class VposService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ClientsConfigService clientsConfigService;
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
         log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
-        if (!VALID_CLIENT_ID.contains(clientId)) {
+        if (!clientsConfigService.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
             return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null);
         }

@@ -67,7 +67,7 @@ public class CreditCardPaymentControllerTest {
                 .andExpect(status().isOk());
     }
 
-    private static final String APP_ORIGIN = "APP";
+    private static final String APP_ORIGIN = "ECOMMERCE_WEB";
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test

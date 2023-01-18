@@ -690,7 +690,7 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "OK, executed asynchronous call to vpos"
   /request-payments/creditCard/{requestId}/resume/challenge:
     post:
       summary: resume CreditCard payment request

@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.client.ecommerce;
 import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -32,8 +33,8 @@ public class EcommerceClient {
     @Value("${transaction.patch.url}")
     private String transactionPatchUrl;
 
-    @Value("${pgs.xpay.azure.apiKey}")
-    private String azureApiKey;
+    @Value("${transaction.patch.apiKey}")
+    private String transactionPatchApiKey;
 
     private RestTemplate eCommerceRestTemplate;
 
@@ -74,13 +75,15 @@ public class EcommerceClient {
     }
 
     public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId) {
-        log.info("Calling PATCH to update transaction " + transactionId);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(OCP_APIM_SUBSCRIPTION_KEY, azureApiKey);
+        if (StringUtils.isNotBlank(transactionPatchApiKey)) {
+            headers.add(OCP_APIM_SUBSCRIPTION_KEY, transactionPatchApiKey);
+        }
         HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
         transactionPatchUrl = String.format(transactionPatchUrl, transactionId);
 
+        log.info("Calling PATCH to update transaction " + transactionId + " at URL: " + transactionPatchUrl);
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }
 }

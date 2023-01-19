@@ -7,10 +7,8 @@ import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
-import it.pagopa.pm.gateway.service.CcPaymentInfoService;
-import it.pagopa.pm.gateway.service.CcResumeStep1Service;
-import it.pagopa.pm.gateway.service.CcResumeStep2Service;
-import it.pagopa.pm.gateway.service.VposService;
+import it.pagopa.pm.gateway.dto.vpos.VposDeleteResponse;
+import it.pagopa.pm.gateway.service.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -27,10 +25,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
+import static it.pagopa.pm.gateway.constant.Messages.GENERIC_REFUND_ERROR_MSG;
+import static it.pagopa.pm.gateway.constant.Messages.REQUEST_ID_NOT_FOUND_MSG;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -52,6 +52,9 @@ public class CreditCardPaymentControllerTest {
 
     @MockBean
     private CcResumeStep2Service resumeStep2Service;
+
+    @MockBean
+    private VposDeleteService deleteService;
 
     @Mock
     private Environment environment;
@@ -129,7 +132,7 @@ public class CreditCardPaymentControllerTest {
         mvc.perform(post(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE + "/resume/method")
                         .content(mapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isFound());
     }
 
     @Test
@@ -138,6 +141,42 @@ public class CreditCardPaymentControllerTest {
         mvc.perform(post(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE + "/resume/challenge")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isFound());
+    }
+
+    @Test
+    public void deleteVposPayment_Test() throws Exception {
+        String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+        VposDeleteResponse response = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, null, true);
+        response.setStatus(CANCELLED.name());
+        when(deleteService.startDelete(any())).thenReturn(response);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void deleteVposPayment_Test_404() throws Exception {
+        String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+        VposDeleteResponse response = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, REQUEST_ID_NOT_FOUND_MSG, false);
+        response.setStatus(CANCELLED.name());
+        when(deleteService.startDelete(any())).thenReturn(response);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deleteVposPayment_Test_500() throws Exception {
+        String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+        VposDeleteResponse response = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, GENERIC_REFUND_ERROR_MSG + UUID_SAMPLE, false);
+        response.setStatus(CANCELLED.name());
+        when(deleteService.startDelete(any())).thenReturn(response);
+
+        mvc.perform(delete(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
     }
 
 }

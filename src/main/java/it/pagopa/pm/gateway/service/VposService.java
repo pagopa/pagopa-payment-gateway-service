@@ -13,6 +13,7 @@ import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -68,12 +69,12 @@ public class VposService {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private ClientsConfigService clientsConfigService;
+    private ClientsConfig clientsConfig;
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
         log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
-        if (!clientsConfigService.containsKey(clientId)) {
+        if (!clientsConfig.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
             return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null);
         }

@@ -67,7 +67,7 @@ public class CreditCardPaymentControllerTest {
                 .andExpect(status().isOk());
     }
 
-    private static final String APP_ORIGIN = "ECOMMERCE_WEB";
+    private static final String ECOMMERCE_WEB = "ECOMMERCE_WEB";
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
@@ -77,7 +77,7 @@ public class CreditCardPaymentControllerTest {
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -90,7 +90,7 @@ public class CreditCardPaymentControllerTest {
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
@@ -103,7 +103,7 @@ public class CreditCardPaymentControllerTest {
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
@@ -116,7 +116,7 @@ public class CreditCardPaymentControllerTest {
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
         mvc.perform(post(REQUEST_PAYMENTS_CREDIT_CARD)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());

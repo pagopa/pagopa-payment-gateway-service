@@ -1,35 +1,35 @@
-package it.pagopa.pm.gateway.service;
+package it.pagopa.pm.gateway.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.dto.ClientConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@Service
+@Component
 @Scope("singleton")
-public class ClientsConfigService {
-    @Value("${pgs.clients.config}")
-    private String clientsConfigJson;
-    private Map<String, ClientConfig> clientsConfigMap;
+public class ClientsConfig {
+    private Map<String, ClientConfig> config;
 
     @PostConstruct
-    private void convertJsonToMap() throws JsonProcessingException {
+    private void convertJsonToMap(@Autowired ObjectMapper mapper, @Value("${pgs.clients.config}") String config) throws JsonProcessingException {
         TypeReference<HashMap<String, ClientConfig>> mapType = new TypeReference<HashMap<String, ClientConfig>>() {};
-        clientsConfigMap = new ObjectMapper().readValue(clientsConfigJson, mapType);
+        this.config = Collections.unmodifiableMap(mapper.readValue(config, mapType));
     }
 
     public ClientConfig getByKey(String key) {
-        return clientsConfigMap.get(key);
+        return config.get(key);
     }
 
     public boolean containsKey(String key) {
-        return clientsConfigMap.containsKey(key);
+        return config.containsKey(key);
     }
 }

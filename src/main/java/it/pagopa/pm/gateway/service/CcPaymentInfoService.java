@@ -5,6 +5,7 @@ import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.utils.ClientsConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class CcPaymentInfoService {
     private PaymentRequestRepository paymentRequestRepository;
 
     @Autowired
-    private ClientsConfigService clientsConfigService;
+    private ClientsConfig clientsConfig;
 
     public CcPaymentInfoResponse getPaymentoInfo(String requestId) {
         Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, REQUEST_PAYMENTS_CREDIT_CARD);
@@ -42,7 +43,7 @@ public class CcPaymentInfoService {
         response.setRequestId(paymentInfo.getGuid());
 
         if(AUTHORIZED.equals(paymentInfo.getStatus())) {
-            ClientConfig clientConfig = clientsConfigService.getByKey(paymentInfo.getClientId());
+            ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
             response.setClientReturnUrl(clientConfig.getVpos().getClientReturnUrl());
         } else {
             response.setResponseType(paymentInfo.getResponseType());

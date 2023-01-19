@@ -26,5 +26,6 @@ public class VposConstant {
     public static final String OPERATION_REFUND = "REFUND";
     public static final String OPERATION_AUTH_REQUEST_3DS2_STEP_1 = "THREEDSAUTHORIZATION1";
     public static final String OPERATION_AUTH_REQUEST_3DS2_STEP_2 = "THREEDSAUTHORIZATION2";
+    public static final String OPERATION_ORDERSTATUS = "ORDERSTATUS";
 
 }

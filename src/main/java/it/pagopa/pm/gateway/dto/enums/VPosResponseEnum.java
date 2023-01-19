@@ -34,6 +34,17 @@ public enum VPosResponseEnum {
     RESPONSE_CODE_ISO("ResponseCodeISO"),
     TIMESTAMP_RESPONSE("Timestamp"),
     OPERATION("Operation"),
+    HEADER("Header"),
+    ORDER_ID("OrderID"),
+    OPERATOR_ID("OperatorId"),
+    REQ_REF_NUM("ReqRefNum"),
+    SHOP_ID("ShopId"),
+    PRODUCT_REF("ProductRef"),
+    NUMBER_OF_ITEMS("NumberOfItems"),
+    NETWORK("Network"),
+    CURRENCY("Currency"),
+    TIMESTAMP("Timestamp"),
+    ORDER_STATUS("OrderStatus"),
     MAC_RESPONSE("MAC");
 
     @Getter

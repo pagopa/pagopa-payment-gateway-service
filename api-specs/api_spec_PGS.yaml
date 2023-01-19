@@ -689,8 +689,8 @@ paths:
               $ref: '#/components/schemas/CreditCardResumeRequest'
         required: true
       responses:
-        "302":
-          description: "FOUND, Redirect to url"
+        "200":
+          description: "OK, executed asynchronous call to vpos"
   /request-payments/creditCard/{requestId}/resume/challenge:
     post:
       summary: resume CreditCard payment request

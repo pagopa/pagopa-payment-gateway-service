@@ -129,7 +129,7 @@ public class CreditCardPaymentControllerTest {
         mvc.perform(post(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE + "/resume/method")
                         .content(mapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isFound());
+                .andExpect(status().isOk());
     }
 
     @Test

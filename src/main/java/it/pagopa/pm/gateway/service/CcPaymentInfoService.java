@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 
 @Slf4j
 @Service
@@ -20,7 +20,7 @@ public class CcPaymentInfoService {
     private PaymentRequestRepository paymentRequestRepository;
 
     public CcPaymentInfoResponse getPaymentoInfo(String requestId) {
-        Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, REQUEST_PAYMENTS_CREDIT_CARD);
+        Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, REQUEST_PAYMENTS_VPOS);
 
         if(!paymentInfo.isPresent()) {
             log.error("No CreditCard request entity has been found for requestId: " + requestId);

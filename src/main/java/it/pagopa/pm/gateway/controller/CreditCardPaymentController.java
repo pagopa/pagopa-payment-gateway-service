@@ -26,7 +26,7 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 
 @RestController
 @Slf4j
-@RequestMapping(REQUEST_PAYMENTS_CREDIT_CARD)
+@RequestMapping(REQUEST_PAYMENTS_VPOS)
 public class CreditCardPaymentController {
 
     @Value("${vpos.response.urlredirect}")
@@ -83,21 +83,23 @@ public class CreditCardPaymentController {
     public ResponseEntity<String> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                           @PathVariable String requestId,
                                                           @RequestBody CreditCardResumeRequest request) {
-        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
+        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
         resumeStep1Service.startResumeStep1(request, requestId);
-        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
+
+        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         return ResponseEntity.status(HttpStatus.OK).build();
+
     }
 
     @PostMapping(REQUEST_PAYMENTS_RESUME_CHALLENGE)
     public ResponseEntity<String> resumeCreditCardPaymentStep2(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                @PathVariable String requestId) {
-        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
+        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         MdcUtils.setMdcFields(mdcFields);
         String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
         resumeStep2Service.startResumeStep2(requestId);
-        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_CREDIT_CARD, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
+        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 

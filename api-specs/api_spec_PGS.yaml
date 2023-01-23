@@ -690,7 +690,11 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK, executed asynchronous call to vpos"
+          description: OK
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/VposResumeResponse'
   /request-payments/creditCard/{requestId}/resume/challenge:
     post:
       summary: resume CreditCard payment request
@@ -1245,3 +1249,11 @@ components:
         methodCompleted:
           type: string
           example: "Y"
+    VposResumeResponse:
+      type: object
+      required:
+        - requestId
+      properties:
+        requestId:
+          type: string
+          example: "1f3af548-f9d3-423f-b7b0-4e68948d41d2"

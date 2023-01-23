@@ -4,6 +4,7 @@ import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
+import it.pagopa.pm.gateway.dto.vpos.VposResumeMethodResponse;
 import it.pagopa.pm.gateway.service.CcPaymentInfoService;
 import it.pagopa.pm.gateway.service.CcResumeStep1Service;
 import it.pagopa.pm.gateway.service.CcResumeStep2Service;
@@ -80,15 +81,16 @@ public class CreditCardPaymentController {
     }
 
     @PostMapping(REQUEST_PAYMENTS_RESUME_METHOD)
-    public ResponseEntity<String> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                          @PathVariable String requestId,
-                                                          @RequestBody CreditCardResumeRequest request) {
+    public ResponseEntity<VposResumeMethodResponse> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
+                                                                            @PathVariable String requestId,
+                                                                            @RequestBody CreditCardResumeRequest request) {
         log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
+        VposResumeMethodResponse response = new VposResumeMethodResponse(requestId);
         resumeStep1Service.startResumeStep1(request, requestId);
 
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
 
     }
 

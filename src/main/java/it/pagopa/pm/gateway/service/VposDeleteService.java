@@ -141,7 +141,7 @@ public class VposDeleteService {
         }
     }
 
-    private RefundOutcome checkRevertResultCode(AuthResponse response, PaymentRequestEntity entity) {
+    private RefundOutcome saveRevertResultCode(AuthResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         RefundOutcome refundOutcome;
         if (resultCode.equals(RESULT_CODE_AUTHORIZED)) {

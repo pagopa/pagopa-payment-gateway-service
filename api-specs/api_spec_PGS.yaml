@@ -656,6 +656,7 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/CcPaymentInfoAcceptedResponse'
                   - $ref: '#/components/schemas/CcPaymentInfoAcsResponse'
+                  - $ref: '#/components/schemas/CcPaymentInfoAuthorizedResponse'
         "404":
           description: Not Found
           content:
@@ -1211,9 +1212,10 @@ components:
           type: string
         vposUrl:
           type: string
+        clientReturnUrl:
+          type: string
       required:
         - status
-        - responseType
         - requestId
     CcPaymentInfoAcsResponse:
       type: object
@@ -1231,6 +1233,19 @@ components:
         - responseType
         - requestId
         - vposUrl
+    CcPaymentInfoAuthorizedResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        requestId:
+          type: string
+        clientReturnUrl:
+          type: string
+      required:
+        - status
+        - requestId
+        - clientReturnUrl
     CcPaymentInfoError:
       type: object
       properties:

@@ -75,6 +75,8 @@ public class VposDeleteService {
                 refundOutcome = executeRevert(entity, stepZeroRequest);
                 if(!refundOutcome.equals(OK)) {
                     return createDeleteResponse(requestId, entity.getErrorMessage(), refundOutcome, entity);
+                } else {
+                    return createDeleteResponse(requestId, null, refundOutcome, entity);
                 }
             } else {
                 return createDeleteResponse(requestId, entity.getErrorMessage(), refundOutcome, entity);
@@ -83,7 +85,6 @@ public class VposDeleteService {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + e);
             return createDeleteResponse(requestId, GENERIC_REFUND_ERROR_MSG + requestId, KO, entity);
         }
-        return createDeleteResponse(requestId, null, refundOutcome, entity);
     }
 
     private StepZeroRequest getStepZeroRequest(PaymentRequestEntity entity) throws JsonProcessingException {

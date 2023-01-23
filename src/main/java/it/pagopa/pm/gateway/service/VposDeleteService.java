@@ -130,7 +130,7 @@ public class VposDeleteService {
         return clientResponse;
     }
 
-    private RefundOutcome checkOrderStatusResultCode(VposOrderStatusResponse response, PaymentRequestEntity entity) {
+    private RefundOutcome computeOrderStatusResultCode(VposOrderStatusResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         if (resultCode.equals(RESULT_CODE_AUTHORIZED)) {
             return OK;

@@ -16,7 +16,6 @@ import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.entity.ContentType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,20 +37,21 @@ public class VposDeleteService {
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private VPosRequestUtils vPosRequestUtils;
-
-    @Autowired
     private VPosResponseUtils vPosResponseUtils;
-
-    @Autowired
     private HttpClient httpClient;
-
-    @Autowired
     private ObjectMapper objectMapper;
+
+    public VposDeleteService(PaymentRequestRepository paymentRequestRepository,
+                             VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
+                             HttpClient httpClient, ObjectMapper objectMapper) {
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.vPosRequestUtils = vPosRequestUtils;
+        this.vPosResponseUtils = vPosResponseUtils;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+    }
 
     public VposDeleteResponse startDelete(String requestId) {
         log.info("START - Vpos refund for requestId: " + requestId);
@@ -73,7 +73,7 @@ public class VposDeleteService {
             refundOutcome = executeOrderStatus(entity, stepZeroRequest);
             if (refundOutcome.equals(OK)) {
                 refundOutcome = executeRevert(entity, stepZeroRequest);
-                if(!refundOutcome.equals(OK)) {
+                if (!refundOutcome.equals(OK)) {
                     return createDeleteResponse(requestId, entity.getErrorMessage(), refundOutcome, entity);
                 } else {
                     return createDeleteResponse(requestId, null, refundOutcome, entity);
@@ -114,7 +114,7 @@ public class VposDeleteService {
         response.setRequestId(requestId);
         response.setError(errorMessage);
         response.setRefundOutcome(refundOutcome.name());
-        if(Objects.nonNull(entity)) {
+        if (Objects.nonNull(entity)) {
             response.setStatus(entity.getStatus());
         }
 

@@ -2,7 +2,6 @@ package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
-import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
@@ -37,29 +36,29 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = VposDeleteService.class)
 public class VposDeleteServiceTest {
 
-    @Spy
-    @InjectMocks
-    private VposDeleteService service = new VposDeleteService();
-
-    @Before
-    public void setUpProperties() {
-        ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
-    }
+    private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 
     @Mock
     private PaymentRequestRepository paymentRequestRepository;
     @Mock
-    private RestapiCdClientImpl restapiCdClient;
+    private VPosResponseUtils vPosResponseUtils;
     @Mock
     private VPosRequestUtils vPosRequestUtils;
-    @Mock
-    private VPosResponseUtils vPosResponseUtils;
     @Mock
     private HttpClient httpClient;
     @Mock
     private ObjectMapper objectMapper;
 
-    private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+    @Spy
+    @InjectMocks
+    private VposDeleteService service = new VposDeleteService(paymentRequestRepository,
+            vPosRequestUtils, vPosResponseUtils,
+            httpClient, objectMapper);
+
+    @Before
+    public void setUpProperties() {
+        ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
+    }
 
     @Test
     public void startDelete_Test_OK() throws IOException {

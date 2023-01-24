@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
@@ -82,12 +83,12 @@ public class CreditCardPaymentController {
 
     @PostMapping(REQUEST_PAYMENTS_RESUME_METHOD)
     public ResponseEntity<VposResumeMethodResponse> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                                            @PathVariable String requestId,
+                                                                            @PathVariable UUID requestId,
                                                                             @RequestBody CreditCardResumeRequest request) {
         log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
-        VposResumeMethodResponse response = new VposResumeMethodResponse(requestId);
-        resumeStep1Service.startResumeStep1(request, requestId);
+        VposResumeMethodResponse response = new VposResumeMethodResponse(String.valueOf(requestId));
+        resumeStep1Service.startResumeStep1(request, String.valueOf(requestId));
 
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         return ResponseEntity.status(HttpStatus.OK).body(response);

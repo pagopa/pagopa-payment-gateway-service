@@ -34,9 +34,7 @@ import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 @Slf4j
 public class VposDeleteService {
 
-    @Value("${vpos.requestUrl}")
     private String vposUrl;
-
     private PaymentRequestRepository paymentRequestRepository;
     private VPosRequestUtils vPosRequestUtils;
     private VPosResponseUtils vPosResponseUtils;
@@ -45,12 +43,13 @@ public class VposDeleteService {
 
     public VposDeleteService(PaymentRequestRepository paymentRequestRepository,
                              VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
-                             HttpClient httpClient, ObjectMapper objectMapper) {
+                             HttpClient httpClient, ObjectMapper objectMapper, @Value("${vpos.requestUrl}") String vposUrl) {
         this.paymentRequestRepository = paymentRequestRepository;
         this.vPosRequestUtils = vPosRequestUtils;
         this.vPosResponseUtils = vPosResponseUtils;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
+        this.vposUrl = vposUrl;
     }
 
     public VposDeleteResponse startDelete(String requestId) {
@@ -98,7 +97,7 @@ public class VposDeleteService {
         Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest, entity.getCorrelationId());
         HttpClientResponse clientResponse = callVPos(params);
         VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse.getEntity());
-        return checkOrderStatusResultCode(response, entity);
+        return computeOrderStatusResultCode(response, entity);
     }
 
     private RefundOutcome executeRevert(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
@@ -106,7 +105,7 @@ public class VposDeleteService {
         Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(stepZeroRequest, entity.getCorrelationId());
         HttpClientResponse clientResponse = callVPos(params);
         AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
-        return checkRevertResultCode(response, entity);
+        return saveRevertResultCode(response, entity);
     }
 
     private VposDeleteResponse createDeleteResponse(String requestId, String errorMessage, RefundOutcome refundOutcome, PaymentRequestEntity entity) {

@@ -12,7 +12,6 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -20,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -53,12 +51,7 @@ public class VposDeleteServiceTest {
     @InjectMocks
     private VposDeleteService service = new VposDeleteService(paymentRequestRepository,
             vPosRequestUtils, vPosResponseUtils,
-            httpClient, objectMapper);
-
-    @Before
-    public void setUpProperties() {
-        ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
-    }
+            httpClient, objectMapper, "http://localhost:8080");
 
     @Test
     public void startDelete_Test_OK() throws IOException {

@@ -1256,4 +1256,5 @@ components:
       properties:
         requestId:
           type: string
+          format: uuid
           example: "1f3af548-f9d3-423f-b7b0-4e68948d41d2"

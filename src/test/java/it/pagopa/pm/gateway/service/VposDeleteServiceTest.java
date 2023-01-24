@@ -34,6 +34,8 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = VposDeleteService.class)
 public class VposDeleteServiceTest {
 
+    public static final String RESULT_CODE_OK = "00";
+    public static final String RESULT_CODE_KO = "02";
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 
     @Mock
@@ -64,13 +66,14 @@ public class VposDeleteServiceTest {
         entity.setIdTransaction("1235");
         entity.setStatus(CANCELLED.name());
 
+        //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
         VposOrderStatusResponse vposOrderStatusResponse = new VposOrderStatusResponse();
-        vposOrderStatusResponse.setResultCode("00");
+        vposOrderStatusResponse.setResultCode(RESULT_CODE_OK);
         AuthResponse authResponse = new AuthResponse();
-        authResponse.setResultCode("00");
+        authResponse.setResultCode(RESULT_CODE_OK);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
@@ -98,11 +101,12 @@ public class VposDeleteServiceTest {
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
 
+        //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
         VposOrderStatusResponse vposOrderStatusResponse = new VposOrderStatusResponse();
-        vposOrderStatusResponse.setResultCode("02");
+        vposOrderStatusResponse.setResultCode(RESULT_CODE_KO);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
@@ -127,13 +131,14 @@ public class VposDeleteServiceTest {
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
 
+        //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
         VposOrderStatusResponse vposOrderStatusResponse = new VposOrderStatusResponse();
-        vposOrderStatusResponse.setResultCode("00");
+        vposOrderStatusResponse.setResultCode(RESULT_CODE_OK);
         AuthResponse authResponse = new AuthResponse();
-        authResponse.setResultCode("02");
+        authResponse.setResultCode(RESULT_CODE_KO);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
@@ -198,6 +203,7 @@ public class VposDeleteServiceTest {
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
 
+        //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 

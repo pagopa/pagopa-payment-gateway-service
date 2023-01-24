@@ -43,8 +43,8 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 public class XPayPaymentController {
 
     private static final String APP_ORIGIN = "APP";
-    private static final String WEB_ORIGIN = "WEB";
-    private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, WEB_ORIGIN);
+    private static final String ECOMMERCE_WEB_ORIGIN = "ECOMMERCE_WEB";
+    private static final List<String> VALID_CLIENT_ID = Arrays.asList(APP_ORIGIN, ECOMMERCE_WEB_ORIGIN);
     public static final String EUR_CURRENCY = "978";
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static final String ZERO_CHAR = "0";

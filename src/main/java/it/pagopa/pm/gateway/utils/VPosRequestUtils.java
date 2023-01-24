@@ -36,6 +36,8 @@ public class VPosRequestUtils {
     private static final String METHOD = "/method";
     @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;
+    @Value("${pgs.vpos.method.notifyUrl}")
+    private String methodNotifyUrl;
 
     @Autowired
     VPosUtils vPosUtils;
@@ -118,7 +120,7 @@ public class VPosRequestUtils {
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NETWORK, pgsRequest.getCircuit().getCode());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_DATA, pgsRequest.getThreeDsData());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + CHALLENGE);
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl + METHOD);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());

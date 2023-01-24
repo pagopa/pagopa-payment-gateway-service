@@ -26,5 +26,13 @@ public class VposConstant {
     public static final String OPERATION_REFUND = "REFUND";
     public static final String OPERATION_AUTH_REQUEST_3DS2_STEP_1 = "THREEDSAUTHORIZATION1";
     public static final String OPERATION_AUTH_REQUEST_3DS2_STEP_2 = "THREEDSAUTHORIZATION2";
-    public static final String METHOD_NOTIFICATIONS_VIEW = "method_notifications_view";
+    public static final String HTML_METHOD = "<html>" +
+            "<head>" +
+            "<script>" +
+            "            var getUrl = window.location;" +
+            "window.parent.postMessage(\"3DS.Notification.Received\", getUrl.protocol + \"//\" + getUrl.host);" +
+            "</script>" +
+            "    </head>" +
+            "<body></body>" +
+            "</html>";
 }

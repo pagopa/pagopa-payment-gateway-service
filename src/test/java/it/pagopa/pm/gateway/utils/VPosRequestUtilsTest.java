@@ -31,6 +31,7 @@ public class VPosRequestUtilsTest {
     @Before
     public void setUpProperties() {
         ReflectionTestUtils.setField(vPosRequestUtils, "vposResponseUrl", "http://localhost:8080/payment-gateway/");
+        ReflectionTestUtils.setField(vPosRequestUtils, "methodNotifyUrl", "http://localhost:8080/payment-gateway/");
     }
 
     @Mock

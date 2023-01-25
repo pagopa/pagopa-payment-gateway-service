@@ -134,4 +134,24 @@ public class VPosRequestUtilsTest {
         assertNotNull(vPosRequestUtils.buildStepTwoRequestParams(pgsRequest, "correlationId"));
     }
 
+    @Test
+    public void generateRequestForOrderStatus_First_Payment_Test() throws IOException {
+        Boolean isFisrtPayment = true;
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
+        assertNotNull(vPosRequestUtils.buildOrderStatusParams(pgsRequest, "correlationId"));
+    }
+
+    @Test
+    public void generateRequestForOrderStatus_Not_FirstPayment_Test() throws IOException {
+        Boolean isFisrtPayment = false;
+        StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
+        Shop shop = ValidBeans.generateShop("321");
+        when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
+        when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
+        assertNotNull(vPosRequestUtils.buildOrderStatusParams(pgsRequest, "correlationId"));
+    }
+
 }

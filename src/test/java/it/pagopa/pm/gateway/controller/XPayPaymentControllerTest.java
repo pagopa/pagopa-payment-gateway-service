@@ -70,7 +70,7 @@ public class XPayPaymentControllerTest {
     @Mock
     final UUID uuid = UUID.fromString(UUID_SAMPLE);
 
-    private static final String APP_ORIGIN = "APP";
+    private static final String ECOMMERCE_APP_ORIGIN = "ECOMMERCE_APP";
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
@@ -81,10 +81,10 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false));
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false));
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -99,10 +99,10 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false));
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false));
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -114,7 +114,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callAutenticazione3DS(any())).thenThrow(ResourceAccessException.class);
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is2xxSuccessful());
@@ -124,7 +124,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenRequestWithGrandTotalEqualToZero_shouldReturnBadRequestResponse() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(false);
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -147,10 +147,10 @@ public class XPayPaymentControllerTest {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
 
         given(paymentRequestRepository.findByIdTransaction("2")).
-                willReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false));
+                willReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false));
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                        .header(Headers.X_CLIENT_ID, "APP")
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
@@ -163,7 +163,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callAutenticazione3DS(any())).thenReturn(null);
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -172,7 +172,7 @@ public class XPayPaymentControllerTest {
     @Test
     public void xPay_shouldReturnAuthPollingResponseOK() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
         XPayPollingResponse expectedResponse = ValidBeans.createXpayAuthPollingResponse(true, null, false);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE)).thenReturn(entity);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
@@ -182,7 +182,7 @@ public class XPayPaymentControllerTest {
     @Test
     public void xPay_shouldReturnAuthPollingResponseKO() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity requestEntity = ValidBeans.paymentRequestEntityxPayWithError(xPayAuthRequest, APP_ORIGIN);
+        PaymentRequestEntity requestEntity = ValidBeans.paymentRequestEntityxPayWithError(xPayAuthRequest, ECOMMERCE_APP_ORIGIN);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(requestEntity);
 
@@ -197,7 +197,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenRequestEntityWithoutHtmlAndWithoutError_shouldReturnPending() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
-                .thenReturn(ValidBeans.paymentRequestEntityxPayWithoutHtml(xPayAuthRequest, APP_ORIGIN));
+                .thenReturn(ValidBeans.paymentRequestEntityxPayWithoutHtml(xPayAuthRequest, ECOMMERCE_APP_ORIGIN));
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
@@ -219,7 +219,7 @@ public class XPayPaymentControllerTest {
         boolean isTrue = true;
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(isTrue);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(isTrue);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, isTrue, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, isTrue, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
@@ -234,7 +234,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -244,7 +244,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenMacIncorrect_shouldReturn302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
@@ -259,7 +259,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -269,7 +269,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenGoodResumeRequest_shouldReturnPaymentKO302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
@@ -284,7 +284,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -294,7 +294,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenGoodResumeRequest_shouldReturnPaymentResponseEmpty302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
@@ -307,7 +307,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callPaga3DS(any())).thenReturn(null);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -317,7 +317,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenGoodResumeRequest_paymentCallShouldThrowAnException302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
@@ -330,7 +330,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callPaga3DS(any())).thenThrow(new RuntimeException());
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -340,7 +340,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenResumeRequestWithKO_shouldReturnResponseFromXPayOKAnd302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(false);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(params.get(XPAY_MAC)));
@@ -350,7 +350,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -360,7 +360,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenGoodResumeRequest_patchCallShouldThrowAnException() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
@@ -377,7 +377,7 @@ public class XPayPaymentControllerTest {
         when(restapiCdClient.callPatchTransactionV2(any(), any())).thenThrow(new RuntimeException());
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -390,7 +390,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -400,7 +400,7 @@ public class XPayPaymentControllerTest {
     public void xPay_givenBadResumeRequest_TransactionAlredyProcessedshouldReturn302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(params.get(XPAY_MAC)));
@@ -411,7 +411,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume")
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .params(params))
                 .andExpect(status().isFound());
@@ -423,7 +423,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
 
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -433,7 +433,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CANCELLED, true);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -444,7 +444,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -454,7 +454,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CANCELLED, true);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -472,7 +472,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callStorna(any())).thenReturn(revertResponse);
 
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -482,7 +482,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CANCELLED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -500,7 +500,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callStorna(any())).thenReturn(revertResponse);
 
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -510,7 +510,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, AUTHORIZED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, AUTHORIZED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -523,7 +523,7 @@ public class XPayPaymentControllerTest {
 
 
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
     }
@@ -533,7 +533,7 @@ public class XPayPaymentControllerTest {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, AUTHORIZED, false);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, AUTHORIZED, false);
 
         AuthPaymentXPayRequest authPaymentXPayRequest = ValidBeans.createAuthPaymentRequest(xPayAuthRequest);
         authPaymentXPayRequest.setMac(String.valueOf(xPayResumeRequest.get(XPAY_MAC)));
@@ -548,7 +548,7 @@ public class XPayPaymentControllerTest {
         when(xpayService.callStorna(any())).thenThrow(RuntimeException.class);
 
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
-                        .header(Headers.X_CLIENT_ID, APP_ORIGIN)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
     }
@@ -557,7 +557,7 @@ public class XPayPaymentControllerTest {
     public void xPay_shouldReturnCancelledCase() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
-                .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED, false));
+                .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CANCELLED, false));
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
@@ -569,7 +569,7 @@ public class XPayPaymentControllerTest {
     public void xPay_shouldReturnRefundedCase() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
-                .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CANCELLED,
+                .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CANCELLED,
                         true));
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;

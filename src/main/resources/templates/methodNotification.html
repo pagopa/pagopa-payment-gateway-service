@@ -2,8 +2,8 @@
 <html>
 <head>
     <script>
-		var getOrigin = window.location;
-		window.parent.postMessage("3DS.Notification.Received", getOrigin.origin);
+		var getOrigin = window.location.origin;
+		window.parent.postMessage("3DS.Notification.Received", getOrigin);
 	</script>
 </head>
 <body></body>

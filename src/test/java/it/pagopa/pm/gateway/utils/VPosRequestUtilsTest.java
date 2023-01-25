@@ -4,7 +4,6 @@ import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.vpos.MethodCompletedEnum;
 import it.pagopa.pm.gateway.dto.vpos.Shop;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -12,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 
@@ -24,21 +22,15 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = VPosRequestUtils.class)
 public class VPosRequestUtilsTest {
 
-    @Spy
-    @InjectMocks
-    private VPosRequestUtils vPosRequestUtils;
-
-    @Before
-    public void setUpProperties() {
-        ReflectionTestUtils.setField(vPosRequestUtils, "vposResponseUrl", "http://localhost:8080/payment-gateway/");
-        ReflectionTestUtils.setField(vPosRequestUtils, "methodNotifyUrl", "http://localhost:8080/payment-gateway/");
-    }
-
     @Mock
     VPosUtils vPosUtils;
 
-    private static final String CORRELATION_ID = "correlationId";
+    @Spy
+    @InjectMocks
+    private VPosRequestUtils vPosRequestUtils = new VPosRequestUtils("http://localhost:8080/payment-gateway/",
+            "http://localhost:8080/payment-gateway/", vPosUtils);
 
+    private static final String CORRELATION_ID = "correlationId";
 
     @Test
     public void generateRequestForStep0_FirstPayment_Test() throws IOException {

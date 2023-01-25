@@ -34,17 +34,21 @@ public class VPosRequestUtils {
 
     private static final String CHALLENGE = "/challenge";
     private static final String METHOD = "/method";
-    @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;
-    @Value("${vpos.method.notifyUrl}")
     private String methodNotifyUrl;
-
-    @Autowired
-    VPosUtils vPosUtils;
-
+    private VPosUtils vPosUtils;
     private String shopId;
     private String terminalId;
     private String mac;
+
+    @Autowired
+    public VPosRequestUtils(@Value("${vpos.request.responseUrl}") String vposResponseUrl,
+                            @Value("${vpos.method.notifyUrl}") String methodNotifyUrl,
+                            VPosUtils vPosUtils) {
+        this.vposResponseUrl = vposResponseUrl;
+        this.methodNotifyUrl = methodNotifyUrl;
+        this.vPosUtils = vPosUtils;
+    }
 
     private void retrieveShopInformation(StepZeroRequest pgsRequest) {
         Shop shopParameters = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());

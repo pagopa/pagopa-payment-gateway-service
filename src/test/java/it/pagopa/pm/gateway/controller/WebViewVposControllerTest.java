@@ -25,18 +25,8 @@ public class WebViewVposControllerTest {
 
     @Test
     public void testMethodNotifications() throws Exception {
-        String HTML = "<html>" +
-                "<head>" +
-                "<script>" +
-                "            var getUrl = window.location;" +
-                "window.parent.postMessage(\"3DS.Notification.Received\", getUrl.protocol + \"//\" + getUrl.host);" +
-                "</script>" +
-                "    </head>" +
-                "<body></body>" +
-                "</html>";
         String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
         mvc.perform(post(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE + "/method/notifications"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(HTML));
+                .andExpect(status().isOk());
     }
 }

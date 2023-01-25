@@ -36,7 +36,7 @@ public class VPosRequestUtils {
     private static final String METHOD = "/method";
     @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;
-    @Value("${pgs.vpos.method.notifyUrl}")
+    @Value("${vpos.method.notifyUrl}")
     private String methodNotifyUrl;
 
     @Autowired

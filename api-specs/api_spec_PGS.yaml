@@ -707,6 +707,7 @@ paths:
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
             type: string
+            format: UUID
         - in: header
           name: MDC-Fields
           description: MDC information
@@ -721,9 +722,13 @@ paths:
               $ref: '#/components/schemas/CreditCardResumeRequest'
         required: true
       responses:
-        "302":
-          description: "FOUND, Redirect to url"
-  /request-payments/vpos/{requestId}/resume/challenge:
+        "200":
+          description: OK
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/VposResumeResponse'
+  /request-payments/creditCard/{requestId}/resume/challenge:
     post:
       summary: resume vpos payment request
       tags:
@@ -1291,6 +1296,15 @@ components:
         methodCompleted:
           type: string
           example: "Y"
+    VposResumeResponse:
+      type: object
+      required:
+        - requestId
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          example: "1f3af548-f9d3-423f-b7b0-4e68948d41d2"
     VposDeleteResponse:
       type: object
       required:

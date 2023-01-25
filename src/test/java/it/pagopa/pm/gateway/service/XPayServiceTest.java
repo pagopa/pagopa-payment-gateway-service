@@ -30,7 +30,7 @@ public class XPayServiceTest {
     @Mock
     private RestTemplate xpayRestTemplate;
 
-    private static final String APP_ORIGIN = "APP";
+    private static final String ECOMMERCE_APP_ORIGIN = "ECOMMERCE_APP";
 
     @Before
     public void setUpProperties() {
@@ -61,7 +61,7 @@ public class XPayServiceTest {
     public void callPaga3DSTest() {
         try {
             XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
-            PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, APP_ORIGIN, true, CREATED, false);
+            PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
             PaymentXPayRequest request = ValidBeans.createXPayPaymentRequest(entity);
 
             PaymentXPayResponse responseTest = ValidBeans.createPaymentXPayResponse(true);

@@ -3,7 +3,7 @@
 <head>
     <script>
 		var getUrl = window.location;
-		window.parent.postMessage("3DS.Notification.Received", getUrl.protocol + "//"  + getUrl.host);
+		window.parent.postMessage("3DS.Notification.Received", location.origin);
 	</script>
 </head>
 <body></body>

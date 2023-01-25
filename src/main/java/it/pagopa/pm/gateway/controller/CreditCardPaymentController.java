@@ -4,10 +4,8 @@ import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
-import it.pagopa.pm.gateway.service.CcPaymentInfoService;
-import it.pagopa.pm.gateway.service.CcResumeStep1Service;
-import it.pagopa.pm.gateway.service.CcResumeStep2Service;
-import it.pagopa.pm.gateway.service.VposService;
+import it.pagopa.pm.gateway.dto.vpos.VposDeleteResponse;
+import it.pagopa.pm.gateway.service.*;
 import it.pagopa.pm.gateway.utils.MdcUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Objects;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
@@ -43,6 +42,9 @@ public class CreditCardPaymentController {
 
     @Autowired
     private CcResumeStep2Service resumeStep2Service;
+
+    @Autowired
+    private VposDeleteService deleteService;
 
     @GetMapping(REQUEST_ID)
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,
@@ -85,11 +87,10 @@ public class CreditCardPaymentController {
                                                           @RequestBody CreditCardResumeRequest request) {
         log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
+        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
         resumeStep1Service.startResumeStep1(request, requestId);
-
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
-        return ResponseEntity.status(HttpStatus.OK).build();
-
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
     }
 
     @PostMapping(REQUEST_PAYMENTS_RESUME_CHALLENGE)
@@ -101,6 +102,28 @@ public class CreditCardPaymentController {
         resumeStep2Service.startResumeStep2(requestId);
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
+    }
+
+    @DeleteMapping(REQUEST_ID)
+    public ResponseEntity<VposDeleteResponse> deleteVposPayment(@PathVariable String requestId) {
+        log.info("START - DELETE {} for requestId: {}", REQUEST_PAYMENTS_VPOS, requestId);
+        VposDeleteResponse deleteResponse = deleteService.startDelete(requestId);
+        log.info("START - DELETE {} for requestId: {}", REQUEST_PAYMENTS_VPOS, requestId);
+        return buildResponseDelete(deleteResponse, requestId);
+    }
+
+    private ResponseEntity<VposDeleteResponse> buildResponseDelete(VposDeleteResponse deleteResponse, String requestId) {
+        HttpStatus httpStatus = HttpStatus.OK;
+        String error = deleteResponse.getError();
+        if (Objects.nonNull(error)) {
+            if (error.equals(REQUEST_ID_NOT_FOUND_MSG)) {
+                httpStatus = HttpStatus.NOT_FOUND;
+            }
+            if (error.equals(GENERIC_REFUND_ERROR_MSG + requestId)) {
+                httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+        }
+        return ResponseEntity.status(httpStatus).body(deleteResponse);
     }
 
 }

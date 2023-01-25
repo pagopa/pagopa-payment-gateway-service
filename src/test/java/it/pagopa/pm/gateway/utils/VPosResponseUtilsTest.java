@@ -6,6 +6,7 @@ import it.pagopa.pm.gateway.dto.enums.CardCircuit;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.Shop;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
+import it.pagopa.pm.gateway.dto.vpos.VposOrderStatusResponse;
 import org.jdom2.Document;
 import org.jdom2.JDOMException;
 import org.junit.Test;
@@ -143,5 +144,14 @@ public class VPosResponseUtilsTest {
         byte[] clientResponse = ValidBeans.convertToByte(document);
         AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse);
         assertEquals(authResponse, response);
+    }
+
+    @Test
+    public void buildOrderStatusResponse_Test_OK() throws IOException, JDOMException {
+        VposOrderStatusResponse testResponse = ValidBeans.createVposOrderStatusResponse("00");
+        Document document = ValidBeans.createVposOrderStatusResponseDocument(testResponse);
+        byte[] clientResponse = ValidBeans.convertToByte(document);
+        VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse);
+        assertEquals(testResponse, response);
     }
 }

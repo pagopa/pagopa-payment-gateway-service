@@ -629,7 +629,7 @@ paths:
                 $ref: '#/components/schemas/CreditCardAuthResponseGenericError'
   /request-payments/vpos/{requestId}:
     get:
-      summary: retrieve CreditCard payment request
+      summary: retrieve vpos payment request
       tags:
         - Vpos
       parameters:
@@ -656,15 +656,47 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/CcPaymentInfoAcceptedResponse'
                   - $ref: '#/components/schemas/CcPaymentInfoAcsResponse'
+                  - $ref: '#/components/schemas/CcPaymentInfoAuthorizedResponse'
         "404":
           description: Not Found
           content:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CcPaymentInfoError'
+    delete:
+      summary: delete vpos payment request
+      tags:
+        - Vpos
+      parameters:
+        - in: path
+          required: true
+          name: requestId
+          description: Id of the request
+          example: "41bc2409-5926-4aa9-afcc-797c7054e467"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/VposDeleteResponse'
+        "404":
+          description: Not Found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/VposDeleteResponse404'
+        "500":
+          description: Internal Server Error
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/VposDeleteResponse500'
   /request-payments/vpos/{requestId}/resume/method:
     post:
-      summary: resume CreditCard payment request
+      summary: resume vpos payment request
       tags:
         - Vpos
       parameters:
@@ -698,7 +730,7 @@ paths:
                 $ref: '#/components/schemas/VposResumeResponse'
   /request-payments/creditCard/{requestId}/resume/challenge:
     post:
-      summary: resume CreditCard payment request
+      summary: resume vpos payment request
       tags:
         - Vpos
       parameters:
@@ -1216,9 +1248,10 @@ components:
           type: string
         vposUrl:
           type: string
+        clientReturnUrl:
+          type: string
       required:
         - status
-        - responseType
         - requestId
     CcPaymentInfoAcsResponse:
       type: object
@@ -1236,6 +1269,19 @@ components:
         - responseType
         - requestId
         - vposUrl
+    CcPaymentInfoAuthorizedResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        requestId:
+          type: string
+        clientReturnUrl:
+          type: string
+      required:
+        - status
+        - requestId
+        - clientReturnUrl
     CcPaymentInfoError:
       type: object
       properties:
@@ -1259,3 +1305,56 @@ components:
           type: string
           format: uuid
           example: "1f3af548-f9d3-423f-b7b0-4e68948d41d2"
+    VposDeleteResponse:
+      type: object
+      required:
+        - requestId
+        - refundOutcome
+        - status
+      properties:
+        requestId:
+          type: string
+        refundOutcome:
+          type: string
+          enum:
+            [OK, KO]
+        status:
+          type: string
+        error:
+          type: string
+          description: "null if no error occurred"
+    VposDeleteResponse404:
+      type: object
+      required:
+        - requestId
+        - refundOutcome
+        - error
+      properties:
+        requestId:
+          type: string
+        refundOutcome:
+          type: string
+          enum:
+            [OK, KO]
+        status:
+          type: string
+        error:
+          type: string
+    VposDeleteResponse500:
+      type: object
+      required:
+        - requestId
+        - refundOutcome
+        - status
+        - error
+      properties:
+        requestId:
+          type: string
+        refundOutcome:
+          type: string
+          enum:
+            [OK, KO]
+        status:
+          type: string
+        error:
+          type: string

@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static it.pagopa.pm.gateway.constant.VposConstant.DEFAULT_CHARSET;
 import static it.pagopa.pm.gateway.constant.VposConstant.WRONG_MAC_MSG;
@@ -229,6 +231,92 @@ public class VPosResponseUtils {
             authResponse.setStatus(getVposResponseField(authorization, TRANSACTION_STATUS));
             authResponse.setRrn(getVposResponseField(authorization, RRN));
             authResponse.setAuthorizationMac(getVposResponseField(authorization, MAC_RESPONSE));
+        }
+    }
+
+    public VposOrderStatusResponse buildOrderStatusResponse(byte[] clientResponse) throws IOException {
+        try {
+            SAXBuilder saxBuilder = new SAXBuilder();
+            saxBuilder.setFeature(DISALLOW_DOCTYPE_DECL, true);
+            saxBuilder.setFeature(EXTERNAL_GENERAL_ENTITIES, false);
+            saxBuilder.setFeature(EXTERNAL_PARAMETER_ENTITIES, false);
+            Document responseDocument = saxBuilder.build(new ByteArrayInputStream(clientResponse));
+            Element root = responseDocument.getRootElement();
+            VposOrderStatusResponse response = new VposOrderStatusResponse();
+            response.setTimestamp(getVposResponseField(root, TIMESTAMP_RESPONSE));
+            response.setResultCode(getVposResponseField(root, RESULT));
+            response.setResultMac(getVposResponseField(root, MAC_RESPONSE));
+            Element data = root.getChild(DATA_RESPONSE.getTagName());
+            if (data != null) {
+                Element orderStatus = data.getChild(ORDER_STATUS.getTagName());
+                if (orderStatus != null) {
+                    VposOrderStatus vposOrderStatus = new VposOrderStatus();
+                    Element header = root.getChild(HEADER.getTagName());
+                    if (header != null) {
+                        Header headerDto = new Header();
+                        headerDto.setOperatorId(getVposResponseField(header, OPERATOR_ID));
+                        headerDto.setShopId(getVposResponseField(header, SHOP_ID));
+                        headerDto.setReqRefNum(getVposResponseField(header, REQ_REF_NUM));
+                        vposOrderStatus.setHeader(headerDto);
+                        response.setOrderStatus(vposOrderStatus);
+                    }
+                    vposOrderStatus.setOrderId(getVposResponseField(orderStatus, ORDER_ID));
+                    response.setOrderStatus(vposOrderStatus);
+                }
+                response.setProductRef(getVposResponseField(data, PRODUCT_REF ));
+                response.setNumberOfItems(getVposResponseField(data, NUMBER_OF_ITEMS));
+                List<Element> authorizations = data.getChildren(AUTHORIZATION.getTagName());
+                List<ThreeDS2Authorization> authorizationsDto = new ArrayList<>();
+                for (Element authorization : authorizations){
+                    checkOrderStatusAuthorization(authorizationsDto, authorization);
+                }
+                response.setAuthorizations(authorizationsDto);
+            }
+            return response;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new IOException(e);
+        }
+    }
+
+    private void checkOrderStatusAuthorization(List<ThreeDS2Authorization> authorizationsDto, Element authorization) {
+        if (authorization != null) {
+            ThreeDS2Authorization authorizationDto = new ThreeDS2Authorization();
+
+            authorizationDto.setPaymentType(getVposResponseField(authorization, PAYMENT_TYPE));
+            authorizationDto.setAuthorizationType(getVposResponseField(authorization, AUTHORIZATION_TYPE));
+            authorizationDto.setAuthorizationNumber(getVposResponseField(authorization, AUTHORIZATION_NUMBER));
+            String authorizationAmount = getVposResponseField(authorization, AUTHORIZED_AMOUNT);
+            if (StringUtils.isNumeric(authorizationAmount)) {
+                authorizationDto.setAuthorizedAmount(Long.parseLong(authorizationAmount));
+            }
+            authorizationDto.setAcquirerBin(getVposResponseField(authorization, ACQUIRER_BIN));
+            authorizationDto.setExponent(getVposResponseField(authorization, EXPONENT));
+            authorizationDto.setCurrency(getVposResponseField(authorization, CURRENCY));
+            authorizationDto.setMerchantId(getVposResponseField(authorization, MERCHANT_ID));
+            String accountedAmount = getVposResponseField(authorization, ACCOUNTED_AMOUNT);
+            if (StringUtils.isNumeric(accountedAmount)) {
+                authorizationDto.setAccountedAmount(Long.parseLong(accountedAmount));
+            }
+            authorizationDto.setNetwork(CardCircuit.fromCode(getVposResponseField(authorization, NETWORK)));
+
+            authorizationDto.setOrderId(getVposResponseField(authorization, ORDER_ID));
+            authorizationDto.setResponseCodeIso(getVposResponseField(authorization, RESPONSE_CODE_ISO));
+            String refundedAmount = getVposResponseField(authorization, REFUNDED_AMOUNT);
+            if (StringUtils.isNumeric(refundedAmount)) {
+                authorizationDto.setRefundedAmount(Long.parseLong(refundedAmount));
+            }
+
+            authorizationDto.setRrn(getVposResponseField(authorization, RRN));
+            authorizationDto.setTimestamp(getVposResponseField(authorization, TIMESTAMP));
+            String transactionAmount = getVposResponseField(authorization, TRANSACTION_AMOUNT);
+            if (StringUtils.isNumeric(transactionAmount)) {
+                authorizationDto.setTransactionAmount(Long.parseLong(transactionAmount));
+            }
+            authorizationDto.setTransactionId(getVposResponseField(authorization, TRANSACTION_ID));
+            authorizationDto.setTransactionResult(getVposResponseField(authorization, TRANSACTION_RESULT));
+            authorizationDto.setTransactionStatus(getVposResponseField(authorization, TRANSACTION_STATUS));
+            authorizationsDto.add(authorizationDto);
         }
     }
 }

@@ -87,6 +87,12 @@ public class VPosRequestUtils {
         return getParams(stepTwoRequest);
     }
 
+    public Map<String, String> buildOrderStatusParams(StepZeroRequest pgsRequest, String correlationId) throws IOException {
+        retrieveShopInformation(pgsRequest);
+        Document revertRequest = buildOrderStatusRequest(shopId, terminalId, mac, correlationId);
+        return getParams(revertRequest);
+    }
+
     private Document buildStepZeroRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
         String notifyUrl = String.format(vposResponseUrl, requestId);
         String reqRefNum = vPosUtils.getReqRefNum();
@@ -248,6 +254,33 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
+    private Document buildOrderStatusRequest(String shopId, String terminalId, String mac, String correlationId) {
+        String reqRefNum = vPosUtils.getReqRefNum();
+        VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
+        Date date = new Date();
+        Element macElement = new Element(MAC.getTagName());
+        documentBuilder.addElement(VposRequestEnum.RELEASE, RELEASE_VALUE);
+        //REQUEST
+        documentBuilder.addBodyElement(REQUEST);
+        documentBuilder.addElement(REQUEST, OPERATION, OPERATION_ORDERSTATUS);
+        documentBuilder.addElement(REQUEST, TIMESTAMP, date);
+        documentBuilder.addElement(REQUEST, macElement);
+        //DATA
+        documentBuilder.addBodyElement(DATA);
+        documentBuilder.addBodyElement(DATA, ORDERSTATUS);
+        documentBuilder.addBodyElement(ORDERSTATUS, HEADER);
+        //HEADER
+        documentBuilder.addElement(HEADER, SHOP_ID, shopId);
+        documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
+        documentBuilder.addElement(HEADER, REQ_REF_NUM, reqRefNum);
+        //STEP2
+        documentBuilder.addElement(ORDERSTATUS, THREEDS_TRANS_ID, correlationId);
+        //MAC
+        VPosMacBuilder macBuilder = calculateMacOrderStatus(date, shopId, terminalId, mac, correlationId, reqRefNum);
+        macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
+        return documentBuilder.build();
+    }
+
     private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl, String reqRefNum) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
@@ -307,6 +340,19 @@ public class VPosRequestUtils {
     private VPosMacBuilder calculateMacStep2(Date date, String shopId, String terminalId, String mac, String correlationId, String reqRefNum) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_2);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
+        macBuilder.addElement(TIMESTAMP, dateFormat.format(date));
+        macBuilder.addElement(SHOP_ID, shopId);
+        macBuilder.addElement(OPERATOR_ID, terminalId);
+        macBuilder.addElement(REQ_REF_NUM, reqRefNum);
+        macBuilder.addElement(THREEDS_TRANS_ID, correlationId);
+        macBuilder.addString(mac);
+        return macBuilder;
+    }
+
+    private VPosMacBuilder calculateMacOrderStatus(Date date, String shopId, String terminalId, String mac, String correlationId, String reqRefNum) {
+        VPosMacBuilder macBuilder = new VPosMacBuilder();
+        macBuilder.addElement(OPERATION, OPERATION_ORDERSTATUS);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
         macBuilder.addElement(TIMESTAMP, dateFormat.format(date));
         macBuilder.addElement(SHOP_ID, shopId);

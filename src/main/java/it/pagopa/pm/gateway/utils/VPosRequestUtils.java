@@ -34,15 +34,21 @@ public class VPosRequestUtils {
 
     private static final String CHALLENGE = "/challenge";
     private static final String METHOD = "/method";
-    @Value("${vpos.request.responseUrl}")
     private String vposResponseUrl;
-
-    @Autowired
-    VPosUtils vPosUtils;
-
+    private String methodNotifyUrl;
+    private VPosUtils vPosUtils;
     private String shopId;
     private String terminalId;
     private String mac;
+
+    @Autowired
+    public VPosRequestUtils(@Value("${vpos.request.responseUrl}") String vposResponseUrl,
+                            @Value("${vpos.method.notifyUrl}") String methodNotifyUrl,
+                            VPosUtils vPosUtils) {
+        this.vposResponseUrl = vposResponseUrl;
+        this.methodNotifyUrl = methodNotifyUrl;
+        this.vPosUtils = vPosUtils;
+    }
 
     private void retrieveShopInformation(StepZeroRequest pgsRequest) {
         Shop shopParameters = vPosUtils.getVposShopByIdPsp(pgsRequest.getIdPsp());
@@ -124,7 +130,7 @@ public class VPosRequestUtils {
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NETWORK, pgsRequest.getCircuit().getCode());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_DATA, pgsRequest.getThreeDsData());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + CHALLENGE);
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, notifyUrl + METHOD);
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());

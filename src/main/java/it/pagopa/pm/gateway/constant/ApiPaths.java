@@ -31,10 +31,12 @@ public class ApiPaths {
     // XPay
     public static final String REQUEST_PAYMENTS_XPAY = REQUEST_PAYMENTS + XPAY;
     public static final String REQUEST_PAYMENTS_RESUME = REQUEST_ID + "/resume";
-    public static final String REQUEST_PAYMENTS_RESUME_METHOD = REQUEST_PAYMENTS_RESUME + "/method";
-    public static final String REQUEST_PAYMENTS_RESUME_CHALLENGE = REQUEST_PAYMENTS_RESUME + "/challenge";
 
-    //CreditCard
+    //Vpos
+    private static final String METHOD = "/method";
     public static final String REQUEST_PAYMENTS_VPOS = REQUEST_PAYMENTS + VPOS;
+    public static final String REQUEST_PAYMENTS_RESUME_METHOD = REQUEST_PAYMENTS_RESUME + METHOD;
+    public static final String REQUEST_PAYMENTS_RESUME_CHALLENGE = REQUEST_PAYMENTS_RESUME + "/challenge";
+    public static final String METHOD_NOTIFICATIONS = REQUEST_ID + METHOD +"/notifications";
 
 }

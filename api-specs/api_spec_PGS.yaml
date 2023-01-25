@@ -751,6 +751,25 @@ paths:
       responses:
         "302":
           description: "FOUND, Redirect to url"
+  /request-payments/vpos/{requestId}/method/notifications:
+    post:
+      summary: created webView to execute 'method'
+      tags:
+        - Vpos
+      parameters:
+        - in: path
+          required: true
+          name: requestId
+          description: Id of the request
+          example: "41bc2409-5926-4aa9-afcc-797c7054e467"
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK, returns html
+          content:
+            text/html: {}
 components:
   schemas:
     AuthMessage:

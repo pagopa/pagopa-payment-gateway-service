@@ -675,6 +675,7 @@ paths:
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
             type: string
+            format: UUID
         - in: header
           name: MDC-Fields
           description: MDC information

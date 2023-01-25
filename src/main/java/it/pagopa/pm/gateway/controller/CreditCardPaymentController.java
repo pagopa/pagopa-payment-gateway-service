@@ -87,8 +87,8 @@ public class CreditCardPaymentController {
                                                                             @RequestBody CreditCardResumeRequest request) {
         log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
-        VposResumeMethodResponse response = new VposResumeMethodResponse(String.valueOf(requestId));
-        resumeStep1Service.startResumeStep1(request, String.valueOf(requestId));
+        VposResumeMethodResponse response = new VposResumeMethodResponse(requestId);
+        resumeStep1Service.startResumeStep1(request, requestId.toString());
 
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         return ResponseEntity.status(HttpStatus.OK).body(response);

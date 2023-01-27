@@ -29,7 +29,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 import static it.pagopa.pm.gateway.constant.Messages.*;
@@ -225,7 +227,7 @@ public class VposService {
             case RESULT_CODE_METHOD:
                 ThreeDS2Method methodResponse = (ThreeDS2Method) response.getThreeDS2ResponseElement();
                 responseType = response.getResponseType().name();
-                responseVposUrl = getMethodUrl(methodResponse);
+                responseVposUrl = methodResponse.getThreeDSMethodUrl();
                 correlationId = methodResponse.getThreeDSTransId();
                 break;
             case RESULT_CODE_CHALLENGE:
@@ -246,13 +248,6 @@ public class VposService {
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         return isToAccount;
-    }
-
-    private String getMethodUrl(ThreeDS2Method threeDS2Method) {
-        String url = threeDS2Method.getThreeDSMethodUrl();
-        String data = threeDS2Method.getThreeDSMethodData();
-
-        return url + "?threeDSMethodData=" + data;
     }
 
     private String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {

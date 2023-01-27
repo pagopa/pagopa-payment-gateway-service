@@ -944,6 +944,7 @@ components:
           type: string
         refundOutcome:
           type: string
+          enum: [OK, KO]
         error:
           type: string
       required:
@@ -1031,6 +1032,7 @@ components:
           example: "urlRedirect.com"
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
           description: status
           example: CREATED
         timeStamp:
@@ -1071,6 +1073,7 @@ components:
           example: affd8e24-f99a-406f-9ded-67a4a20c097f
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
           description: status
           example: CREATED
         authOutcome:
@@ -1113,6 +1116,7 @@ components:
           example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
         refundOutcome:
           type: string
+          enum: [OK, KO]
           example: "OK"
         error:
           type: string
@@ -1223,6 +1227,7 @@ components:
           example: "urlRedirect.com"
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
           description: status
           example: CREATED
         timeStamp:
@@ -1261,8 +1266,10 @@ components:
       properties:
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         responseType:
           type: string
+          enum: [METHOD, CHALLENGE, AUTHORIZATION, ERROR]
         requestId:
           type: string
         vposUrl:
@@ -1277,8 +1284,10 @@ components:
       properties:
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         responseType:
           type: string
+          enum: [METHOD, CHALLENGE, AUTHORIZATION, ERROR]
         requestId:
           type: string
         vposUrl:
@@ -1293,6 +1302,7 @@ components:
       properties:
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         requestId:
           type: string
         clientReturnUrl:
@@ -1339,6 +1349,7 @@ components:
             [OK, KO]
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         error:
           type: string
           description: "null if no error occurred"
@@ -1357,6 +1368,7 @@ components:
             [OK, KO]
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         error:
           type: string
     VposDeleteResponse500:
@@ -1375,5 +1387,6 @@ components:
             [OK, KO]
         status:
           type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         error:
           type: string

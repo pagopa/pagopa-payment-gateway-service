@@ -42,7 +42,7 @@ public class VPosRequestUtils {
     private String mac;
 
     @Autowired
-    public VPosRequestUtils(@Value("${vpos.request.responseUrl}") String vposResponseUrl,
+    public VPosRequestUtils(@Value("${vpos.request.urlredirect}") String vposResponseUrl,
                             @Value("${vpos.method.notifyUrl}") String methodNotifyUrl,
                             VPosUtils vPosUtils) {
         this.vposResponseUrl = vposResponseUrl;

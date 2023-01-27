@@ -19,7 +19,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -37,9 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = CreditCardPaymentController.class)
 @AutoConfigureMockMvc
 @EnableWebMvc
-@TestPropertySource(properties = {
-        "vpos.response.urlredirect=http://localhost:8080/",
-})
 public class CreditCardPaymentControllerTest {
     @MockBean
     private CcPaymentInfoService ccPaymentInfoService;

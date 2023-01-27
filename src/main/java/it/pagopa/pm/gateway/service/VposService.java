@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
+import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
@@ -42,13 +44,11 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Service
 @Slf4j
 public class VposService {
-    @Value("${vpos.response.urlredirect}")
-    private String responseUrlRedirect;
+    private static final String CAUSE = " cause: ";
+    private String clientId;
 
     @Value("${vpos.requestUrl}")
     private String vposUrl;
-
-    private static final String CAUSE = " cause: ";
 
     @Autowired
     private PaymentRequestRepository paymentRequestRepository;
@@ -73,7 +73,9 @@ public class VposService {
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
+        this.clientId = clientId;
         log.info("START - POST " + REQUEST_PAYMENTS_VPOS);
+
         if (!clientsConfig.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
             return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null);
@@ -161,7 +163,8 @@ public class VposService {
         String authCode = entity.getAuthorizationCode();
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
-            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction());
+            ClientConfig clientConfig = clientsConfig.getByKey(clientId);
+            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
@@ -185,8 +188,11 @@ public class VposService {
             response.setRequestId(requestId);
         }
 
+        VposClientConfig clientConfig = clientsConfig.getByKey(clientId).getVpos();
+        String clientReturnUrl = clientConfig.getClientReturnUrl();
+
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+            String urlRedirect = StringUtils.join(clientReturnUrl, requestId);
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

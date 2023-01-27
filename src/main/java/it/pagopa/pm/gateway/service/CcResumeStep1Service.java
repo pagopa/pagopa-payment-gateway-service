@@ -1,16 +1,20 @@
 package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
-import it.pagopa.pm.gateway.dto.PatchRequest;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
+import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
+import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
+import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,14 +36,13 @@ import static it.pagopa.pm.gateway.constant.Messages.PATCH_CLOSE_PAYMENT_ERROR;
 import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_AUTHORIZED;
 import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_CHALLENGE;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_AUTHORIZED_BY_PGS;
-import static it.pagopa.pm.gateway.dto.enums.TransactionStatusEnum.TX_REFUSED;
 
 @Service
 @Slf4j
 public class CcResumeStep1Service {
-
     private static final String CREQ_QUERY_PARAM = "?creq=";
+    private String clientId;
+
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
@@ -47,7 +50,7 @@ public class CcResumeStep1Service {
     private PaymentRequestRepository paymentRequestRepository;
 
     @Autowired
-    private RestapiCdClientImpl restapiCdClient;
+    private EcommerceClient ecommerceClient;
 
     @Autowired
     private VPosRequestUtils vPosRequestUtils;
@@ -61,6 +64,9 @@ public class CcResumeStep1Service {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ClientsConfig clientsConfig;
+
     public void startResumeStep1(CreditCardResumeRequest request, String requestId) {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
 
@@ -68,6 +74,8 @@ public class CcResumeStep1Service {
             log.error("No CreditCard request entity has been found for requestId: " + requestId);
             return;
         }
+
+        this.clientId = entity.getClientId();
 
         if (Objects.nonNull(entity.getAuthorizationOutcome())) {
             log.warn(String.format("requestId %s already processed", requestId));
@@ -194,15 +202,17 @@ public class CcResumeStep1Service {
 
     private void executePatchTransaction(PaymentRequestEntity entity) {
         String requestId = entity.getGuid();
-        log.info("START - PATCH updateTransaction for requestId: {}", requestId);
-        Long transactionStatus = entity.getStatus().equals(AUTHORIZED.name()) ? TX_AUTHORIZED_BY_PGS.getId() : TX_REFUSED.getId();
+        log.info("START - PATCH updateTransaction for requestId: " + requestId);
+        AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
         String authCode = entity.getAuthorizationCode();
-        PatchRequest patchRequest = new PatchRequest(transactionStatus, authCode);
+        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
-            String result = restapiCdClient.callPatchTransactionV2(Long.valueOf(entity.getIdTransaction()), patchRequest);
-            log.info("Response from PATCH updateTransaction for requestId {} is {}", requestId, result);
+            ClientConfig clientConfig = clientsConfig.getByKey(clientId);
+            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
+            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
-            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
+            log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
+            log.info("Refunding payment with requestId: " + requestId);
         }
     }
 }

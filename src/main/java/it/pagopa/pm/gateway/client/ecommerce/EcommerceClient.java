@@ -28,6 +28,7 @@ public class EcommerceClient {
     private static final String REQUEST_TIMEOUT_MSEC = System.getProperty(CONTEXT + "REQUEST_TIMEOUT");
     private static final String CONNECTION_TIMEOUT_MSEC = System.getProperty(CONTEXT + "CONNECT_TIMEOUT");
     private static final String SOCKET_TIMEOUT_MSEC = System.getProperty(CONTEXT + "SOCKET_TIMEOUT");
+    private static final String HEADER_API_KEY = "ocp-apim-subscription-key";
 
     private RestTemplate eCommerceRestTemplate;
 
@@ -70,12 +71,12 @@ public class EcommerceClient {
     public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId, ClientConfig clientConfig) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (StringUtils.isNotBlank(clientConfig.getClosePaymentApiKey())) {
-            headers.add(clientConfig.getClosePaymentApiKeyHeader(), clientConfig.getClosePaymentApiKey());
+        if (StringUtils.isNotBlank(clientConfig.getAuthorizationUpdateApiKey())) {
+            headers.add(HEADER_API_KEY, clientConfig.getAuthorizationUpdateApiKey());
         }
 
         HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
-        String transactionPatchUrl = String.format(clientConfig.getClosePaymentUrl(), transactionId);
+        String transactionPatchUrl = String.format(clientConfig.getAuthorizationUpdateUrl(), transactionId);
 
         log.info("Calling PATCH to update transaction " + transactionId + " at URL: " + transactionPatchUrl);
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);

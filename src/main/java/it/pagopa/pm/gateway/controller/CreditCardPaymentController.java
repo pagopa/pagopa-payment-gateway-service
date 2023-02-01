@@ -11,6 +11,7 @@ import it.pagopa.pm.gateway.utils.MdcUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +44,9 @@ public class CreditCardPaymentController {
 
     @Autowired
     private VposDeleteService deleteService;
+
+    @Value("${vpos.polling.url}")
+    private String vposPollingUrl;
 
     @GetMapping(REQUEST_ID)
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,
@@ -98,11 +102,11 @@ public class CreditCardPaymentController {
         log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         MdcUtils.setMdcFields(mdcFields);
 
-        String clientReturnUrl = resumeStep2Service.startResumeStep2(requestId);
-        clientReturnUrl = StringUtils.join(clientReturnUrl, requestId);
+        resumeStep2Service.startResumeStep2(requestId);
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
 
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(clientReturnUrl)).build();
+        String vposPollingRedirect = StringUtils.join(vposPollingUrl, requestId);
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(vposPollingRedirect)).build();
     }
 
     @DeleteMapping(REQUEST_ID)

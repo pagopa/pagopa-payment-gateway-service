@@ -80,7 +80,6 @@ public class CcResumeStep2ServiceTest {
     public void startResume_Test_EntityAlreadyAuthorized() {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setAuthorizationOutcome(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep2(UUID_SAMPLE);
         verify(service).startResumeStep2(UUID_SAMPLE);
@@ -127,7 +126,6 @@ public class CcResumeStep2ServiceTest {
         entity.setCorrelationId("CorrelationId");
         entity.setIdTransaction("1234566");
 
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenThrow(RuntimeException.class);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -146,7 +144,6 @@ public class CcResumeStep2ServiceTest {
         entity.setCorrelationId("CorrelationId");
         entity.setIdTransaction("1234566");
 
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenThrow(RuntimeException.class);
@@ -170,7 +167,6 @@ public class CcResumeStep2ServiceTest {
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         response.setResultCode("99");
 
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
@@ -255,7 +251,6 @@ public class CcResumeStep2ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());

@@ -66,25 +66,22 @@ public class CcResumeStep2Service {
     @Autowired
     private ClientsConfig clientsConfig;
 
-    public String startResumeStep2(String requestId) {
+    public void startResumeStep2(String requestId) {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
         if (Objects.isNull(entity)) {
             log.error("No CreditCard request entity has been found for requestId: " + requestId);
-            return null;
+            return;
         }
 
         this.clientId = entity.getClientId();
-        String clientReturnUrl = clientsConfig.getByKey(clientId).getVpos().getClientReturnUrl();
 
         if (Objects.nonNull(entity.getAuthorizationOutcome())) {
             log.warn(String.format("requestId %s already processed", requestId));
             entity.setErrorMessage("requestId already processed");
-            return clientReturnUrl;
+            return;
         }
 
         processResume(entity, requestId);
-
-        return clientReturnUrl;
     }
 
     private void processResume(PaymentRequestEntity entity, String requestId) {

@@ -4,9 +4,8 @@ import lombok.Data;
 
 @Data
 public class ClientConfig {
-    private String closePaymentUrl;
-    private String closePaymentApiKey;
-    private String closePaymentApiKeyHeader;
+    private String authorizationUpdateUrl;
+    private String authorizationUpdateApiKey;
     private BpayClientConfig bpay;
     private PostepayClientConfig postepay;
     private XpayClientConfig xpay;

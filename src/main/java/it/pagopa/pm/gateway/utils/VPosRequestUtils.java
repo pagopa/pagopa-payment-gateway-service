@@ -34,7 +34,7 @@ public class VPosRequestUtils {
 
     private static final String CHALLENGE = "/challenge";
     private static final String METHOD = "/method";
-    private String vposResponseUrl;
+    private String vposResumeUrl;
     private String methodNotifyUrl;
     private VPosUtils vPosUtils;
     private String shopId;
@@ -42,10 +42,10 @@ public class VPosRequestUtils {
     private String mac;
 
     @Autowired
-    public VPosRequestUtils(@Value("${vpos.request.urlredirect}") String vposResponseUrl,
+    public VPosRequestUtils(@Value("${vpos.resume.url}") String vposResumeUrl,
                             @Value("${vpos.method.notifyUrl}") String methodNotifyUrl,
                             VPosUtils vPosUtils) {
-        this.vposResponseUrl = vposResponseUrl;
+        this.vposResumeUrl = vposResumeUrl;
         this.methodNotifyUrl = methodNotifyUrl;
         this.vPosUtils = vPosUtils;
     }
@@ -100,7 +100,7 @@ public class VPosRequestUtils {
     }
 
     private Document buildStepZeroRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
-        String notifyUrl = String.format(vposResponseUrl, requestId);
+        String notifyUrl = String.format(vposResumeUrl, requestId);
         String reqRefNum = vPosUtils.getReqRefNum();
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
         Date date = new Date();

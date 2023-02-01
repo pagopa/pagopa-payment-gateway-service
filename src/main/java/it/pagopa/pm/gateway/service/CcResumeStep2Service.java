@@ -119,8 +119,9 @@ public class CcResumeStep2Service {
     private boolean isStepTwoResultCodeOk(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
-        String responseType = StringUtils.EMPTY;
-        String correlationId = StringUtils.EMPTY;
+        String responseType = entity.getResponseType();
+        String correlationId = entity.getCorrelationId();
+        String errorCode = StringUtils.EMPTY;
         boolean isToAccount = false;
         if (RESULT_CODE_AUTHORIZED.equals(resultCode)) {
             responseType = response.getResponseType().name();
@@ -129,10 +130,12 @@ public class CcResumeStep2Service {
         } else {
             log.error("Error resultCode {} from Vpos for requestId {}", resultCode, entity.getGuid());
             status = DENIED.name();
+            errorCode = resultCode;
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
         entity.setResponseType(responseType);
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         return isToAccount;
     }
@@ -154,13 +157,16 @@ public class CcResumeStep2Service {
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
+        String errorCode = StringUtils.EMPTY;
         boolean authorizationOutcome = resultCode.equals(RESULT_CODE_AUTHORIZED);
         if (!authorizationOutcome) {
             status = DENIED.name();
+            errorCode = resultCode;
         }
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         log.info("END - XPay Request Payment Account for requestId {}", entity.getGuid());
     }

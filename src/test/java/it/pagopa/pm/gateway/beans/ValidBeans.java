@@ -51,6 +51,8 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.XPayParams.*;
 import static it.pagopa.pm.gateway.dto.enums.CardCircuit.MASTERCARD;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.KO;
+import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
@@ -1026,12 +1028,76 @@ public class ValidBeans {
 
     public static CreditCardResumeRequest createCreditCardResumeRequest(boolean isValid) {
         CreditCardResumeRequest request = new CreditCardResumeRequest();
-        if(isValid) {
+        if (isValid) {
             request.setMethodCompleted("Y");
         } else {
             request.setMethodCompleted("N");
         }
         return request;
+    }
+
+    public static VposDeleteResponse createVposDeleteResponse(String uuid_sample, String error, boolean isValid) {
+        VposDeleteResponse response = new VposDeleteResponse();
+        response.setRequestId(uuid_sample);
+        if (isValid) {
+            response.setRefundOutcome(OK.name());
+        } else {
+            response.setRefundOutcome(KO.name());
+        }
+        response.setError(error);
+        return response;
+    }
+
+    public static VposOrderStatusResponse createVposOrderStatusResponse(String resultCode) {
+        VposOrderStatusResponse response = new VposOrderStatusResponse();
+
+        response.setTimestamp(String.valueOf(System.currentTimeMillis()));
+        response.setResultCode(resultCode);
+        response.setResultMac("MAC");
+        response.setProductRef("prodictRef");
+        response.setNumberOfItems("numberOfItems");
+        response.setAuthorizations(Collections.singletonList(new ThreeDS2Authorization()));
+        response.setOrderStatus(createVposOrderStatus());
+        return response;
+    }
+
+    private static VposOrderStatus createVposOrderStatus() {
+        VposOrderStatus orderStatus = new VposOrderStatus();
+        orderStatus.setHeader(createHeader());
+        orderStatus.setOrderId("orderId");
+        return orderStatus;
+    }
+
+    private static Header createHeader() {
+        Header header = new Header();
+        header.setOperatorId("OperatorId");
+        header.setReqRefNum("reRefNum");
+        header.setShopId("shooId");
+        return header;
+    }
+
+    public static Document createVposOrderStatusResponseDocument(VposOrderStatusResponse response) throws IOException, JDOMException {
+        VposOrderStatus orderStatus = response.getOrderStatus();
+        Header header = orderStatus.getHeader();
+        List<ThreeDS2Authorization> authorizations = response.getAuthorizations();
+        ThreeDS2Authorization authorization = authorizations.get(0);
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<BPWXmlResponse><Timestamp>" + response.getTimestamp() + "</Timestamp><Result>" + response.getResultCode() + "</Result><MAC>" + response.getResultMac() + "</MAC>" +
+                "<Header>" +
+                "<OperatorId>" + header.getOperatorId() + "</OperatorId><ShopId>" + header.getShopId() + "</ShopId>" + "<ReqRefNum>" + header.getReqRefNum() + "</ReqRefNum>" +
+                "</Header>" +
+                "<Data>" +
+                "<OrderStatus>" +
+                "<OrderID>" + orderStatus.getOrderId() + "</OrderID>" +
+                "</OrderStatus>" +
+                "<ProductRef>" + response.getProductRef() + "</ProductRef>" +
+                "<NumberOfItems>" + response.getNumberOfItems() + "</NumberOfItems>" +
+                "<NumberOfItems>" + response.getNumberOfItems() + "</NumberOfItems>" +
+                "<Authorization>" + authorization + "</Authorization>" +
+                "</Data>" +
+                "</BPWXmlResponse>\n";
+        SAXBuilder saxBuilder = new SAXBuilder();
+        return saxBuilder.build(new StringReader(xmlString));
     }
 }
 

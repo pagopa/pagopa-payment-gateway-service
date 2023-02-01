@@ -13,6 +13,7 @@ import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +29,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_CREDIT_CARD;
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.VposConstant.*;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
@@ -45,7 +48,6 @@ public class VposService {
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
-    private static final List<String> VALID_CLIENT_ID = Arrays.asList("APP", "WEB");
     private static final String CAUSE = " cause: ";
 
     @Autowired
@@ -66,11 +68,13 @@ public class VposService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ClientsConfig clientsConfig;
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
-        log.info("START - POST " + REQUEST_PAYMENTS_CREDIT_CARD);
-        if (!VALID_CLIENT_ID.contains(clientId)) {
+        log.info("START - POST " + REQUEST_PAYMENTS_VPOS);
+        if (!clientsConfig.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
             return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null);
         }
@@ -81,7 +85,7 @@ public class VposService {
         }
 
         String idTransaction = request.getIdTransaction();
-        log.info(String.format("START - POST %s for idTransaction %s", REQUEST_PAYMENTS_CREDIT_CARD, idTransaction));
+        log.info(String.format("START - POST %s for idTransaction %s", REQUEST_PAYMENTS_VPOS, idTransaction));
         if ((Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction)))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
             return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null);
@@ -189,7 +193,7 @@ public class VposService {
             response.setError(errorMessage);
         }
 
-        log.info(String.format("END - POST %s for requestId %s", REQUEST_PAYMENTS_CREDIT_CARD, requestId));
+        log.info(String.format("END - POST %s for requestId %s", REQUEST_PAYMENTS_VPOS, requestId));
         return response;
     }
 
@@ -200,7 +204,7 @@ public class VposService {
         entity.setMdcInfo(mdcFields);
         entity.setIdTransaction(idTransaction);
         entity.setGuid(UUID.randomUUID().toString());
-        entity.setRequestEndpoint(REQUEST_PAYMENTS_CREDIT_CARD);
+        entity.setRequestEndpoint(REQUEST_PAYMENTS_VPOS);
         entity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         entity.setJsonRequest(requestJson);
         return entity;
@@ -209,9 +213,10 @@ public class VposService {
     private boolean checkResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
-        String responseType = StringUtils.EMPTY;
+        String responseType = "ERROR";
         String correlationId = StringUtils.EMPTY;
         String responseVposUrl = StringUtils.EMPTY;
+        String errorCode = StringUtils.EMPTY;
         boolean isToAccount = false;
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
@@ -222,7 +227,7 @@ public class VposService {
             case RESULT_CODE_METHOD:
                 ThreeDS2Method methodResponse = (ThreeDS2Method) response.getThreeDS2ResponseElement();
                 responseType = response.getResponseType().name();
-                responseVposUrl = getMethodUrl(methodResponse);
+                responseVposUrl = methodResponse.getThreeDSMethodUrl();
                 correlationId = methodResponse.getThreeDSTransId();
                 break;
             case RESULT_CODE_CHALLENGE:
@@ -233,21 +238,16 @@ public class VposService {
                 break;
             default:
                 log.error(String.format("Error resultCode %s from Vpos for requestId %s", resultCode, entity.getGuid()));
+                errorCode = resultCode;
                 status = DENIED.name();
         }
         entity.setCorrelationId(correlationId);
         entity.setStatus(status);
         entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         return isToAccount;
-    }
-
-    private String getMethodUrl(ThreeDS2Method threeDS2Method) {
-        String url = threeDS2Method.getThreeDSMethodUrl();
-        String data = threeDS2Method.getThreeDSMethodData();
-
-        return url + "?threeDSMethodData=" + data;
     }
 
     private String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {
@@ -260,15 +260,18 @@ public class VposService {
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
+        String errorCode = StringUtils.EMPTY;
         boolean authorizationOutcome = true;
         if (!resultCode.equals(RESULT_CODE_AUTHORIZED)) {
             status = DENIED.name();
             authorizationOutcome = false;
+            errorCode = resultCode;
         }
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
         entity.setAuthorizationCode(response.getAuthorizationNumber());
+        entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());
     }

@@ -5,45 +5,99 @@
 
     <changeSet id="V2__PM_739_PP_PGS_REQUEST_INFO_DEFINITION" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V2__PM_739_PP_PGS_REQUEST_INFO_DEFINITION.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            DROP TABLE AGID_USER.PP_PGS_REQUEST_INFO;
+            DROP SEQUENCE AGID_USER.SEQ_PGS_REQUEST_INFO;
+        </rollback>
     </changeSet>
     <changeSet id="V3__PM_906_PP_PGS_REQUEST_INFO_MODIFY__AUTH_URL" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V3__PM_906_PP_PGS_REQUEST_INFO_MODIFY__AUTH_URL.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO MODIFY AUTH_URL VARCHAR2(50);
+        </rollback>
     </changeSet>
     <changeSet id="V4__PM_895_ADD_COLUMN_IS_REFUNDED" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V4__PM_895_ADD_COLUMN_IS_REFUNDED.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN IS_REFUNDED;
+        </rollback>
     </changeSet>
     <changeSet id="V5__PM_913_ADD_COLUMN_IS_ONBOARDING" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V5__PM_913_ADD_COLUMN_IS_ONBOARDING.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN IS_ONBOARDING;
+        </rollback>
     </changeSet>
     <changeSet id="V6__PM_917_CHANGE_ID_TRANSACTION_TYPE_TO_VARCHAR" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V6__PM_917_CHANGE_ID_TRANSACTION_TYPE_TO_VARCHAR.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            -- create new temporary NUMBER column
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO ADD ID_TRANSACTION_NEW NUMBER;
+
+            -- copy values from ID_TRANSACTION to ID_TRANSACTION_NEW
+            UPDATE AGID_USER.PP_PGS_REQUEST_INFO SET ID_TRANSACTION_NEW = TO_NUMBER (TRIM (ID_TRANSACTION));
+
+            -- drop old column ID_TRANSACTION
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN ID_TRANSACTION;
+
+            -- rename new column ID_TRANSACTION_NEW to ID_TRANSACTION
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO RENAME COLUMN ID_TRANSACTION_NEW TO ID_TRANSACTION;
+        </rollback>
     </changeSet>
     <changeSet id="V7__PM_988_ADD_COLUMN_STATUS" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V7__PM_988_ADD_COLUMN_STATUS.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN STATUS;
+        </rollback>
     </changeSet>
     <changeSet id="V8__PM_1102_ADD_COLUMN_REQUEST_TIMESTAMP" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V8__PM_1102_ADD_COLUMN_REQUEST_TIMESTAMP.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN REQUEST_TIMESTAMP;
+        </rollback>
     </changeSet>
     <changeSet id="V9__PM_1102_ADD_COLUMN_NONCE" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V9__PM_1102_ADD_COLUMN_NONCE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN NONCE;
+        </rollback>
     </changeSet>
     <changeSet id="V10__PM_1102_ADD_COLUMN_HTML" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V10__PM_1102_ADD_COLUMN_HTML.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN HTML;
+        </rollback>
     </changeSet>
     <changeSet id="V11__PM_1102_ADD_COLUMN_ERROR_MESSAGE" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V11__PM_1102_ADD_COLUMN_ERROR_MESSAGE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN ERROR_MESSAGE;
+        </rollback>
     </changeSet>
     <changeSet id="V12__PM_1102_ADD_COLUMN_ERROR_CODE" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V12__PM_1102_ADD_COLUMN_ERROR_CODE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN ERROR_CODE;
+        </rollback>
     </changeSet>
     <changeSet id="V13__PM_1215_ADD_IS_FIRST_PAYMENT_AND_COLUMN_RESPONSE_TYPE" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V13__PM_1215_ADD_IS_FIRST_PAYMENT_AND_COLUMN_RESPONSE_TYPE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN IS_FIRST_PAYMENT;
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN RESPONSE_TYPE;
+        </rollback>
     </changeSet>
     <changeSet id="V14__PM_1266_MODIFY_AUTH_URL" author="liquibase" failOnError="true" context="incremental-prod">
         <sqlFile path="../scripts/table-creation/V14__PM_1266_MODIFY_AUTH_URL.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO MODIFY AUTH_URL VARCHAR2(200);
+        </rollback>
     </changeSet>
     <changeSet id="V15__PM_1275_RICREATE_INDEX_PGS_REQUEST_ID_TRANSACTION_IDX" author="liquibase" failOnError="true" context="incremental or incremental-uat or incremental-prod">
         <sqlFile path="../scripts/table-creation/V15__PM_1275_RICREATE_INDEX_PGS_REQUEST_ID_TRANSACTION_IDX.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            DROP INDEX AGID_USER.PGS_REQUEST_ID_TRANSACTION_IDX;
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>

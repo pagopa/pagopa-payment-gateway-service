@@ -105,7 +105,7 @@ public class CreditCardPaymentController {
         resumeStep2Service.startResumeStep2(requestId);
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
 
-        String vposPollingRedirect = StringUtils.join(vposPollingUrl, requestId);
+        String vposPollingRedirect = vposPollingUrl + requestId;
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(vposPollingRedirect)).build();
     }
 

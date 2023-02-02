@@ -22,17 +22,19 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 @Slf4j
 @Service
 public class CcPaymentInfoService {
+
     private static final String AUTHORIZED = "AUTHORIZED";
     private static final String METHOD = "METHOD";
-
-    @Value("${vpos.method.notifyUrl}")
-    String methodNotifyUrl;
-
-    @Autowired
+    private String methodNotifyUrl;
     private PaymentRequestRepository paymentRequestRepository;
+    private ClientsConfig clientsConfig;
 
     @Autowired
-    private ClientsConfig clientsConfig;
+    public CcPaymentInfoService(@Value("${vpos.method.notifyUrl}") String methodNotifyUrl, PaymentRequestRepository paymentRequestRepository, ClientsConfig clientsConfig) {
+        this.methodNotifyUrl = methodNotifyUrl;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.clientsConfig = clientsConfig;
+    }
 
     public CcPaymentInfoResponse getPaymentoInfo(String requestId) {
         Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, REQUEST_PAYMENTS_VPOS);
@@ -56,7 +58,7 @@ public class CcPaymentInfoService {
             response.setClientReturnUrl(clientConfig.getVpos().getClientReturnUrl());
         } else {
             if (METHOD.equals(paymentInfo.getResponseType())) {
-                String threeDsMethodData = generateBase643DsMethodData(paymentInfo.getIdTransaction(), requestId);
+                String threeDsMethodData = generate3DsMethodData(paymentInfo.getIdTransaction(), requestId);
                 response.setThreeDsMethodData(threeDsMethodData);
             }
             response.setResponseType(paymentInfo.getResponseType());
@@ -66,7 +68,7 @@ public class CcPaymentInfoService {
         return response;
     }
 
-    private String generateBase643DsMethodData(String idTransaction, String requestId) {
+    private String generate3DsMethodData(String idTransaction, String requestId) {
         String notifyUrl = String.format(methodNotifyUrl, requestId);
 
         ThreeDsMethodData threeDsMethodData = new ThreeDsMethodData();

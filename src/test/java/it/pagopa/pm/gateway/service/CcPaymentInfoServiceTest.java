@@ -7,15 +7,14 @@ import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -30,19 +29,17 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest(classes = CcPaymentInfoService.class)
 public class CcPaymentInfoServiceTest {
-    @InjectMocks
-    private CcPaymentInfoService ccPaymentInfoService;
 
-    @Before
-    public void setUpProperties() {
-        ReflectionTestUtils.setField(ccPaymentInfoService, "methodNotifyUrl", "http://localhost:8080");
-    }
 
     @Mock
     private PaymentRequestRepository paymentRequestRepository;
 
     @Mock
     private ClientsConfig clientsConfig;
+
+    @Spy
+    @InjectMocks
+    private CcPaymentInfoService ccPaymentInfoService = new CcPaymentInfoService("http://localhost:8080", paymentRequestRepository, clientsConfig);
 
     @Test
     public void getPaymentInfoAuthorizedSuccessTest() {

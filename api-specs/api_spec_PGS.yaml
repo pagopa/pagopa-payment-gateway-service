@@ -728,7 +728,7 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/VposResumeResponse'
-  /request-payments/creditCard/{requestId}/resume/challenge:
+  /request-payments/vpos/{requestId}/resume/challenge:
     post:
       summary: resume vpos payment request
       tags:
@@ -1276,6 +1276,9 @@ components:
           type: string
         clientReturnUrl:
           type: string
+        threeDsMethodData:
+          type: string
+          format: base64
       required:
         - status
         - requestId

@@ -40,8 +40,6 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 @Service
 @Slf4j
 public class CcResumeStep2Service {
-    private String clientId;
-
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
@@ -72,8 +70,6 @@ public class CcResumeStep2Service {
             log.error("No CreditCard request entity has been found for requestId: " + requestId);
             return;
         }
-
-        this.clientId = entity.getClientId();
 
         if (Objects.nonNull(entity.getAuthorizationOutcome())) {
             log.warn(String.format("requestId %s already processed", requestId));
@@ -186,7 +182,7 @@ public class CcResumeStep2Service {
         String authCode = entity.getAuthorizationCode();
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
-            ClientConfig clientConfig = clientsConfig.getByKey(clientId);
+            ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());
             TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {

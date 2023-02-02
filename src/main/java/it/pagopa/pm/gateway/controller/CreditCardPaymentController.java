@@ -45,8 +45,12 @@ public class CreditCardPaymentController {
     @Autowired
     private VposDeleteService deleteService;
 
-    @Value("${vpos.polling.url}")
-    private String vposPollingUrl;
+    private final String vposPollingUrl;
+
+    @Autowired
+    public CreditCardPaymentController(@Value("${vpos.polling.url}") String vposPollingUrl) {
+        this.vposPollingUrl = vposPollingUrl;
+    }
 
     @GetMapping(REQUEST_ID)
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,

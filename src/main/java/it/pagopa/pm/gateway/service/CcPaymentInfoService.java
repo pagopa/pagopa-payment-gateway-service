@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway.service;
 
+import com.google.gson.Gson;
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;

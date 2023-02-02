@@ -11,4 +11,5 @@ public class CcPaymentInfoResponse {
     private String requestId;
     private String vposUrl;
     private String clientReturnUrl;
+    private String threeDsMethodData;
 }

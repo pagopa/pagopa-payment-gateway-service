@@ -4,11 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.bpay.generated.*;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.ACKMessage;
+import it.pagopa.pm.gateway.dto.AuthMessage;
+import it.pagopa.pm.gateway.dto.PatchRequest;
+import it.pagopa.pm.gateway.dto.TransactionUpdateRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayInfoResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayOutcomeResponse;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
+import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
@@ -1100,9 +1105,9 @@ public class ValidBeans {
     public static ClientConfig createClientsConfigVpos() {
         String clientReturnUrl = "http://localhost:8080";
         ClientConfig clientConfig = new ClientConfig();
-        PaymentMethodConfig methodConfig = new PaymentMethodConfig();
-        methodConfig.setClientReturnUrl(clientReturnUrl);
-        clientConfig.setVpos(methodConfig);
+        VposClientConfig vposClientConfig = new VposClientConfig();
+        vposClientConfig.setClientReturnUrl(clientReturnUrl);
+        clientConfig.setVpos(vposClientConfig);
         return clientConfig;
     }
 }

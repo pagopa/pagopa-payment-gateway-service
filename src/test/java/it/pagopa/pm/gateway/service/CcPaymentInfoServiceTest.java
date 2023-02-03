@@ -1,7 +1,7 @@
 package it.pagopa.pm.gateway.service;
 
 import it.pagopa.pm.gateway.beans.ValidBeans;
-import it.pagopa.pm.gateway.dto.ClientConfig;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;

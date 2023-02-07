@@ -9,6 +9,7 @@ import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.XPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
@@ -70,6 +71,9 @@ public class XPayPaymentController {
 
     @Autowired
     private XPayUtils xPayUtils;
+
+    @Autowired
+    private JwtTokenUtils jwtTokenUtils;
 
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
@@ -152,7 +156,8 @@ public class XPayPaymentController {
         }
 
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+            String sessionToken = jwtTokenUtils.generateToken(requestId);
+            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId, "#token=", sessionToken);
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

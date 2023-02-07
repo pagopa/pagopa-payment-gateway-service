@@ -14,6 +14,7 @@ import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -42,34 +43,35 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Service
 @Slf4j
 public class VposService {
-    @Value("${vpos.response.urlredirect}")
-    private String responseUrlRedirect;
-
-    @Value("${vpos.requestUrl}")
-    private String vposUrl;
 
     private static final String CAUSE = " cause: ";
-
-    @Autowired
+    private String responseUrlRedirect;
+    private String vposUrl;
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private EcommerceClient ecommerceClient;
-
-    @Autowired
     private VPosRequestUtils vPosRequestUtils;
-
-    @Autowired
     private VPosResponseUtils vPosResponseUtils;
-
-    @Autowired
     private HttpClient httpClient;
-
-    @Autowired
     private ObjectMapper objectMapper;
+    private ClientsConfig clientsConfig;
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    private ClientsConfig clientsConfig;
+    public VposService(@Value("${vpos.response.urlredirect}") String responseUrlRedirect, @Value("${vpos.requestUrl}") String vposUrl,
+                       PaymentRequestRepository paymentRequestRepository, EcommerceClient ecommerceClient, VPosRequestUtils vPosRequestUtils,
+                       VPosResponseUtils vPosResponseUtils, HttpClient httpClient, ObjectMapper objectMapper,
+                       ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
+        this.responseUrlRedirect = responseUrlRedirect;
+        this.vposUrl = vposUrl;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.ecommerceClient = ecommerceClient;
+        this.vPosRequestUtils = vPosRequestUtils;
+        this.vPosResponseUtils = vPosResponseUtils;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+        this.clientsConfig = clientsConfig;
+        this.jwtTokenUtils = jwtTokenUtils;
+    }
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
@@ -186,7 +188,8 @@ public class VposService {
         }
 
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+            String sessionToken = jwtTokenUtils.generateToken(requestId);
+            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId, "#token=", sessionToken);
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

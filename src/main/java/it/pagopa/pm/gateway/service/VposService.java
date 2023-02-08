@@ -45,7 +45,6 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Slf4j
 public class VposService {
     private static final String CAUSE = " cause: ";
-    private String clientId;
 
     @Value("${vpos.requestUrl}")
     private String vposUrl;
@@ -73,31 +72,30 @@ public class VposService {
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
-        this.clientId = clientId;
         log.info("START - POST " + REQUEST_PAYMENTS_VPOS);
 
         if (!clientsConfig.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
-            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null, clientId);
         }
 
         if (ObjectUtils.anyNull(request) || request.getAmount().equals(BigInteger.ZERO)) {
             log.error(BAD_REQUEST_MSG);
-            return createStepZeroResponse(BAD_REQUEST_MSG, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG, null, clientId);
         }
 
         String idTransaction = request.getIdTransaction();
         log.info(String.format("START - POST %s for idTransaction %s", REQUEST_PAYMENTS_VPOS, idTransaction));
         if ((Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction)))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null);
+            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null, clientId);
         }
 
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
             log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
-            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null);
+            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null, clientId);
         }
     }
 
@@ -105,7 +103,7 @@ public class VposService {
         PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
         Map<String, String> params = vPosRequestUtils.buildStepZeroRequestParams(request, entity.getGuid());
         executeStepZeroAuth(params, entity, request);
-        return createStepZeroResponse(null, entity.getGuid());
+        return createStepZeroResponse(null, entity.getGuid(), clientId);
     }
 
     @Async
@@ -163,7 +161,7 @@ public class VposService {
         String authCode = entity.getAuthorizationCode();
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
-            ClientConfig clientConfig = clientsConfig.getByKey(clientId);
+            ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());
             TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
@@ -181,7 +179,7 @@ public class VposService {
         return clientResponse;
     }
 
-    private StepZeroResponse createStepZeroResponse(String errorMessage, String requestId) {
+    private StepZeroResponse createStepZeroResponse(String errorMessage, String requestId, String clientId) {
         StepZeroResponse response = new StepZeroResponse();
 
         if (StringUtils.isNotBlank(requestId)) {

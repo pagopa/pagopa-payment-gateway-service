@@ -20,7 +20,6 @@ import it.pagopa.pm.gateway.dto.postepay.PostePayOnboardingRequest;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
-import it.pagopa.pm.gateway.service.VposService;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -120,6 +119,7 @@ public class PostePayPaymentControllerTest {
             given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
             given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, appRequest)).willReturn(okResponse);
+            given(jwtTokenUtils.generateToken(any())).willReturn("exampletoken");
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
                             .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
@@ -148,6 +148,7 @@ public class PostePayPaymentControllerTest {
             given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
             given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(userApi.apiV1UserOnboardingPost(bearerToken, onboardingRequest)).willReturn(onboardingResponse);
+            given(jwtTokenUtils.generateToken(any())).willReturn("exampletoken");
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
                             .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
@@ -183,6 +184,7 @@ public class PostePayPaymentControllerTest {
             given(env.getProperty(String.format("postepay.clientId.%s.config", "WEB"))).willReturn(appConfigurationProperty);
             given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, request)).willReturn(okResponse);
+            given(jwtTokenUtils.generateToken(any())).willReturn("exampletoken");
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY).header(Headers.X_CLIENT_ID, "WEB")
                             .content(mapper.writeValueAsString(postePayAuthRequest)).contentType(MediaType.APPLICATION_JSON))

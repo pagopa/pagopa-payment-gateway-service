@@ -186,8 +186,8 @@ public class CcResumeStep2Service {
             TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
             log.info("Response from PATCH updateTransaction for requestId {} is {}", requestId, patchResponse.toString());
         } catch (Exception e) {
-            log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
-            log.info("Refunding payment with requestId: " + requestId);
+            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
+            log.info("Refunding payment with requestId: {}", requestId);
         }
     }
 }

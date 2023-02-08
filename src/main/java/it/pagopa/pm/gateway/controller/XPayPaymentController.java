@@ -75,7 +75,7 @@ public class XPayPaymentController {
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                 @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                                @RequestBody XPayAuthRequest pgsRequest) {
+                                                                @Valid @RequestBody XPayAuthRequest pgsRequest) {
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.info("START - POST " + REQUEST_PAYMENTS_XPAY);
             log.error(String.format("Client id %s is not valid", clientId));
@@ -191,7 +191,7 @@ public class XPayPaymentController {
         }
     }
 
-    private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(@Valid XPayAuthRequest pgsRequest, String clientId, String mdcFields) {
+    private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(XPayAuthRequest pgsRequest, String clientId, String mdcFields) {
         String transactionId = pgsRequest.getIdTransaction();
         log.info("START - requesting XPay payment authorization for transactionId " + transactionId);
 

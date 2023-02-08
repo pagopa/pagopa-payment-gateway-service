@@ -411,7 +411,7 @@ public class PostePayPaymentTransactionsController {
         postePayAuthResponse.setCorrelationId(correlationId);
         String sessionToken = jwtTokenUtils.generateToken(requestId);
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(String.format(pgsResponseUrlRedirect, requestId, Scopes.POSTEPAY_SCOPE), "#token=", sessionToken);
+            String urlRedirect = String.format(pgsResponseUrlRedirect, requestId, Scopes.POSTEPAY_SCOPE) + "#token=" + sessionToken;
             postePayAuthResponse.setUrlRedirect(urlRedirect);
         } else {
             postePayAuthResponse.setError(errorMessage);

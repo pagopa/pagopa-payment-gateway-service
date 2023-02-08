@@ -157,7 +157,7 @@ public class XPayPaymentController {
 
         if (StringUtils.isEmpty(errorMessage)) {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
-            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId, "#token=", sessionToken);
+            String urlRedirect = responseUrlRedirect + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

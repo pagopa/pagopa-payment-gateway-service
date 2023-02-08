@@ -177,7 +177,7 @@ public class CcResumeStep2Service {
 
     private void executePatchTransaction(PaymentRequestEntity entity) {
         String requestId = entity.getGuid();
-        log.info("START - PATCH updateTransaction for requestId: " + requestId);
+        log.info("START - PATCH updateTransaction for requestId: {}", requestId);
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
         String authCode = entity.getAuthorizationCode();
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);

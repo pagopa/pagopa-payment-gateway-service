@@ -10,24 +10,26 @@ import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.XPayUtils;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-
-import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_XPAY;
 import static it.pagopa.pm.gateway.constant.Messages.*;
@@ -40,39 +42,38 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 @SpringBootTest(classes = XPayPaymentController.class)
 @AutoConfigureMockMvc
 @EnableWebMvc
-@TestPropertySource(properties = {
-        "xpay.response.urlredirect=http://localhost:8080/payment-gateway/",
-        "xpay.apiKey=apiKey",
-        "xpay.secretKey=secretKey"
-})
 public class XPayPaymentControllerTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    @MockBean
+    @Mock
     private PaymentRequestRepository paymentRequestRepository;
-    @MockBean
+    @Mock
     private XpayService xpayService;
-    @MockBean
+    @Mock
     private RestapiCdClientImpl restapiCdClient;
-    @MockBean
+    @Mock
     private XPayUtils xPayUtils;
-    @MockBean
+    @Mock
     private JwtTokenUtils jwtTokenUtils;
 
-    @Autowired
+    private XPayPaymentController xpayController;
     private MockMvc mvc;
 
+    @Before
+    public void init() {
+        MockitoAnnotations.openMocks(this);
+        xpayController = new XPayPaymentController("http://localhost:8080/", "http://localhost:8080/", "apiKey",
+                paymentRequestRepository, xpayService, restapiCdClient, xPayUtils, jwtTokenUtils);
+        mvc = MockMvcBuilders.standaloneSetup(xpayController).build();
+    }
+
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
-
-    @Mock
-    final UUID uuid = UUID.fromString(UUID_SAMPLE);
-
     private static final String ECOMMERCE_APP_ORIGIN = "ECOMMERCE_APP";
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -83,8 +84,6 @@ public class XPayPaymentControllerTest {
         AuthPaymentXPayResponse xPayResponse = ValidBeans.createXPayAuthResponse(xPayRequest);
 
         when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
-
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false));
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -101,8 +100,6 @@ public class XPayPaymentControllerTest {
         AuthPaymentXPayResponse xPayResponse = ValidBeans.createBadXPayAuthResponse(xPayRequest);
 
         when(xpayService.callAutenticazione3DS(any())).thenReturn(xPayResponse);
-
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false));
 
         mvc.perform(post(REQUEST_PAYMENTS_XPAY)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -258,8 +255,6 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
         when(xPayUtils.checkMac(any(), any())).thenReturn(false);
-
-        when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -469,10 +464,6 @@ public class XPayPaymentControllerTest {
         XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
 
         XPayRevertResponse revertResponse = ValidBeans.createXPayRevertResponse(true);
-
-        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
-
-        when(xpayService.callStorna(any())).thenReturn(revertResponse);
 
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)

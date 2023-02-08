@@ -52,29 +52,28 @@ public class XPayPaymentController {
     public static final String ZERO_CHAR = "0";
     private static final int MAX_RETRIES = 3;
 
-    @Value("${xpay.response.urlredirect}")
-    private String responseUrlRedirect;
-
-    @Value("${xpay.request.responseUrl}")
+    private final String responseUrlRedirect;
     private String xpayResponseUrl;
-
-    @Value("${xpay.apiKey}")
     private String apiKey;
-
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private XpayService xpayService;
-
-    @Autowired
     private RestapiCdClientImpl restapiCdClient;
-
-    @Autowired
     private XPayUtils xPayUtils;
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    private JwtTokenUtils jwtTokenUtils;
+    public XPayPaymentController(@Value("${xpay.response.urlredirect}") String responseUrlRedirect, @Value("${xpay.request.responseUrl}") String xpayResponseUrl,
+                                 @Value("${xpay.apiKey}") String apiKey, PaymentRequestRepository paymentRequestRepository, XpayService xpayService,
+                                 RestapiCdClientImpl restapiCdClient, XPayUtils xPayUtils, JwtTokenUtils jwtTokenUtils) {
+        this.responseUrlRedirect = responseUrlRedirect;
+        this.xpayResponseUrl = xpayResponseUrl;
+        this.apiKey = apiKey;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.xpayService = xpayService;
+        this.restapiCdClient = restapiCdClient;
+        this.xPayUtils = xPayUtils;
+        this.jwtTokenUtils = jwtTokenUtils;
+    }
 
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,

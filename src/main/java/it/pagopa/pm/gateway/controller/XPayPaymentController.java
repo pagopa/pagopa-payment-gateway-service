@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.*;
@@ -190,7 +191,7 @@ public class XPayPaymentController {
         }
     }
 
-    private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(XPayAuthRequest pgsRequest, String clientId, String mdcFields) {
+    private ResponseEntity<XPayAuthResponse> createAuthPaymentXpay(@Valid XPayAuthRequest pgsRequest, String clientId, String mdcFields) {
         String transactionId = pgsRequest.getIdTransaction();
         log.info("START - requesting XPay payment authorization for transactionId " + transactionId);
 

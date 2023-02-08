@@ -68,35 +68,35 @@ public class PostePayPaymentTransactionsController {
     private static final String RESPONSE_BODY_MSG = "Response body: ";
     private static final String COMPLETE_EXCEPTION_MSG = "Complete exception: ";
 
-    @Value("${pgs.postepay.response.urlredirect}")
     private String pgsResponseUrlRedirect;
-
-    @Value("${pgs.postepay.notificationURL}")
     private String postepayNotificationUrl;
-
-    @Value("${pgs.postepay.logo.url}")
     private String postepayLogoUrl;
-
-    @Autowired
     private AzureLoginClient azureLoginClient;
-
-    @Autowired
     private RestapiCdClientImpl restapiCdClient;
-
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private PaymentManagerControllerApi postePayControllerApi;
-
-    @Autowired
     private UserApi userApi;
-
-    @Autowired
     private Environment environment;
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    private JwtTokenUtils jwtTokenUtils;
+    public PostePayPaymentTransactionsController(@Value("${pgs.postepay.response.urlredirect}") String pgsResponseUrlRedirect,
+                                                 @Value("${pgs.postepay.notificationURL}") String postepayNotificationUrl,
+                                                 @Value("${pgs.postepay.logo.url}") String postepayLogoUrl, AzureLoginClient azureLoginClient,
+                                                 RestapiCdClientImpl restapiCdClient, PaymentRequestRepository paymentRequestRepository,
+                                                 PaymentManagerControllerApi postePayControllerApi, UserApi userApi,
+                                                 Environment environment, JwtTokenUtils jwtTokenUtils) {
+        this.pgsResponseUrlRedirect = pgsResponseUrlRedirect;
+        this.postepayNotificationUrl = postepayNotificationUrl;
+        this.postepayLogoUrl = postepayLogoUrl;
+        this.azureLoginClient = azureLoginClient;
+        this.restapiCdClient = restapiCdClient;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.postePayControllerApi = postePayControllerApi;
+        this.userApi = userApi;
+        this.environment = environment;
+        this.jwtTokenUtils = jwtTokenUtils;
+    }
 
     @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
     public ResponseEntity<ACKMessage> updatePostePayTransaction(@RequestBody AuthMessage authMessage,

@@ -20,14 +20,13 @@ import it.pagopa.pm.gateway.dto.postepay.PostePayOnboardingRequest;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.service.VposService;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.openapitools.client.ApiException;
 import org.openapitools.client.api.PaymentManagerControllerApi;
 import org.openapitools.client.api.UserApi;
@@ -99,6 +98,11 @@ public class PostePayPaymentControllerTest {
 
     @Mock
     final UUID uuid = UUID.fromString(UUID_SAMPLE);
+
+    @Spy
+    @InjectMocks
+    private PostePayPaymentTransactionsController postePayController = new PostePayPaymentTransactionsController("${pgs.postepay.response.urlredirect}", "${pgs.postepay.notificationURL}", "${pgs.postepay.logo.url}",
+            azureLoginClient, restapiCdClient, paymentRequestRepository, postePayControllerApi, userApi, env, jwtTokenUtils);
 
     @Test
     public void givenPostePayPaymentRequestAPP_returnPostePayAuthResponse() throws Exception {

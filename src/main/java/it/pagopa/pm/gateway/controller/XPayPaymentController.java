@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.*;
@@ -74,7 +75,7 @@ public class XPayPaymentController {
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                 @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                                @RequestBody XPayAuthRequest pgsRequest) {
+                                                                @Valid @RequestBody XPayAuthRequest pgsRequest) {
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.info("START - POST " + REQUEST_PAYMENTS_XPAY);
             log.error(String.format("Client id %s is not valid", clientId));

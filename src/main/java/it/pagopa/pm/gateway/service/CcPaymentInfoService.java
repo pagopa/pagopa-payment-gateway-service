@@ -26,9 +26,10 @@ public class CcPaymentInfoService {
 
     private static final String AUTHORIZED = "AUTHORIZED";
     private static final String METHOD = "METHOD";
-    private final String methodNotifyUrl;
-    private final PaymentRequestRepository paymentRequestRepository;
-    private final ClientsConfig clientsConfig;
+    private static final String CANCELLED = "CANCELLED";
+    private String methodNotifyUrl;
+    private PaymentRequestRepository paymentRequestRepository;
+    private ClientsConfig clientsConfig;
 
     @Autowired
     public CcPaymentInfoService(@Value("${vpos.method.notifyUrl}") String methodNotifyUrl, PaymentRequestRepository paymentRequestRepository, ClientsConfig clientsConfig) {
@@ -54,7 +55,7 @@ public class CcPaymentInfoService {
         response.setStatus(paymentInfo.getStatus());
         response.setRequestId(requestId);
 
-        if (AUTHORIZED.equals(paymentInfo.getStatus())) {
+        if (AUTHORIZED.equals(paymentInfo.getStatus()) || CANCELLED.equals(paymentInfo.getStatus())) {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
 
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();

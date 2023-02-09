@@ -41,6 +41,7 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 @Slf4j
 public class CcResumeStep1Service {
     private static final String CREQ_QUERY_PARAM = "?creq=";
+    private ClientsConfig clientsConfig;
 
     @Value("${vpos.requestUrl}")
     private String vposUrl;
@@ -64,7 +65,9 @@ public class CcResumeStep1Service {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private ClientsConfig clientsConfig;
+    public CcResumeStep1Service(ClientsConfig clientsConfig) {
+        this.clientsConfig = clientsConfig;
+    }
 
     public void startResumeStep1(CreditCardResumeRequest request, String requestId) {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);

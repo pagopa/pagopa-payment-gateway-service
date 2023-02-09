@@ -40,6 +40,8 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 @Service
 @Slf4j
 public class CcResumeStep2Service {
+    private ClientsConfig clientsConfig;
+
     @Value("${vpos.requestUrl}")
     private String vposUrl;
 
@@ -62,7 +64,9 @@ public class CcResumeStep2Service {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private ClientsConfig clientsConfig;
+    public CcResumeStep2Service(ClientsConfig clientsConfig) {
+        this.clientsConfig = clientsConfig;
+    }
 
     public void startResumeStep2(String requestId) {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);

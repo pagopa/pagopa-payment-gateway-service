@@ -40,9 +40,12 @@ import static org.mockito.Mockito.when;
 public class CcResumeStep1ServiceTest {
     private final ClientConfig clientConfig = new ClientConfig();
 
+    @Mock
+    private ClientsConfig clientsConfig;
+
     @Spy
     @InjectMocks
-    private CcResumeStep1Service service = new CcResumeStep1Service();
+    private CcResumeStep1Service service = new CcResumeStep1Service(clientsConfig);
 
     @Before
     public void setUpProperties() {
@@ -64,8 +67,6 @@ public class CcResumeStep1ServiceTest {
     private HttpClient httpClient;
     @Mock
     private ObjectMapper objectMapper;
-    @Mock
-    private ClientsConfig clientsConfig;
 
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 

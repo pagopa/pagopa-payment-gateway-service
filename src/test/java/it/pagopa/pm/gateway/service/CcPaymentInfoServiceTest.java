@@ -29,8 +29,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest(classes = CcPaymentInfoService.class)
 public class CcPaymentInfoServiceTest {
-
-
+    
     @Mock
     private PaymentRequestRepository paymentRequestRepository;
 
@@ -51,7 +50,7 @@ public class CcPaymentInfoServiceTest {
         paymentInfo.setClientId("ClientId");
         paymentInfo.setIdTransaction("1234");
 
-        ClientConfig clientConfigToReturn = ValidBeans.createClientsConfigVpos();
+        ClientConfig clientConfigToReturn = ValidBeans.createClientsConfig();
 
         when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any()))
                 .thenReturn(Optional.of(paymentInfo));

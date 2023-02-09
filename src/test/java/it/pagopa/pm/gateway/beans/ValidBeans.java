@@ -14,6 +14,7 @@ import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
 import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.config.VposClientConfig;
+import it.pagopa.pm.gateway.dto.config.XpayClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
@@ -1102,12 +1103,18 @@ public class ValidBeans {
         return saxBuilder.build(new StringReader(xmlString));
     }
 
-    public static ClientConfig createClientsConfigVpos() {
+    public static ClientConfig createClientsConfig() {
         String clientReturnUrl = "http://localhost:8080";
         ClientConfig clientConfig = new ClientConfig();
+
         VposClientConfig vposClientConfig = new VposClientConfig();
         vposClientConfig.setClientReturnUrl(clientReturnUrl);
         clientConfig.setVpos(vposClientConfig);
+
+        XpayClientConfig xpayClientConfig = new XpayClientConfig();
+        xpayClientConfig.setClientReturnUrl(clientReturnUrl);
+        clientConfig.setXpay(xpayClientConfig);
+
         return clientConfig;
     }
 }

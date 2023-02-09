@@ -25,6 +25,7 @@ public class CcPaymentInfoService {
 
     private static final String AUTHORIZED = "AUTHORIZED";
     private static final String METHOD = "METHOD";
+    private static final String CANCELLED = "CANCELLED";
     private String methodNotifyUrl;
     private PaymentRequestRepository paymentRequestRepository;
     private ClientsConfig clientsConfig;
@@ -53,7 +54,7 @@ public class CcPaymentInfoService {
         response.setStatus(paymentInfo.getStatus());
         response.setRequestId(requestId);
 
-        if (AUTHORIZED.equals(paymentInfo.getStatus())) {
+        if (AUTHORIZED.equals(paymentInfo.getStatus()) || CANCELLED.equals(paymentInfo.getStatus())) {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
             response.setClientReturnUrl(clientConfig.getVpos().getClientReturnUrl());
         } else {

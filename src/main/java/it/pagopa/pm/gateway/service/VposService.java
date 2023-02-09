@@ -198,8 +198,8 @@ public class VposService {
     }
 
     private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, StepZeroRequest request) throws JsonProcessingException {
-        StepZeroRequest requestToSave = deleteRequestFieldsForDb(request);
-        String requestJson = objectMapper.writeValueAsString(requestToSave);
+        VposDatabaseRequest vposDatabaseRequest = generateVposDatabaseRequest(request);
+        String requestJson = objectMapper.writeValueAsString(vposDatabaseRequest);
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setClientId(clientId);
         entity.setMdcInfo(mdcFields);
@@ -211,14 +211,13 @@ public class VposService {
         return entity;
     }
 
-    private StepZeroRequest deleteRequestFieldsForDb(StepZeroRequest request) {
-        StepZeroRequest requestToReturn = new StepZeroRequest();
-        requestToReturn.setIsFirstPayment(request.getIsFirstPayment());
-        requestToReturn.setAmount(request.getAmount());
-        requestToReturn.setIdTransaction(request.getIdTransaction());
-        requestToReturn.setCircuit(request.getCircuit());
-        requestToReturn.setIdPsp(request.getIdPsp());
-        return requestToReturn;
+    private VposDatabaseRequest generateVposDatabaseRequest(StepZeroRequest request) {
+        VposDatabaseRequest vposDatabaseRequest = new VposDatabaseRequest();
+        vposDatabaseRequest.setIsFirstPayment(request.getIsFirstPayment());
+        vposDatabaseRequest.setAmount(request.getAmount());
+        vposDatabaseRequest.setIdTransaction(request.getIdTransaction());
+        vposDatabaseRequest.setIdPsp(request.getIdPsp());
+        return vposDatabaseRequest;
     }
 
     private boolean checkResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {

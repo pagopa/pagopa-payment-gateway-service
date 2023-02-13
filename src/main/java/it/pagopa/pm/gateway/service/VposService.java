@@ -198,8 +198,8 @@ public class VposService {
     }
 
     private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, StepZeroRequest request) throws JsonProcessingException {
-        VposDatabaseRequest vposDatabaseRequest = generateVposDatabaseRequest(request);
-        String requestJson = objectMapper.writeValueAsString(vposDatabaseRequest);
+        VpostPersistableRequest vpostPersistableRequest = generateVposDatabaseRequest(request);
+        String requestJson = objectMapper.writeValueAsString(vpostPersistableRequest);
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setClientId(clientId);
         entity.setMdcInfo(mdcFields);
@@ -211,13 +211,9 @@ public class VposService {
         return entity;
     }
 
-    private VposDatabaseRequest generateVposDatabaseRequest(StepZeroRequest request) {
-        VposDatabaseRequest vposDatabaseRequest = new VposDatabaseRequest();
-        vposDatabaseRequest.setIsFirstPayment(request.getIsFirstPayment());
-        vposDatabaseRequest.setAmount(request.getAmount());
-        vposDatabaseRequest.setIdTransaction(request.getIdTransaction());
-        vposDatabaseRequest.setIdPsp(request.getIdPsp());
-        return vposDatabaseRequest;
+    private VpostPersistableRequest generateVposDatabaseRequest(StepZeroRequest request) {
+        return new VpostPersistableRequest(request.getIdTransaction(),
+                request.getAmount(), request.getIsFirstPayment(), request.getIdPsp());
     }
 
     private boolean checkResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {

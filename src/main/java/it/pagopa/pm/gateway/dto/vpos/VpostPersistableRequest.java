@@ -1,11 +1,13 @@
 package it.pagopa.pm.gateway.dto.vpos;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigInteger;
 
 @Data
-public class VposDatabaseRequest {
+@AllArgsConstructor
+public class VpostPersistableRequest {
     private String idTransaction;
     private BigInteger amount;
     private Boolean isFirstPayment;

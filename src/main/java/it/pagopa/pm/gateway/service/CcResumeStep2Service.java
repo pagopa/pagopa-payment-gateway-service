@@ -18,6 +18,7 @@ import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
@@ -39,6 +40,7 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 
 @Service
 @Slf4j
+@NoArgsConstructor
 public class CcResumeStep2Service {
     private ClientsConfig clientsConfig;
 

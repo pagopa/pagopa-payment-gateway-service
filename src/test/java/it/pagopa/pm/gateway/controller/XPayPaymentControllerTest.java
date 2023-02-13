@@ -2,12 +2,15 @@ package it.pagopa.pm.gateway.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
-import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.constant.Headers;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
+import it.pagopa.pm.gateway.dto.config.XpayClientConfig;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
+import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.XPayUtils;
 import org.junit.Before;
@@ -15,15 +18,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -47,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @EnableWebMvc
 public class XPayPaymentControllerTest {
+    private final ClientConfig clientConfig = new ClientConfig();
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -56,11 +56,13 @@ public class XPayPaymentControllerTest {
     @Mock
     private XpayService xpayService;
     @Mock
-    private RestapiCdClientImpl restapiCdClient;
+    private EcommerceClient ecommerceClient;
     @Mock
     private XPayUtils xPayUtils;
     @Mock
     private JwtTokenUtils jwtTokenUtils;
+    @Mock
+    private ClientsConfig clientsConfig;
 
     private XPayPaymentController xpayController;
     private MockMvc mvc;
@@ -69,8 +71,12 @@ public class XPayPaymentControllerTest {
     public void init() {
         MockitoAnnotations.openMocks(this);
         xpayController = new XPayPaymentController("http://localhost:8080/", "http://localhost:8080/", "apiKey",
-                paymentRequestRepository, xpayService, restapiCdClient, xPayUtils, jwtTokenUtils);
+                paymentRequestRepository, xpayService, ecommerceClient, xPayUtils, jwtTokenUtils, clientsConfig);
         mvc = MockMvcBuilders.standaloneSetup(xpayController).build();
+
+        XpayClientConfig xpayClientConfig = new XpayClientConfig();
+        xpayClientConfig.setClientReturnUrl("url");
+        clientConfig.setXpay(xpayClientConfig);
     }
 
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
@@ -188,6 +194,7 @@ public class XPayPaymentControllerTest {
 
         XPayPollingResponseError error = new XPayPollingResponseError(Long.valueOf(requestEntity.getErrorCode()), requestEntity.getErrorMessage());
 
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, error, false))));
@@ -372,7 +379,7 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenThrow(new RuntimeException());
+        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(new RuntimeException());
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)

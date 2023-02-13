@@ -1,6 +1,5 @@
 package it.pagopa.pm.gateway.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
@@ -60,8 +59,6 @@ public class VposServiceTest {
     private VPosResponseUtils vPosResponseUtils;
     @Mock
     private HttpClient httpClient;
-    @Mock
-    private ObjectMapper objectMapper;
     @Mock
     private ClientsConfig clientsConfig;
 

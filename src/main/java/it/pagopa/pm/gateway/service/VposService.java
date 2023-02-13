@@ -66,9 +66,6 @@ public class VposService {
     private HttpClient httpClient;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private ClientsConfig clientsConfig;
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
@@ -198,8 +195,7 @@ public class VposService {
     }
 
     private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, StepZeroRequest request) throws JsonProcessingException {
-        VpostPersistableRequest vpostPersistableRequest = generateVposDatabaseRequest(request);
-        String requestJson = objectMapper.writeValueAsString(vpostPersistableRequest);
+        VposPersistableRequest vposPersistableRequest = generateVposDatabaseRequest(request);
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setClientId(clientId);
         entity.setMdcInfo(mdcFields);
@@ -207,12 +203,12 @@ public class VposService {
         entity.setGuid(UUID.randomUUID().toString());
         entity.setRequestEndpoint(REQUEST_PAYMENTS_VPOS);
         entity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
-        entity.setJsonRequest(requestJson);
+        entity.setJsonRequest(vposPersistableRequest);
         return entity;
     }
 
-    private VpostPersistableRequest generateVposDatabaseRequest(StepZeroRequest request) {
-        return new VpostPersistableRequest(request.getIdTransaction(),
+    private VposPersistableRequest generateVposDatabaseRequest(StepZeroRequest request) {
+        return new VposPersistableRequest(request.getIdTransaction(),
                 request.getAmount(), request.getIsFirstPayment(), request.getIdPsp());
     }
 

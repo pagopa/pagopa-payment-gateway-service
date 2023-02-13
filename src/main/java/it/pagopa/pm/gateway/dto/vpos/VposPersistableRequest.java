@@ -7,7 +7,7 @@ import java.math.BigInteger;
 
 @Data
 @AllArgsConstructor
-public class VpostPersistableRequest {
+public class VposPersistableRequest {
     private String idTransaction;
     private BigInteger amount;
     private Boolean isFirstPayment;

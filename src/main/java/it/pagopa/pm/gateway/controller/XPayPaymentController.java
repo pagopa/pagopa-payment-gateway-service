@@ -9,6 +9,7 @@ import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.XPayUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
@@ -51,26 +52,28 @@ public class XPayPaymentController {
     public static final String ZERO_CHAR = "0";
     private static final int MAX_RETRIES = 3;
 
-    @Value("${xpay.response.urlredirect}")
-    private String responseUrlRedirect;
-
-    @Value("${xpay.request.responseUrl}")
+    private final String responseUrlRedirect;
     private String xpayResponseUrl;
-
-    @Value("${xpay.apiKey}")
     private String apiKey;
-
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private XpayService xpayService;
-
-    @Autowired
     private RestapiCdClientImpl restapiCdClient;
+    private XPayUtils xPayUtils;
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    private XPayUtils xPayUtils;
+    public XPayPaymentController(@Value("${xpay.response.urlredirect}") String responseUrlRedirect, @Value("${xpay.request.responseUrl}") String xpayResponseUrl,
+                                 @Value("${xpay.apiKey}") String apiKey, PaymentRequestRepository paymentRequestRepository, XpayService xpayService,
+                                 RestapiCdClientImpl restapiCdClient, XPayUtils xPayUtils, JwtTokenUtils jwtTokenUtils) {
+        this.responseUrlRedirect = responseUrlRedirect;
+        this.xpayResponseUrl = xpayResponseUrl;
+        this.apiKey = apiKey;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.xpayService = xpayService;
+        this.restapiCdClient = restapiCdClient;
+        this.xPayUtils = xPayUtils;
+        this.jwtTokenUtils = jwtTokenUtils;
+    }
 
     @PostMapping()
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
@@ -153,7 +156,8 @@ public class XPayPaymentController {
         }
 
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+            String sessionToken = jwtTokenUtils.generateToken(requestId);
+            String urlRedirect = responseUrlRedirect + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

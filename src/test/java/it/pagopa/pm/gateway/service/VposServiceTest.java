@@ -14,9 +14,9 @@ import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -25,7 +25,6 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -41,20 +40,6 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = VposService.class)
 public class VposServiceTest {
     public static final String ECOMMERCE_WEB = "ECOMMERCE_WEB";
-    private final ClientConfig clientConfig = new ClientConfig();
-
-    @Spy
-    @InjectMocks
-    private VposService service = new VposService();
-
-    @Before
-    public void init() {
-        ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
-
-        VposClientConfig vposClientConfig= new VposClientConfig();
-        vposClientConfig.setClientReturnUrl("url");
-        clientConfig.setVpos(vposClientConfig);
-    }
 
     @Mock
     private PaymentRequestRepository paymentRequestRepository;
@@ -70,6 +55,15 @@ public class VposServiceTest {
     private ObjectMapper objectMapper;
     @Mock
     private ClientsConfig clientsConfig;
+    @Mock
+    private JwtTokenUtils jwtTokenUtils;
+
+    @Spy
+    @InjectMocks
+    private VposService service = new VposService("http://localhost:8080/", "http://localhost:8080/",
+            paymentRequestRepository, ecommerceClient, vPosRequestUtils,
+            vPosResponseUtils, httpClient, objectMapper, clientsConfig, jwtTokenUtils);
+
 
     @Test
     public void getRequestPayment_Invalid_ClientId_Test_400() {

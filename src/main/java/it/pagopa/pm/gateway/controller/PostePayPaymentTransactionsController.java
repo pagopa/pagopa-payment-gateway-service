@@ -6,7 +6,9 @@ import feign.FeignException;
 import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.Scopes;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.ACKMessage;
+import it.pagopa.pm.gateway.dto.AuthMessage;
+import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.StatusErrorCodeOutcomeEnum;
@@ -17,6 +19,7 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -65,32 +68,35 @@ public class PostePayPaymentTransactionsController {
     private static final String RESPONSE_BODY_MSG = "Response body: ";
     private static final String COMPLETE_EXCEPTION_MSG = "Complete exception: ";
 
-    @Value("${pgs.postepay.response.urlredirect}")
     private String pgsResponseUrlRedirect;
-
-    @Value("${pgs.postepay.notificationURL}")
     private String postepayNotificationUrl;
-
-    @Value("${pgs.postepay.logo.url}")
     private String postepayLogoUrl;
-
-    @Autowired
     private AzureLoginClient azureLoginClient;
-
-    @Autowired
     private RestapiCdClientImpl restapiCdClient;
-
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private PaymentManagerControllerApi postePayControllerApi;
-
-    @Autowired
     private UserApi userApi;
+    private Environment environment;
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    private Environment environment;
+    public PostePayPaymentTransactionsController(@Value("${pgs.postepay.response.urlredirect}") String pgsResponseUrlRedirect,
+                                                 @Value("${pgs.postepay.notificationURL}") String postepayNotificationUrl,
+                                                 @Value("${pgs.postepay.logo.url}") String postepayLogoUrl, AzureLoginClient azureLoginClient,
+                                                 RestapiCdClientImpl restapiCdClient, PaymentRequestRepository paymentRequestRepository,
+                                                 PaymentManagerControllerApi postePayControllerApi, UserApi userApi,
+                                                 Environment environment, JwtTokenUtils jwtTokenUtils) {
+        this.pgsResponseUrlRedirect = pgsResponseUrlRedirect;
+        this.postepayNotificationUrl = postepayNotificationUrl;
+        this.postepayLogoUrl = postepayLogoUrl;
+        this.azureLoginClient = azureLoginClient;
+        this.restapiCdClient = restapiCdClient;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.postePayControllerApi = postePayControllerApi;
+        this.userApi = userApi;
+        this.environment = environment;
+        this.jwtTokenUtils = jwtTokenUtils;
+    }
 
     @PutMapping(REQUEST_PAYMENTS_POSTEPAY)
     public ResponseEntity<ACKMessage> updatePostePayTransaction(@RequestBody AuthMessage authMessage,
@@ -403,8 +409,9 @@ public class PostePayPaymentTransactionsController {
         postePayAuthResponse.setChannel(channel);
         postePayAuthResponse.setRequestId(requestId);
         postePayAuthResponse.setCorrelationId(correlationId);
+        String sessionToken = jwtTokenUtils.generateToken(requestId);
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = String.format(pgsResponseUrlRedirect, requestId, Scopes.POSTEPAY_SCOPE);
+            String urlRedirect = String.format(pgsResponseUrlRedirect, requestId, Scopes.POSTEPAY_SCOPE) + "#token=" + sessionToken;
             postePayAuthResponse.setUrlRedirect(urlRedirect);
         } else {
             postePayAuthResponse.setError(errorMessage);

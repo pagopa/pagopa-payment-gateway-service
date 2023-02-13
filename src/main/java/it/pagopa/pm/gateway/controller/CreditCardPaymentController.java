@@ -4,12 +4,8 @@ import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
-import it.pagopa.pm.gateway.dto.vpos.VposResumeMethodResponse;
-import it.pagopa.pm.gateway.service.CcPaymentInfoService;
-import it.pagopa.pm.gateway.service.CcResumeStep1Service;
-import it.pagopa.pm.gateway.service.CcResumeStep2Service;
-import it.pagopa.pm.gateway.service.VposService;
 import it.pagopa.pm.gateway.dto.vpos.VposDeleteResponse;
+import it.pagopa.pm.gateway.dto.vpos.VposResumeMethodResponse;
 import it.pagopa.pm.gateway.service.*;
 import it.pagopa.pm.gateway.utils.MdcUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.UUID;
 import java.util.Objects;
+import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.*;
 import static it.pagopa.pm.gateway.constant.Headers.MDC_FIELDS;
@@ -33,9 +29,6 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 @Slf4j
 @RequestMapping(REQUEST_PAYMENTS_VPOS)
 public class CreditCardPaymentController {
-
-    @Value("${vpos.response.urlredirect}")
-    private String responseUrlRedirect;
 
     @Autowired
     private CcPaymentInfoService ccPaymentInfoService;
@@ -51,6 +44,13 @@ public class CreditCardPaymentController {
 
     @Autowired
     private VposDeleteService deleteService;
+
+    private final String vposPollingUrl;
+
+    @Autowired
+    public CreditCardPaymentController(@Value("${vpos.polling.url}") String vposPollingUrl) {
+        this.vposPollingUrl = vposPollingUrl;
+    }
 
     @GetMapping(REQUEST_ID)
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,
@@ -105,10 +105,12 @@ public class CreditCardPaymentController {
                                                                @PathVariable String requestId) {
         log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         MdcUtils.setMdcFields(mdcFields);
-        String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+
         resumeStep2Service.startResumeStep2(requestId);
         log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(urlRedirect)).build();
+
+        String vposPollingRedirect = vposPollingUrl + requestId;
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(vposPollingRedirect)).build();
     }
 
     @DeleteMapping(REQUEST_ID)

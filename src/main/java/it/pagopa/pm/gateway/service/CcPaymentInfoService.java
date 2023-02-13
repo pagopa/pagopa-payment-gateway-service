@@ -1,7 +1,7 @@
 package it.pagopa.pm.gateway.service;
 
 import com.google.gson.Gson;
-import it.pagopa.pm.gateway.dto.ClientConfig;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDsMethodData;
@@ -9,6 +9,7 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -56,7 +57,9 @@ public class CcPaymentInfoService {
 
         if (AUTHORIZED.equals(paymentInfo.getStatus()) || CANCELLED.equals(paymentInfo.getStatus())) {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
-            response.setClientReturnUrl(clientConfig.getVpos().getClientReturnUrl());
+
+            String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
+            response.setClientReturnUrl(StringUtils.join(clientReturnUrl, requestId));
         } else {
             if (METHOD.equals(paymentInfo.getResponseType())) {
                 String threeDsMethodData = generate3DsMethodData(paymentInfo.getIdTransaction(), requestId);

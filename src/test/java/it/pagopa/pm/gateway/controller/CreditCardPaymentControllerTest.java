@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @EnableWebMvc
 @TestPropertySource(properties = {
-        "vpos.response.urlredirect=http://localhost:8080/",
+        "vpos.polling.url=http://localhost:8080/",
 })
 public class CreditCardPaymentControllerTest {
     @MockBean

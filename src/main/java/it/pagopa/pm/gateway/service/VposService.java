@@ -42,57 +42,61 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 @Service
 @Slf4j
 public class VposService {
-    @Value("${vpos.response.urlredirect}")
-    private String responseUrlRedirect;
-
-    @Value("${vpos.requestUrl}")
-    private String vposUrl;
 
     private static final String CAUSE = " cause: ";
-
-    @Autowired
+    private String responseUrlRedirect;
+    private String vposUrl;
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private EcommerceClient ecommerceClient;
-
-    @Autowired
     private VPosRequestUtils vPosRequestUtils;
-
-    @Autowired
     private VPosResponseUtils vPosResponseUtils;
-
-    @Autowired
     private HttpClient httpClient;
+    private ClientsConfig clientsConfig;
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    private ClientsConfig clientsConfig;
+    public VposService(@Value("${vpos.response.urlredirect}") String responseUrlRedirect, @Value("${vpos.requestUrl}") String vposUrl,
+                       PaymentRequestRepository paymentRequestRepository, EcommerceClient ecommerceClient, VPosRequestUtils vPosRequestUtils,
+                       VPosResponseUtils vPosResponseUtils, HttpClient httpClient, ObjectMapper objectMapper,
+                       ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
+        this.responseUrlRedirect = responseUrlRedirect;
+        this.vposUrl = vposUrl;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.ecommerceClient = ecommerceClient;
+        this.vPosRequestUtils = vPosRequestUtils;
+        this.vPosResponseUtils = vPosResponseUtils;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+        this.clientsConfig = clientsConfig;
+        this.jwtTokenUtils = jwtTokenUtils;
+    }
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
         log.info("START - POST " + REQUEST_PAYMENTS_VPOS);
+
         if (!clientsConfig.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
-            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null, clientId);
         }
 
         if (ObjectUtils.anyNull(request) || request.getAmount().equals(BigInteger.ZERO)) {
             log.error(BAD_REQUEST_MSG);
-            return createStepZeroResponse(BAD_REQUEST_MSG, null);
+            return createStepZeroResponse(BAD_REQUEST_MSG, null, clientId);
         }
 
         String idTransaction = request.getIdTransaction();
         log.info(String.format("START - POST %s for idTransaction %s", REQUEST_PAYMENTS_VPOS, idTransaction));
         if ((Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction)))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null);
+            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null, clientId);
         }
 
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
             log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
-            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null);
+            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null, clientId);
         }
     }
 
@@ -100,7 +104,7 @@ public class VposService {
         PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
         Map<String, String> params = vPosRequestUtils.buildStepZeroRequestParams(request, entity.getGuid());
         executeStepZeroAuth(params, entity, request);
-        return createStepZeroResponse(null, entity.getGuid());
+        return createStepZeroResponse(null, entity.getGuid(), clientId);
     }
 
     @Async
@@ -158,7 +162,8 @@ public class VposService {
         String authCode = entity.getAuthorizationCode();
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
-            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction());
+            ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());
+            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
@@ -175,15 +180,19 @@ public class VposService {
         return clientResponse;
     }
 
-    private StepZeroResponse createStepZeroResponse(String errorMessage, String requestId) {
+    private StepZeroResponse createStepZeroResponse(String errorMessage, String requestId, String clientId) {
         StepZeroResponse response = new StepZeroResponse();
 
         if (StringUtils.isNotBlank(requestId)) {
             response.setRequestId(requestId);
         }
 
+        VposClientConfig clientConfig = clientsConfig.getByKey(clientId).getVpos();
+        String clientReturnUrl = clientConfig.getClientReturnUrl();
+
         if (StringUtils.isEmpty(errorMessage)) {
-            String urlRedirect = StringUtils.join(responseUrlRedirect, requestId);
+            String sessionToken = jwtTokenUtils.generateToken(requestId);
+            String urlRedirect = responseUrlRedirect + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

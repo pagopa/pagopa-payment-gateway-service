@@ -12,6 +12,7 @@ import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.XPayUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -55,27 +56,25 @@ public class XPayPaymentController {
     private String xpayPollingUrl;
     private String xpayResumeUrl;
     private ClientsConfig clientsConfig;
-
-    @Value("${xpay.apiKey}")
     private String apiKey;
-
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
     private XpayService xpayService;
-
-    @Autowired
     private EcommerceClient ecommerceClient;
-
-    @Autowired
     private XPayUtils xPayUtils;
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    public XPayPaymentController(@Value("${xpay.polling.url}") String xpayPollingUrl,
-                                 @Value("${xpay.resume.url}")String xpayResumeUrl, ClientsConfig clientsConfig) {
+    public XPayPaymentController(@Value("${xpay.polling.url}") String xpayPollingUrl, @Value("${xpay.resume.url}") String xpayResumeUrl,
+                                 @Value("${xpay.apiKey}") String apiKey, PaymentRequestRepository paymentRequestRepository, XpayService xpayService,
+                                 EcommerceClient ecommerceClient, XPayUtils xPayUtils, JwtTokenUtils jwtTokenUtils, ClientsConfig clientsConfig) {
         this.xpayPollingUrl = xpayPollingUrl;
         this.xpayResumeUrl = xpayResumeUrl;
+        this.apiKey = apiKey;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.xpayService = xpayService;
+        this.ecommerceClient = ecommerceClient;
+        this.xPayUtils = xPayUtils;
+        this.jwtTokenUtils = jwtTokenUtils;
         this.clientsConfig = clientsConfig;
     }
 
@@ -159,7 +158,8 @@ public class XPayPaymentController {
         }
 
         if (StringUtils.isEmpty(errorMessage)) {
-            String pollingUrlRedirect = StringUtils.join(xpayPollingUrl, requestId);
+            String sessionToken = jwtTokenUtils.generateToken(requestId);
+            String pollingUrlRedirect = xpayPollingUrl + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(pollingUrlRedirect);
             response.setStatus(CREATED.name());
         } else {

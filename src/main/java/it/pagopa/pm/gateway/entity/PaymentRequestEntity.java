@@ -1,6 +1,9 @@
 package it.pagopa.pm.gateway.entity;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pm.gateway.dto.vpos.VposPersistableRequest;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -82,4 +85,12 @@ public class PaymentRequestEntity {
     @Column(name = "RESPONSE_TYPE")
     private String responseType;
 
+    public void setJsonRequest(String request) {
+        this.jsonRequest = request;
+    }
+
+    public void setJsonRequest(VposPersistableRequest request) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        this.jsonRequest = objectMapper.writeValueAsString(request);
+    }
 }

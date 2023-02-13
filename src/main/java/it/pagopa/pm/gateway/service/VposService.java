@@ -18,6 +18,7 @@ import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -43,6 +44,7 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @Service
 @Slf4j
+@NoArgsConstructor
 public class VposService {
 
     private static final String CAUSE = " cause: ";

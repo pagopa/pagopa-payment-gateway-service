@@ -1,6 +1,5 @@
 package it.pagopa.pm.gateway.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
 import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
@@ -64,17 +63,15 @@ public class VposServiceTest {
     @Mock
     private HttpClient httpClient;
     @Mock
-    private ObjectMapper objectMapper;
-    @Mock
     private ClientsConfig clientsConfig;
     @Mock
     private JwtTokenUtils jwtTokenUtils;
 
     @Spy
     @InjectMocks
-    private VposService service = new VposService("http://localhost:8080/", "http://localhost:8080/",
+    private VposService service = new VposService( "http://localhost:8080/",
             paymentRequestRepository, ecommerceClient, vPosRequestUtils,
-            vPosResponseUtils, httpClient, objectMapper, clientsConfig, jwtTokenUtils);
+            vPosResponseUtils, httpClient, clientsConfig, jwtTokenUtils);
 
 
     @Test

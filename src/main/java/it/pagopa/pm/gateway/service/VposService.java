@@ -1,7 +1,6 @@
 package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
@@ -47,30 +46,25 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 public class VposService {
 
     private static final String CAUSE = " cause: ";
-    private String responseUrlRedirect;
     private String vposUrl;
     private PaymentRequestRepository paymentRequestRepository;
     private EcommerceClient ecommerceClient;
     private VPosRequestUtils vPosRequestUtils;
     private VPosResponseUtils vPosResponseUtils;
     private HttpClient httpClient;
-    private ObjectMapper objectMapper;
     private ClientsConfig clientsConfig;
     private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    public VposService(@Value("${vpos.response.urlredirect}") String responseUrlRedirect, @Value("${vpos.requestUrl}") String vposUrl,
-                       PaymentRequestRepository paymentRequestRepository, EcommerceClient ecommerceClient, VPosRequestUtils vPosRequestUtils,
-                       VPosResponseUtils vPosResponseUtils, HttpClient httpClient, ObjectMapper objectMapper,
-                       ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
-        this.responseUrlRedirect = responseUrlRedirect;
+    public VposService(@Value("${vpos.requestUrl}") String vposUrl, PaymentRequestRepository paymentRequestRepository,
+                       EcommerceClient ecommerceClient, VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
+                       HttpClient httpClient, ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
         this.vposUrl = vposUrl;
         this.paymentRequestRepository = paymentRequestRepository;
         this.ecommerceClient = ecommerceClient;
         this.vPosRequestUtils = vPosRequestUtils;
         this.vPosResponseUtils = vPosResponseUtils;
         this.httpClient = httpClient;
-        this.objectMapper = objectMapper;
         this.clientsConfig = clientsConfig;
         this.jwtTokenUtils = jwtTokenUtils;
     }
@@ -196,7 +190,7 @@ public class VposService {
 
         if (StringUtils.isEmpty(errorMessage)) {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
-            String urlRedirect = responseUrlRedirect + requestId + "#token=" + sessionToken;
+            String urlRedirect = clientReturnUrl + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {
@@ -208,7 +202,7 @@ public class VposService {
     }
 
     private PaymentRequestEntity createEntity(String clientId, String mdcFields, String idTransaction, StepZeroRequest request) throws JsonProcessingException {
-        String requestJson = objectMapper.writeValueAsString(request);
+        VposPersistableRequest vposPersistableRequest = generateVposDatabaseRequest(request);
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setClientId(clientId);
         entity.setMdcInfo(mdcFields);
@@ -216,8 +210,13 @@ public class VposService {
         entity.setGuid(UUID.randomUUID().toString());
         entity.setRequestEndpoint(REQUEST_PAYMENTS_VPOS);
         entity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
-        entity.setJsonRequest(requestJson);
+        entity.setJsonRequest(vposPersistableRequest);
         return entity;
+    }
+
+    private VposPersistableRequest generateVposDatabaseRequest(StepZeroRequest request) {
+        return new VposPersistableRequest(request.getIdTransaction(),
+                request.getAmount(), request.getIsFirstPayment(), request.getIdPsp());
     }
 
     private boolean checkResultCode(ThreeDS2Response response, PaymentRequestEntity entity) {

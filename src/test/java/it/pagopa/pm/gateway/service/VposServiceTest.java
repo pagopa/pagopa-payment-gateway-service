@@ -69,7 +69,7 @@ public class VposServiceTest {
 
     @Spy
     @InjectMocks
-    private VposService service = new VposService("http://localhost:8080/", "http://localhost:8080/",
+    private VposService service = new VposService( "http://localhost:8080/",
             paymentRequestRepository, ecommerceClient, vPosRequestUtils,
             vPosResponseUtils, httpClient, clientsConfig, jwtTokenUtils);
 

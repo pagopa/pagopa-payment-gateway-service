@@ -46,7 +46,6 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 public class VposService {
 
     private static final String CAUSE = " cause: ";
-    private String responseUrlRedirect;
     private String vposUrl;
     private PaymentRequestRepository paymentRequestRepository;
     private EcommerceClient ecommerceClient;
@@ -57,10 +56,9 @@ public class VposService {
     private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    public VposService(@Value("${vpos.polling.url}") String responseUrlRedirect, @Value("${vpos.requestUrl}") String vposUrl,
-                       PaymentRequestRepository paymentRequestRepository, EcommerceClient ecommerceClient, VPosRequestUtils vPosRequestUtils,
-                       VPosResponseUtils vPosResponseUtils, HttpClient httpClient, ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
-        this.responseUrlRedirect = responseUrlRedirect;
+    public VposService(@Value("${vpos.requestUrl}") String vposUrl, PaymentRequestRepository paymentRequestRepository,
+                       EcommerceClient ecommerceClient, VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
+                       HttpClient httpClient, ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
         this.vposUrl = vposUrl;
         this.paymentRequestRepository = paymentRequestRepository;
         this.ecommerceClient = ecommerceClient;
@@ -192,7 +190,7 @@ public class VposService {
 
         if (StringUtils.isEmpty(errorMessage)) {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
-            String urlRedirect = responseUrlRedirect + requestId + "#token=" + sessionToken;
+            String urlRedirect = clientReturnUrl + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

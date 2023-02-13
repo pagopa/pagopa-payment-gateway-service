@@ -17,6 +17,7 @@ import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -40,6 +42,16 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = VposService.class)
 public class VposServiceTest {
     public static final String ECOMMERCE_WEB = "ECOMMERCE_WEB";
+    private final ClientConfig clientConfig = new ClientConfig();
+
+    @Before
+    public void init() {
+        ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
+
+        VposClientConfig vposClientConfig = new VposClientConfig();
+        vposClientConfig.setClientReturnUrl("url");
+        clientConfig.setVpos(vposClientConfig);
+    }
 
     @Mock
     private PaymentRequestRepository paymentRequestRepository;

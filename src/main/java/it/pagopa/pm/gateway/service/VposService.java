@@ -1,10 +1,11 @@
 package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
+import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
 import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
@@ -14,6 +15,7 @@ import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +57,9 @@ public class VposService {
     private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    public VposService(@Value("${vpos.response.urlredirect}") String responseUrlRedirect, @Value("${vpos.requestUrl}") String vposUrl,
+    public VposService(@Value("${vpos.polling.url}") String responseUrlRedirect, @Value("${vpos.requestUrl}") String vposUrl,
                        PaymentRequestRepository paymentRequestRepository, EcommerceClient ecommerceClient, VPosRequestUtils vPosRequestUtils,
-                       VPosResponseUtils vPosResponseUtils, HttpClient httpClient, ObjectMapper objectMapper,
-                       ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
+                       VPosResponseUtils vPosResponseUtils, HttpClient httpClient, ClientsConfig clientsConfig, JwtTokenUtils jwtTokenUtils) {
         this.responseUrlRedirect = responseUrlRedirect;
         this.vposUrl = vposUrl;
         this.paymentRequestRepository = paymentRequestRepository;
@@ -66,7 +67,6 @@ public class VposService {
         this.vPosRequestUtils = vPosRequestUtils;
         this.vPosResponseUtils = vPosResponseUtils;
         this.httpClient = httpClient;
-        this.objectMapper = objectMapper;
         this.clientsConfig = clientsConfig;
         this.jwtTokenUtils = jwtTokenUtils;
     }

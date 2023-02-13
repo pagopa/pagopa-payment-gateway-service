@@ -2,15 +2,19 @@ package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
-import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
+import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
+import it.pagopa.pm.gateway.dto.config.ClientConfig;
+import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
+import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import org.junit.Before;
@@ -28,25 +32,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest(classes = CcResumeStep1Service.class)
 public class CcResumeStep1ServiceTest {
+    private final ClientConfig clientConfig = new ClientConfig();
+
+    @Mock
+    private ClientsConfig clientsConfig;
 
     @Spy
     @InjectMocks
-    private CcResumeStep1Service service = new CcResumeStep1Service();
+    private CcResumeStep1Service service = new CcResumeStep1Service(clientsConfig);
 
     @Before
     public void setUpProperties() {
         ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
+        VposClientConfig vposClientConfig= new VposClientConfig();
+        vposClientConfig.setClientReturnUrl("url");
+        clientConfig.setVpos(vposClientConfig);
     }
 
     @Mock
     private PaymentRequestRepository paymentRequestRepository;
     @Mock
-    private RestapiCdClientImpl restapiCdClient;
+    private EcommerceClient ecommerceClient;
     @Mock
     private VPosRequestUtils vPosRequestUtils;
     @Mock
@@ -93,6 +105,7 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -100,7 +113,7 @@ public class CcResumeStep1ServiceTest {
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
+        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
@@ -241,6 +254,7 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -248,7 +262,7 @@ public class CcResumeStep1ServiceTest {
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenThrow(RuntimeException.class);
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
+        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
@@ -272,6 +286,7 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -279,7 +294,7 @@ public class CcResumeStep1ServiceTest {
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenReturn("OK");
+        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
@@ -303,6 +318,7 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -310,7 +326,7 @@ public class CcResumeStep1ServiceTest {
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(restapiCdClient.callPatchTransactionV2(any(), any())).thenThrow(RuntimeException.class);
+        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(RuntimeException.class);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);

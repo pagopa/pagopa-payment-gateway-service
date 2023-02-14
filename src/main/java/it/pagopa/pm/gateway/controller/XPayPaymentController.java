@@ -12,8 +12,8 @@ import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
-import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.XPayUtils;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -224,9 +224,9 @@ public class XPayPaymentController {
             } else {
                 requestEntity.setTimeStamp(xPayRequest.getTimeStamp());
                 XpayError xpayError = response.getErrore();
-                requestEntity.setCorrelationId(response.getIdOperazione());
                 if (ObjectUtils.isEmpty(xpayError)) {
                     requestEntity.setXpayHtml(response.getHtml());
+                    requestEntity.setCorrelationId(response.getIdOperazione());
                 } else {
                     requestEntity.setErrorCode(String.valueOf(xpayError.getCodice()));
                     requestEntity.setErrorMessage(xpayError.getMessaggio());

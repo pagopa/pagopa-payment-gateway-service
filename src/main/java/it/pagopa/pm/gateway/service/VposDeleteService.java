@@ -13,6 +13,7 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.entity.ContentType;
@@ -32,6 +33,7 @@ import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 
 @Service
 @Slf4j
+@NoArgsConstructor
 public class VposDeleteService {
 
     private String vposUrl;

@@ -15,6 +15,7 @@ import it.pagopa.pm.gateway.service.XpayService;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.XPayUtils;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -43,6 +44,7 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
 @Slf4j
+@NoArgsConstructor
 @RequestMapping(REQUEST_PAYMENTS_XPAY)
 public class XPayPaymentController {
 

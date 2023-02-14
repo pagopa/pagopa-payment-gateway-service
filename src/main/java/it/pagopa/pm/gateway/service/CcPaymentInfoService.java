@@ -8,6 +8,7 @@ import it.pagopa.pm.gateway.dto.vpos.ThreeDsMethodData;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 
 @Slf4j
 @Service
+@NoArgsConstructor
 public class CcPaymentInfoService {
 
     private static final String AUTHORIZED = "AUTHORIZED";

@@ -8,6 +8,7 @@ import it.pagopa.pm.gateway.dto.vpos.VposDeleteResponse;
 import it.pagopa.pm.gateway.dto.vpos.VposResumeMethodResponse;
 import it.pagopa.pm.gateway.service.*;
 import it.pagopa.pm.gateway.utils.MdcUtils;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 
 @RestController
 @Slf4j
+@NoArgsConstructor
 @RequestMapping(REQUEST_PAYMENTS_VPOS)
 public class CreditCardPaymentController {
 
@@ -45,7 +47,7 @@ public class CreditCardPaymentController {
     @Autowired
     private VposDeleteService deleteService;
 
-    private final String vposPollingUrl;
+    private String vposPollingUrl;
 
     @Autowired
     public CreditCardPaymentController(@Value("${vpos.polling.url}") String vposPollingUrl) {

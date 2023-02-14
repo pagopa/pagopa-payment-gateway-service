@@ -20,6 +20,7 @@ import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.exception.RestApiException;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -53,6 +54,7 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @RestController
 @Slf4j
+@NoArgsConstructor
 public class PostePayPaymentTransactionsController {
 
     private static final String APP_ORIGIN = "APP";

@@ -4,6 +4,7 @@ package it.pagopa.pm.gateway.entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.dto.vpos.VposPersistableRequest;
+import it.pagopa.pm.gateway.dto.xpay.XpayPersistableRequest;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -90,6 +91,11 @@ public class PaymentRequestEntity {
     }
 
     public void setJsonRequest(VposPersistableRequest request) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        this.jsonRequest = objectMapper.writeValueAsString(request);
+    }
+
+    public void setJsonRequest(XpayPersistableRequest request) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         this.jsonRequest = objectMapper.writeValueAsString(request);
     }

@@ -535,6 +535,7 @@ public class XPayPaymentController {
 
     private void generateRequestEntity(String clientId, String mdcFields, String transactionId,
                                        PaymentRequestEntity paymentRequestEntity, AuthPaymentXPayRequest request) {
+        XpayPersistableRequest xpayPersistableRequest = generateXpayDatabaseRequest(request);
         paymentRequestEntity.setClientId(clientId);
         paymentRequestEntity.setGuid(UUID.randomUUID().toString());
         paymentRequestEntity.setRequestEndpoint(REQUEST_PAYMENTS_XPAY);
@@ -542,13 +543,16 @@ public class XPayPaymentController {
         paymentRequestEntity.setMdcInfo(mdcFields);
         paymentRequestEntity.setTimeStamp(request.getTimeStamp());
         paymentRequestEntity.setStatus(CREATED.name());
-        String jsonRequest = StringUtils.EMPTY;
         try {
-            jsonRequest = OBJECT_MAPPER.writeValueAsString(request);
+            paymentRequestEntity.setJsonRequest(xpayPersistableRequest);
         } catch (JsonProcessingException e) {
             log.error("Error while serializing request as JSON. Request object is: " + request);
         }
-        paymentRequestEntity.setJsonRequest(jsonRequest);
+    }
+
+    private XpayPersistableRequest generateXpayDatabaseRequest(AuthPaymentXPayRequest request) {
+        return new XpayPersistableRequest(request.getCodiceTransazione(),
+                request.getImporto(), request.getDivisa(), request.getTimeStamp());
     }
 
 }

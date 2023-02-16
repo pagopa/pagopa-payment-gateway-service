@@ -293,7 +293,6 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-    @SuppressWarnings({"squid:S107"})
     private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl, String reqRefNum, String requestId) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);

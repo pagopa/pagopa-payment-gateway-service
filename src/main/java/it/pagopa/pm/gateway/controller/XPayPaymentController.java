@@ -274,7 +274,7 @@ public class XPayPaymentController {
                 response.setAuthCode(entity.getAuthorizationCode());
 
                 String clientReturnUrl = clientsConfig.getByKey(entity.getClientId()).getXpay().getClientReturnUrl();
-                response.setRedirectUrl(StringUtils.join(clientReturnUrl, requestId));
+                response.setRedirectUrl(StringUtils.join(clientReturnUrl, entity.getIdTransaction()));
                 break;
             default:
                 log.info(BooleanUtils.toBoolean(entity.getIsRefunded()) ?

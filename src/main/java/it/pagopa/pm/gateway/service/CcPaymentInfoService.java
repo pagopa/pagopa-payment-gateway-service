@@ -54,6 +54,7 @@ public class CcPaymentInfoService {
     private CcPaymentInfoResponse createInfoPaymentResponse(PaymentRequestEntity paymentInfo) {
         CcPaymentInfoResponse response = new CcPaymentInfoResponse();
         String requestId = paymentInfo.getGuid();
+        String idTransaction = paymentInfo.getIdTransaction();
         response.setStatus(paymentInfo.getStatus());
         response.setRequestId(requestId);
 
@@ -61,7 +62,7 @@ public class CcPaymentInfoService {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
 
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
-            response.setClientReturnUrl(StringUtils.join(clientReturnUrl, requestId));
+            response.setClientReturnUrl(StringUtils.join(clientReturnUrl, idTransaction));
         } else {
             if (METHOD.equals(paymentInfo.getResponseType())) {
                 String threeDsMethodData = generate3DsMethodData(paymentInfo.getIdTransaction(), requestId);

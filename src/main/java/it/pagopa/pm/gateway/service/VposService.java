@@ -77,26 +77,26 @@ public class VposService {
 
         if (!clientsConfig.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
-            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null, clientId);
+            return createStepZeroResponse(BAD_REQUEST_MSG_CLIENT_ID, null, clientId, request.getIdTransaction());
         }
 
         if (ObjectUtils.anyNull(request) || request.getAmount().equals(BigInteger.ZERO)) {
             log.error(BAD_REQUEST_MSG);
-            return createStepZeroResponse(BAD_REQUEST_MSG, null, clientId);
+            return createStepZeroResponse(BAD_REQUEST_MSG, null, clientId, request.getIdTransaction());
         }
 
         String idTransaction = request.getIdTransaction();
         log.info(String.format("START - POST %s for idTransaction %s", REQUEST_PAYMENTS_VPOS, idTransaction));
         if ((Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction)))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
-            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null, clientId);
+            return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null, clientId, request.getIdTransaction());
         }
 
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
             log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
-            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null, clientId);
+            return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null, clientId, request.getIdTransaction());
         }
     }
 
@@ -104,7 +104,7 @@ public class VposService {
         PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
         Map<String, String> params = vPosRequestUtils.buildStepZeroRequestParams(request, entity.getGuid());
         executeStepZeroAuth(params, entity, request);
-        return createStepZeroResponse(null, entity.getGuid(), clientId);
+        return createStepZeroResponse(null, entity.getGuid(), clientId, request.getIdTransaction());
     }
 
     @Async
@@ -180,7 +180,7 @@ public class VposService {
         return clientResponse;
     }
 
-    private StepZeroResponse createStepZeroResponse(String errorMessage, String requestId, String clientId) {
+    private StepZeroResponse createStepZeroResponse(String errorMessage, String requestId, String clientId, String idTransaction) {
         StepZeroResponse response = new StepZeroResponse();
 
         if (StringUtils.isNotBlank(requestId)) {
@@ -192,7 +192,7 @@ public class VposService {
 
         if (StringUtils.isEmpty(errorMessage)) {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
-            String urlRedirect = clientReturnUrl + requestId + "#token=" + sessionToken;
+            String urlRedirect = clientReturnUrl + idTransaction + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
             response.setStatus(CREATED.name());
         } else {

@@ -71,7 +71,7 @@ public class VposServiceTest {
     @InjectMocks
     private VposService service = new VposService( "http://localhost:8080/",
             paymentRequestRepository, ecommerceClient, vPosRequestUtils,
-            vPosResponseUtils, httpClient, clientsConfig, jwtTokenUtils);
+            vPosResponseUtils, httpClient, clientsConfig, jwtTokenUtils, "http://localhost:8080/");
 
 
     @Test
@@ -81,7 +81,6 @@ public class VposServiceTest {
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.BAD_REQUEST, null);
         mockResponse.setError(BAD_REQUEST_MSG_CLIENT_ID);
         when(clientsConfig.containsKey(any())).thenReturn(false);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
 
         StepZeroResponse realResponse = service.startCreditCardPayment("invalido", null, requestOK);
         assertEquals(mockResponse, realResponse);
@@ -92,7 +91,6 @@ public class VposServiceTest {
         StepZeroRequest request = ValidBeans.createStep0Request(false);
         request.setAmount(BigInteger.ZERO);
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
 
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.BAD_REQUEST, null);
 
@@ -106,7 +104,6 @@ public class VposServiceTest {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setGuid("guidProvaRandoma");
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(entity);
 
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.UNAUTHORIZED, null);
@@ -148,7 +145,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -166,7 +162,6 @@ public class VposServiceTest {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenThrow(RuntimeException.class);
         StepZeroResponse mockResponse = ValidBeans.createStepzeroResponse(HttpStatus.INTERNAL_SERVER_ERROR, requestOK.getIdTransaction());
@@ -181,7 +176,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());
@@ -217,7 +211,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
@@ -282,7 +275,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -300,7 +292,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -319,7 +310,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());

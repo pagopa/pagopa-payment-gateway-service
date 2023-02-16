@@ -113,7 +113,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_No_FirstPayment_Test_OK() throws IOException {
+    public void getRequestPayment_No_FirstPayment_Test_OK() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
@@ -137,7 +137,7 @@ public class VposServiceTest {
 
 
     @Test
-    public void getRequestPayment_FirstPayment_Test_200() throws IOException {
+    public void getRequestPayment_FirstPayment_Test_200() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
@@ -158,7 +158,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Test_500() throws IOException {
+    public void getRequestPayment_Test_500() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
@@ -170,7 +170,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Error_During_Payment_Test_200() throws IOException {
+    public void getRequestPayment_Error_During_Payment_Test_200() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
@@ -185,7 +185,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Error_During_Account_Test_200() throws IOException {
+    public void getRequestPayment_Error_During_Account_Test_200() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         Map<String, String> params = new HashMap<>();
@@ -204,7 +204,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Error_During_Revert_Test_200() throws IOException {
+    public void getRequestPayment_Error_During_Revert_Test_200() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(true);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         Map<String, String> params = new HashMap<>();
@@ -222,7 +222,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Error_During_Patch_Test_200() throws IOException {
+    public void getRequestPayment_Error_During_Patch_Test_200() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
@@ -245,7 +245,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_No_To_Account_Test_OK() throws IOException {
+    public void getRequestPayment_No_To_Account_Test_OK() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         AuthResponse authResponse = ValidBeans.createVPosAuthResponse("12");
@@ -268,7 +268,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Not_Authorized_METHOD_Test_OK() throws IOException {
+    public void getRequestPayment_Not_Authorized_METHOD_Test_OK() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Method();
         Map<String, String> params = new HashMap<>();
@@ -285,7 +285,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Not_Authorized_CHALLENGE_Test_OK() throws IOException {
+    public void getRequestPayment_Not_Authorized_CHALLENGE_Test_OK() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Challenge();
         Map<String, String> params = new HashMap<>();
@@ -302,7 +302,7 @@ public class VposServiceTest {
     }
 
     @Test
-    public void getRequestPayment_Status_Denied_Test_OK() throws IOException {
+    public void getRequestPayment_Status_Denied_Test_OK() throws Exception {
         StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
         response.setResultCode("32");

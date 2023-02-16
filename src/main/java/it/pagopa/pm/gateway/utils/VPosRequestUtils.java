@@ -16,8 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,7 +38,6 @@ import static it.pagopa.pm.gateway.dto.enums.VposRequestEnum.*;
 public class VPosRequestUtils {
 
     private static final String CHALLENGE = "/challenge";
-    private static final String METHOD = "/method";
     private String vposResumeUrl;
     private String methodNotifyUrl;
     private VPosUtils vPosUtils;
@@ -63,7 +67,7 @@ public class VPosRequestUtils {
         }
     }
 
-    public Map<String, String> buildStepZeroRequestParams(StepZeroRequest pgsRequest, String requestId) throws IOException {
+    public Map<String, String> buildStepZeroRequestParams(StepZeroRequest pgsRequest, String requestId) throws Exception {
         retrieveShopInformation(pgsRequest);
         Document stepZeroRequest = buildStepZeroRequest(pgsRequest, shopId, terminalId, mac, requestId);
         return getParams(stepZeroRequest);
@@ -99,7 +103,7 @@ public class VPosRequestUtils {
         return getParams(revertRequest);
     }
 
-    private Document buildStepZeroRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) {
+    private Document buildStepZeroRequest(StepZeroRequest pgsRequest, String shopId, String terminalId, String mac, String requestId) throws Exception {
         String notifyUrl = String.format(vposResumeUrl, requestId);
         String reqRefNum = vPosUtils.getReqRefNum();
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
@@ -120,6 +124,8 @@ public class VPosRequestUtils {
         documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
         documentBuilder.addElement(HEADER, REQ_REF_NUM, reqRefNum);
         //AUTH_REQUEST_3DS2_STEP_0
+        String threeDsData = encode3DSdata(mac, pgsRequest.getThreeDsData());
+        pgsRequest.setThreeDsData(threeDsData);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ORDER_ID, pgsRequest.getIdTransaction());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, PAN, pgsRequest.getPan());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, CVV2, pgsRequest.getSecurityCode());
@@ -128,15 +134,15 @@ public class VPosRequestUtils {
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, CURRENCY, CURRENCY_VALUE);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ACCOUNTING_MODE, ACCOUNT_DEFERRED);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NETWORK, pgsRequest.getCircuit().getCode());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, EMAIL_CH, pgsRequest.getEmailCH());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
+        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_DATA, pgsRequest.getThreeDsData());
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + CHALLENGE);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, USER_ID, pgsRequest.getHolder());
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NAME_CH, pgsRequest.getHolder());
-        documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, EMAIL_CH, pgsRequest.getEmailCH());
         //MAC
-        VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, mac, notifyUrl, reqRefNum);
+        VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, mac, notifyUrl, reqRefNum, requestId);
         macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
@@ -287,7 +293,8 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-    private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl, String reqRefNum) {
+    @SuppressWarnings({"squid:S107"})
+    private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl, String reqRefNum, String requestId) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
@@ -300,14 +307,16 @@ public class VPosRequestUtils {
         macBuilder.addElement(CVV2, pgsRequest.getSecurityCode());
         macBuilder.addElement(EXP_DATE, pgsRequest.getExpireDate());
         macBuilder.addElement(AMOUNT, pgsRequest.getAmount());
+        macBuilder.addElement(CURRENCY, CURRENCY_VALUE);
         macBuilder.addElement(ACCOUNTING_MODE, ACCOUNT_DEFERRED);
-        macBuilder.addElement(NETWORK, pgsRequest.getCircuit());
+        macBuilder.addElement(NETWORK, pgsRequest.getCircuit().getCode());
         macBuilder.addElement(EMAIL_CH, pgsRequest.getEmailCH());
         macBuilder.addElement(USER_ID, pgsRequest.getHolder());
         macBuilder.addElement(OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         macBuilder.addElement(THREEDS_DATA, pgsRequest.getThreeDsData());
+        macBuilder.addElement(NAME_CH, pgsRequest.getHolder());
         macBuilder.addElement(NOTIF_URL, notifyUrl + CHALLENGE);
-        macBuilder.addElement(THREEDS_MTD_NOTIF_URL, notifyUrl + METHOD);
+        macBuilder.addElement(THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
         macBuilder.addString(mac);
         return macBuilder;
     }
@@ -381,6 +390,19 @@ public class VPosRequestUtils {
             params.put(PARAM_DATA, new String(outputStream.toByteArray(), DEFAULT_CHARSET));
             return params;
         }
+    }
+
+    @SuppressWarnings({"squid:S112", "squid:S3329"})
+    public static String encode3DSdata(String apiSecretMerchant, String jsonObject) throws Exception {
+        byte[] initVector = new byte[16];
+        byte[] key = apiSecretMerchant.substring(0, 16).getBytes();
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(initVector);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
+        byte[] toEncrypt = jsonObject.getBytes(StandardCharsets.UTF_8);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
+        byte[] encrypted = cipher.doFinal(toEncrypt);
+        return DatatypeConverter.printBase64Binary(encrypted);
     }
 
 }

@@ -893,10 +893,10 @@ public class ValidBeans {
         shop.setIdPsp(idPsp);
         shop.setAbi("ABI");
         shop.setShopIdFirstPayment("ShopId_F");
-        shop.setMacFirstPayment("mac_F");
+        shop.setMacFirstPayment("macF123654ffggh5");
         shop.setTerminalIdFirstPayment("terminalId_F");
         shop.setShopIdSuccPayment("shopId_S");
-        shop.setMacSuccPayment("mac_S");
+        shop.setMacSuccPayment("macS123654ffggh5");
         shop.setTerminalIdSuccPayment("terminalId_S");
         return shop;
     }

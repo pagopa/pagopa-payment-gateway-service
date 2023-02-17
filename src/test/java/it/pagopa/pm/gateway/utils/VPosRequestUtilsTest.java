@@ -33,7 +33,7 @@ public class VPosRequestUtilsTest {
     private static final String CORRELATION_ID = "correlationId";
 
     @Test
-    public void generateRequestForStep0_FirstPayment_Test() throws IOException {
+    public void generateRequestForStep0_FirstPayment_Test() throws Exception {
         Boolean isFisrtPayment = true;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");
@@ -43,7 +43,7 @@ public class VPosRequestUtilsTest {
     }
 
     @Test
-    public void generateRequestForStep0_Not_FirstPayment_Test() throws IOException {
+    public void generateRequestForStep0_Not_FirstPayment_Test() throws Exception {
         Boolean isFisrtPayment = false;
         StepZeroRequest pgsRequest = ValidBeans.createStep0Request(isFisrtPayment);
         Shop shop = ValidBeans.generateShop("321");

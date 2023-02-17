@@ -102,7 +102,7 @@ public class VposService {
         }
     }
 
-    private StepZeroResponse processStepZero(StepZeroRequest request, String clientId, String mdcFields) throws IOException {
+    private StepZeroResponse processStepZero(StepZeroRequest request, String clientId, String mdcFields) throws Exception {
         PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
         Map<String, String> params = vPosRequestUtils.buildStepZeroRequestParams(request, entity.getGuid());
         executeStepZeroAuth(params, entity, request);

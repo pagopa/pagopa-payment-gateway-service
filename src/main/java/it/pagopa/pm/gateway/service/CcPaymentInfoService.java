@@ -65,7 +65,7 @@ public class CcPaymentInfoService {
             response.setClientReturnUrl(StringUtils.join(clientReturnUrl, idTransaction));
         } else {
             if (METHOD.equals(paymentInfo.getResponseType())) {
-                String threeDsMethodData = generate3DsMethodData(paymentInfo.getIdTransaction(), requestId);
+                String threeDsMethodData = generate3DsMethodData(requestId);
                 response.setThreeDsMethodData(threeDsMethodData);
             }
             response.setResponseType(paymentInfo.getResponseType());
@@ -75,11 +75,11 @@ public class CcPaymentInfoService {
         return response;
     }
 
-    private String generate3DsMethodData(String idTransaction, String requestId) {
+    private String generate3DsMethodData(String requestId) {
         String notifyUrl = String.format(methodNotifyUrl, requestId);
 
         ThreeDsMethodData threeDsMethodData = new ThreeDsMethodData();
-        threeDsMethodData.setThreeDSServerTransID(idTransaction);
+        threeDsMethodData.setThreeDSServerTransID(requestId);
         threeDsMethodData.setThreeDSMethodNotificationURL(notifyUrl);
 
         return Base64Utils.encodeToString(new Gson().toJson(threeDsMethodData).getBytes());

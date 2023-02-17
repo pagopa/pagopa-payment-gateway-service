@@ -124,6 +124,8 @@ public class VPosRequestUtils {
         documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
         documentBuilder.addElement(HEADER, REQ_REF_NUM, reqRefNum);
         //AUTH_REQUEST_3DS2_STEP_0
+        String expDate = pgsRequest.getExpireDate().substring(2);
+        pgsRequest.setExpireDate(expDate);
         String threeDsData = encode3DSdata(mac, pgsRequest.getThreeDsData());
         pgsRequest.setThreeDsData(threeDsData);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, ORDER_ID, pgsRequest.getIdTransaction());

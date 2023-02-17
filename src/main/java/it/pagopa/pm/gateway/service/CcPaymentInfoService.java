@@ -79,8 +79,8 @@ public class CcPaymentInfoService {
         String notifyUrl = String.format(methodNotifyUrl, requestId);
 
         ThreeDsMethodData threeDsMethodData = new ThreeDsMethodData();
-        threeDsMethodData.setTransactionId(idTransaction);
-        threeDsMethodData.setNotificationUrl(notifyUrl);
+        threeDsMethodData.setThreeDSServerTransID(idTransaction);
+        threeDsMethodData.setThreeDSMethodNotificationURL(notifyUrl);
 
         return Base64Utils.encodeToString(new Gson().toJson(threeDsMethodData).getBytes());
     }

@@ -26,8 +26,10 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 @NoArgsConstructor
 public class CcPaymentInfoService {
 
+    public static final String CREQ = "?creq=";
     private static final String AUTHORIZED = "AUTHORIZED";
     private static final String METHOD = "METHOD";
+    private static final String CHALLENGE = "CHALLENGE";
     private static final String CANCELLED = "CANCELLED";
     private String methodNotifyUrl;
     private PaymentRequestRepository paymentRequestRepository;
@@ -67,6 +69,9 @@ public class CcPaymentInfoService {
             if (METHOD.equals(paymentInfo.getResponseType())) {
                 String threeDsMethodData = generate3DsMethodData(requestId);
                 response.setThreeDsMethodData(threeDsMethodData);
+            } else if (CHALLENGE.equals(paymentInfo.getResponseType())) {
+                String creq = getCreqFromChallengeUrl(paymentInfo);
+                response.setCreq(creq);
             }
             response.setResponseType(paymentInfo.getResponseType());
             response.setVposUrl(paymentInfo.getAuthorizationUrl());
@@ -83,5 +88,13 @@ public class CcPaymentInfoService {
         threeDsMethodData.setThreeDSMethodNotificationURL(notifyUrl);
 
         return Base64Utils.encodeToString(new Gson().toJson(threeDsMethodData).getBytes());
+    }
+
+    private String getCreqFromChallengeUrl(PaymentRequestEntity entity) {
+        String challengeUrl = entity.getAuthorizationUrl();
+        int index = challengeUrl.lastIndexOf(CREQ);
+        String url = challengeUrl.substring(0, index);
+        entity.setAuthorizationUrl(url);
+        return challengeUrl.substring(index + CREQ.length());
     }
 }

@@ -82,6 +82,28 @@ public class CcPaymentInfoServiceTest {
     }
 
     @Test
+    public void getPaymentInfoChallengeSuccessTest() {
+        String authUrl = "https://local?TK=tkFromVpos?creq=realcreq";
+        PaymentRequestEntity paymentInfo = new PaymentRequestEntity();
+        paymentInfo.setStatus(CREATED.name());
+        paymentInfo.setGuid("guid");
+        paymentInfo.setAuthorizationUrl(authUrl);
+        paymentInfo.setResponseType("CHALLENGE");
+        paymentInfo.setIdTransaction("12345");
+
+        when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any()))
+                .thenReturn(Optional.of(paymentInfo));
+
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
+        assertNotNull(response.getStatus());
+        assertNotNull(response.getRequestId());
+        assertNotNull(response.getResponseType());
+        assertNotNull(response.getVposUrl());
+        assertEquals("https://local?TK=tkFromVpos", response.getVposUrl());
+        assertEquals("realcreq", response.getCreq());
+    }
+
+    @Test
     public void getPaymentInfo404Test() {
         when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any())).thenReturn(Optional.empty());
 

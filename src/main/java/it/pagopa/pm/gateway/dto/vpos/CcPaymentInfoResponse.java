@@ -12,4 +12,5 @@ public class CcPaymentInfoResponse {
     private String vposUrl;
     private String clientReturnUrl;
     private String threeDsMethodData;
+    private String creq;
 }

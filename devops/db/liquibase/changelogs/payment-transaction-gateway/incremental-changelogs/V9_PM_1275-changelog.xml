@@ -74,10 +74,10 @@
             ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN ERROR_MESSAGE;
         </rollback>
     </changeSet>
-    <changeSet id="V12__PM_1102_ADD_COLUMN_ERROR_CODE" author="liquibase" failOnError="true" context="incremental-prod">
-        <sqlFile path="../scripts/table-creation/V12__PM_1102_ADD_COLUMN_ERROR_CODE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+    <changeSet id="V16__PM_1102_MODIFY_COLUMN_ERROR_CODE" author="liquibase" failOnError="true" context="incremental-prod">
+        <sqlFile path="../scripts/table-creation/V16__PM_1102_MODIFY_COLUMN_ERROR_CODE.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
         <rollback>
-            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO DROP COLUMN ERROR_CODE;
+            ALTER TABLE AGID_USER.PP_PGS_REQUEST_INFO MODIFY ERROR_CODE VARCHAR2(50 CHAR);
         </rollback>
     </changeSet>
     <changeSet id="V13__PM_1215_ADD_IS_FIRST_PAYMENT_AND_COLUMN_RESPONSE_TYPE" author="liquibase" failOnError="true" context="incremental-prod">

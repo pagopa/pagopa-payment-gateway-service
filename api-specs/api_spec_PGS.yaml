@@ -1279,6 +1279,9 @@ components:
         threeDsMethodData:
           type: string
           format: base64
+        creq:
+          type: string
+          format: base64
       required:
         - status
         - requestId
@@ -1295,6 +1298,9 @@ components:
           type: string
         vposUrl:
           type: string
+        creq:
+          type: string
+          format: base64
       required:
         - status
         - responseType
@@ -1310,6 +1316,9 @@ components:
           type: string
         clientReturnUrl:
           type: string
+        creq:
+          type: string
+          format: base64
       required:
         - status
         - requestId

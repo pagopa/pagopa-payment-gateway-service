@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ThreeDsMethodData {
-    private String notificationUrl;
-    private String transactionId;
+    private String threeDSMethodNotificationURL;
+    private String threeDSServerTransID;
 }

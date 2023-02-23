@@ -26,8 +26,10 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 @NoArgsConstructor
 public class CcPaymentInfoService {
 
+    public static final String CREQ = "?creq=";
     private static final String AUTHORIZED = "AUTHORIZED";
     private static final String METHOD = "METHOD";
+    private static final String CHALLENGE = "CHALLENGE";
     private static final String CANCELLED = "CANCELLED";
     private String methodNotifyUrl;
     private PaymentRequestRepository paymentRequestRepository;
@@ -54,6 +56,7 @@ public class CcPaymentInfoService {
     private CcPaymentInfoResponse createInfoPaymentResponse(PaymentRequestEntity paymentInfo) {
         CcPaymentInfoResponse response = new CcPaymentInfoResponse();
         String requestId = paymentInfo.getGuid();
+        String idTransaction = paymentInfo.getIdTransaction();
         response.setStatus(paymentInfo.getStatus());
         response.setRequestId(requestId);
 
@@ -61,11 +64,14 @@ public class CcPaymentInfoService {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
 
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
-            response.setClientReturnUrl(StringUtils.join(clientReturnUrl, requestId));
+            response.setClientReturnUrl(StringUtils.join(clientReturnUrl, idTransaction));
         } else {
             if (METHOD.equals(paymentInfo.getResponseType())) {
-                String threeDsMethodData = generate3DsMethodData(paymentInfo.getIdTransaction(), requestId);
+                String threeDsMethodData = generate3DsMethodData(requestId);
                 response.setThreeDsMethodData(threeDsMethodData);
+            } else if (CHALLENGE.equals(paymentInfo.getResponseType())) {
+                String creq = getCreqFromChallengeUrl(paymentInfo);
+                response.setCreq(creq);
             }
             response.setResponseType(paymentInfo.getResponseType());
             response.setVposUrl(paymentInfo.getAuthorizationUrl());
@@ -74,13 +80,21 @@ public class CcPaymentInfoService {
         return response;
     }
 
-    private String generate3DsMethodData(String idTransaction, String requestId) {
+    private String generate3DsMethodData(String requestId) {
         String notifyUrl = String.format(methodNotifyUrl, requestId);
 
         ThreeDsMethodData threeDsMethodData = new ThreeDsMethodData();
-        threeDsMethodData.setTransactionId(idTransaction);
-        threeDsMethodData.setNotificationUrl(notifyUrl);
+        threeDsMethodData.setThreeDSServerTransID(requestId);
+        threeDsMethodData.setThreeDSMethodNotificationURL(notifyUrl);
 
         return Base64Utils.encodeToString(new Gson().toJson(threeDsMethodData).getBytes());
+    }
+
+    private String getCreqFromChallengeUrl(PaymentRequestEntity entity) {
+        String challengeUrl = entity.getAuthorizationUrl();
+        int index = challengeUrl.lastIndexOf(CREQ);
+        String url = challengeUrl.substring(0, index);
+        entity.setAuthorizationUrl(url);
+        return challengeUrl.substring(index + CREQ.length());
     }
 }

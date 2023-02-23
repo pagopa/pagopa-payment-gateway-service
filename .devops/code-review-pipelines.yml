@@ -5,7 +5,7 @@ resources:
     - repository: pagopaPaymentTransactionGateway
       type: github
       name: pagopa/pagopa-payment-transactions-gateway
-      ref: main
+      ref: develop
       endpoint: 'io-azure-devops-github-ro'
       pr:
         branches:

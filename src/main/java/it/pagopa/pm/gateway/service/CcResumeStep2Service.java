@@ -112,6 +112,8 @@ public class CcResumeStep2Service {
             if (isStepTwoResultCodeOk(response, entity)) {
                 executeAccount(entity, request);
             }
+
+            executePatchTransaction(entity);
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }
@@ -161,7 +163,6 @@ public class CcResumeStep2Service {
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + " stackTrace: " + Arrays.toString(e.getStackTrace()));
         }
-        executePatchTransaction(entity);
     }
 
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
@@ -185,7 +186,14 @@ public class CcResumeStep2Service {
         String requestId = entity.getGuid();
         log.info("START - PATCH updateTransaction for requestId: {}", requestId);
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
-        String authCode = entity.getAuthorizationCode();
+
+        String authCode;
+        if(AUTHORIZED.name().equals(entity.getStatus())) {
+            authCode = entity.getAuthorizationCode();
+        } else {
+            authCode = entity.getErrorCode();
+        }
+
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
             ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());

@@ -50,6 +50,7 @@ public class XPayPaymentController {
 
     private static final String ECOMMERCE_APP_ORIGIN = "ECOMMERCE_APP";
     private static final String ECOMMERCE_WEB_ORIGIN = "ECOMMERCE_WEB";
+    private static final String PGS_GENERIC_ERROR = "1000";
     private static final List<String> VALID_CLIENT_ID = Arrays.asList(ECOMMERCE_APP_ORIGIN, ECOMMERCE_WEB_ORIGIN);
     public static final String EUR_CURRENCY = "978";
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -141,12 +142,13 @@ public class XPayPaymentController {
 
         if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)) {
             executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
-            executePatchTransaction(entity);
         } else {
             log.info(String.format("Outcome is %s: setting status as DENIED for requestId %s", outcome, requestId));
             entity.setStatus(DENIED.name());
             paymentRequestRepository.save(entity);
         }
+
+        executePatchTransaction(entity);
 
         log.info(String.format("END - GET %s for requestId %s", REQUEST_PAYMENTS_XPAY + REQUEST_PAYMENTS_RESUME, requestId));
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(pollingUrlRedirect)).build();
@@ -345,6 +347,7 @@ public class XPayPaymentController {
         if (Objects.nonNull(entity.getAuthorizationOutcome())) {
             log.warn(String.format("requestId %s already processed", requestId));
             entity.setErrorMessage("requestId already processed");
+            entity.setErrorCode(PGS_GENERIC_ERROR);
             return false;
         }
 
@@ -352,6 +355,7 @@ public class XPayPaymentController {
         if (BooleanUtils.isFalse(xPayUtils.checkMac(xPayMac, xpay3DSResponse))) {
             log.error(String.format(MAC_NOT_EQUAL_ERROR_MSG, xPayMac) + "for requestId: " + requestId);
             entity.setErrorMessage("Mac not Equal");
+            entity.setErrorCode(PGS_GENERIC_ERROR);
             return false;
         }
 
@@ -375,8 +379,16 @@ public class XPayPaymentController {
         String requestId = entity.getGuid();
         log.info("START - PATCH updateTransaction for requestId: " + requestId);
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
-        String authCode = entity.getAuthorizationCode();
+
+        String authCode;
+        if(AUTHORIZED.name().equals(entity.getStatus())) {
+            authCode = entity.getAuthorizationCode();
+        } else {
+            authCode = entity.getErrorCode();
+        }
+
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
+
         try {
             ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());
             TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);

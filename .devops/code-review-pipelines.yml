@@ -1,7 +1,17 @@
-trigger:
-  pr:
-    - main
-    - develop
+trigger: none
+
+resources:
+  repositories:
+    - repository: pagopaPaymentTransactionGateway
+      type: github
+      name: pagopa/pagopa-payment-transactions-gateway
+      ref: develop
+      endpoint: 'io-azure-devops-github-ro'
+      pr:
+        branches:
+          include:
+          - develop
+
 pool:
   vmImage: ubuntu-latest
 
@@ -68,3 +78,4 @@ steps:
   - script: |
       [[ "$(docker ps --filter status=exited --format="{{.Image}} :: {{.Status}}" | grep liquibase | cut -d':' -f3 | sed -r "s/Exited \((.*)\) .*/\1/g" | tr -d ' ')" == "0" ]]
     displayName: 'Liquibase check'  
+

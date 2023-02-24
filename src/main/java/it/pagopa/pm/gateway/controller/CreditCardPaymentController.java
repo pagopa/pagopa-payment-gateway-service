@@ -84,7 +84,7 @@ public class CreditCardPaymentController {
                 httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             }
         } else {
-            httpStatus = HttpStatus.OK;
+            httpStatus = HttpStatus.ACCEPTED;
         }
         return ResponseEntity.status(httpStatus).body(stepZeroResponse);
     }

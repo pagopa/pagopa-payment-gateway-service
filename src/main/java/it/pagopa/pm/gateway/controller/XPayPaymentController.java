@@ -165,7 +165,6 @@ public class XPayPaymentController {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
             String pollingUrlRedirect = xpayPollingUrl + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(pollingUrlRedirect);
-            response.setStatus(CREATED.name());
         } else {
             response.setError(errorMessage);
         }
@@ -211,7 +210,7 @@ public class XPayPaymentController {
         xPayAuthRequest.setUrlRisposta(String.format(xpayResumeUrl, paymentRequestEntity.getGuid()));
         executeXPayAuthorizationCall(xPayAuthRequest, paymentRequestEntity, transactionId);
 
-        return createXpayAuthResponse(null, HttpStatus.OK, paymentRequestEntity.getGuid(), paymentRequestEntity.getTimeStamp());
+        return createXpayAuthResponse(null, HttpStatus.ACCEPTED, paymentRequestEntity.getGuid(), paymentRequestEntity.getTimeStamp());
     }
 
     @Async

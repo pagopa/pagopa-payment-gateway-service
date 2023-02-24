@@ -141,7 +141,7 @@ public class VPosRequestUtilsTest {
         Shop shop = ValidBeans.generateShop("321");
         when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
-        assertNotNull(vPosRequestUtils.buildOrderStatusParams(pgsRequest, "correlationId"));
+        assertNotNull(vPosRequestUtils.buildOrderStatusParams(pgsRequest));
     }
 
     @Test
@@ -151,7 +151,7 @@ public class VPosRequestUtilsTest {
         Shop shop = ValidBeans.generateShop("321");
         when(vPosUtils.getReqRefNum()).thenReturn("reqRefNum");
         when(vPosUtils.getVposShopByIdPsp(any())).thenReturn(shop);
-        assertNotNull(vPosRequestUtils.buildOrderStatusParams(pgsRequest, "correlationId"));
+        assertNotNull(vPosRequestUtils.buildOrderStatusParams(pgsRequest));
     }
 
 }

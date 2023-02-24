@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.util.Objects;
 import java.util.UUID;
@@ -67,7 +68,7 @@ public class CreditCardPaymentController {
     @PostMapping()
     public ResponseEntity<StepZeroResponse> startCreditCardPayment(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                    @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
-                                                                   @RequestBody StepZeroRequest request) {
+                                                                   @Valid @RequestBody StepZeroRequest request) {
         StepZeroResponse stepZeroResponse = vposService.startCreditCardPayment(clientId, mdcFields, request);
         return buildResponseStep0(stepZeroResponse);
     }

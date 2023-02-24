@@ -64,13 +64,12 @@ public class XPayPaymentControllerTest {
     @Mock
     private ClientsConfig clientsConfig;
 
-    private XPayPaymentController xpayController;
     private MockMvc mvc;
 
     @Before
     public void init() {
         MockitoAnnotations.openMocks(this);
-        xpayController = new XPayPaymentController("http://localhost:8080/", "http://localhost:8080/", "apiKey",
+        XPayPaymentController xpayController = new XPayPaymentController("http://localhost:8080/", "http://localhost:8080/", "apiKey",
                 paymentRequestRepository, xpayService, ecommerceClient, xPayUtils, jwtTokenUtils, clientsConfig);
         mvc = MockMvcBuilders.standaloneSetup(xpayController).build();
 
@@ -95,7 +94,7 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
     }
 
 
@@ -111,7 +110,7 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
     }
 
     @Test
@@ -172,7 +171,7 @@ public class XPayPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .content(mapper.writeValueAsString(xPayAuthRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
     }
 
     @Test

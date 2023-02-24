@@ -200,6 +200,8 @@ public class VPosRequestUtils {
         documentBuilder.addElement(HEADER, SHOP_ID, shopId);
         documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
         documentBuilder.addElement(HEADER, REQ_REF_NUM, reqRefNum);
+        //ACCOUNTING
+        documentBuilder.addElement(REFUND, TRANSACTION_ID, pgsRequest.getIdTransaction());
         //REFUND
         documentBuilder.addElement(REFUND, TRANSACTION_ID, correlationId);
         documentBuilder.addElement(REFUND, ORDER_ID, pgsRequest.getIdTransaction());

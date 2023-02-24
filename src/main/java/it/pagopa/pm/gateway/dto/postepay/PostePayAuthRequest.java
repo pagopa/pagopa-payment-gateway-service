@@ -3,8 +3,6 @@ package it.pagopa.pm.gateway.dto.postepay;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
-
 @Data
 public class PostePayAuthRequest {
     @JsonProperty(required = true)

@@ -144,7 +144,8 @@ public class VPosRequestUtils {
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + CHALLENGE);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
         //MAC
-        VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, mac, notifyUrl, reqRefNum, requestId);
+        VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, notifyUrl, reqRefNum, requestId);
+        macBuilder.addString(mac);
         macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
@@ -293,7 +294,7 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-    private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl, String reqRefNum, String requestId) {
+    private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String notifyUrl, String reqRefNum, String requestId) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
@@ -316,7 +317,6 @@ public class VPosRequestUtils {
         macBuilder.addElement(NAME_CH, pgsRequest.getHolder());
         macBuilder.addElement(NOTIF_URL, notifyUrl + CHALLENGE);
         macBuilder.addElement(THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
-        macBuilder.addString(mac);
         return macBuilder;
     }
 
@@ -408,7 +408,7 @@ public class VPosRequestUtils {
         }
     }
 
-    @SuppressWarnings({"squid:S112", "squid:S3329"})
+    @SuppressWarnings({"squid:S112", "squid:S3329", "squid:S5542"})
     public static String encode3DSdata(String apiSecretMerchant, String jsonObject) throws Exception {
         byte[] initVector = new byte[16];
         byte[] key = apiSecretMerchant.substring(0, 16).getBytes();

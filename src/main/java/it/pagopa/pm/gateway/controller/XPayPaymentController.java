@@ -234,6 +234,11 @@ public class XPayPaymentController {
                     requestEntity.setErrorMessage(xpayError.getMessaggio());
                     requestEntity.setStatus(DENIED.name());
                 }
+
+                if(DENIED.name().equals(requestEntity.getStatus())) {
+                    executePatchTransaction(requestEntity);
+                }
+
                 paymentRequestRepository.save(requestEntity);
                 log.info("END - XPay Request Payment Authorization for idTransaction " + transactionId);
             }

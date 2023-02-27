@@ -1,6 +1,7 @@
 package it.pagopa.pm.gateway.utils;
 
 import io.jsonwebtoken.Jwts;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Calendar;
@@ -12,6 +13,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Component
 public class JwtTokenUtils {
+
+    @Value("${pgs.jwt.tokenKey}")
+    private String jwtTokenKey;
 
     public static final String REQUEST_ID = "requestId";
     public static final int TOKEN_VALIDITY_MS = 600000;
@@ -27,7 +31,7 @@ public class JwtTokenUtils {
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(issueDate)
                 .setExpiration(expiryDate)
-                .signWith(HS256, requestId.getBytes(UTF_8))
+                .signWith(HS256, jwtTokenKey.getBytes(UTF_8))
                 .compact();
     }
 }

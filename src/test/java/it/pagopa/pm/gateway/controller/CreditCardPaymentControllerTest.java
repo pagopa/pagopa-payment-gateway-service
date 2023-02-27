@@ -83,7 +83,7 @@ public class CreditCardPaymentControllerTest {
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
     }
 
     @Test

@@ -97,9 +97,9 @@ public class VPosRequestUtils {
         return getParams(stepTwoRequest);
     }
 
-    public Map<String, String> buildOrderStatusParams(StepZeroRequest pgsRequest, String correlationId) throws IOException {
+    public Map<String, String> buildOrderStatusParams(StepZeroRequest pgsRequest) throws IOException {
         retrieveShopInformation(pgsRequest);
-        Document revertRequest = buildOrderStatusRequest(shopId, terminalId, mac, correlationId);
+        Document revertRequest = buildOrderStatusRequest(shopId, terminalId, mac, pgsRequest);
         return getParams(revertRequest);
     }
 
@@ -144,7 +144,8 @@ public class VPosRequestUtils {
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, NOTIF_URL, notifyUrl + CHALLENGE);
         documentBuilder.addElement(AUTH_REQUEST_3DS2_STEP_0, THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
         //MAC
-        VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, mac, notifyUrl, reqRefNum, requestId);
+        VPosMacBuilder macBuilder = calculateMacStep0(date, shopId, pgsRequest, terminalId, notifyUrl, reqRefNum, requestId);
+        macBuilder.addString(mac);
         macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
@@ -175,7 +176,7 @@ public class VPosRequestUtils {
         documentBuilder.addElement(ACCOUNTING, CURRENCY, CURRENCY_VALUE);
         documentBuilder.addElement(ACCOUNTING, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         //MAC
-        VPosMacBuilder macBuilder = calculateMac(date, shopId, pgsRequest, terminalId, mac, ACCOUNTING, reqRefNum);
+        VPosMacBuilder macBuilder = calculateMacAccounting(date, shopId, pgsRequest, terminalId, mac, reqRefNum, correlationId);
         macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
@@ -208,7 +209,7 @@ public class VPosRequestUtils {
         documentBuilder.addElement(REFUND, CURRENCY, CURRENCY_VALUE);
         documentBuilder.addElement(REFUND, OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         //MAC
-        VPosMacBuilder macBuilder = calculateMac(date, shopId, pgsRequest, terminalId, mac, REFUND, reqRefNum);
+        VPosMacBuilder macBuilder = calculateMacRevert(date, shopId, pgsRequest, terminalId, mac, reqRefNum, correlationId);
         macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
@@ -268,7 +269,7 @@ public class VPosRequestUtils {
         return documentBuilder.build();
     }
 
-    private Document buildOrderStatusRequest(String shopId, String terminalId, String mac, String correlationId) {
+    private Document buildOrderStatusRequest(String shopId, String terminalId, String mac, StepZeroRequest pgsRequest) {
         String reqRefNum = vPosUtils.getReqRefNum();
         VPosDocumentBuilder documentBuilder = new VPosDocumentBuilder(Locale.ENGLISH);
         Date date = new Date();
@@ -288,14 +289,14 @@ public class VPosRequestUtils {
         documentBuilder.addElement(HEADER, OPERATOR_ID, terminalId);
         documentBuilder.addElement(HEADER, REQ_REF_NUM, reqRefNum);
         //STEP2
-        documentBuilder.addElement(ORDERSTATUS, THREEDS_TRANS_ID, correlationId);
+        documentBuilder.addElement(ORDERSTATUS, ORDER_ID, pgsRequest.getIdTransaction());
         //MAC
-        VPosMacBuilder macBuilder = calculateMacOrderStatus(date, shopId, terminalId, mac, correlationId, reqRefNum);
+        VPosMacBuilder macBuilder = calculateMacOrderStatus(date, shopId, terminalId, mac, reqRefNum, pgsRequest);
         macElement.setText(macBuilder.toSha1Hex(DEFAULT_CHARSET));
         return documentBuilder.build();
     }
 
-    private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String notifyUrl, String reqRefNum, String requestId) {
+    private VPosMacBuilder calculateMacStep0(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String notifyUrl, String reqRefNum, String requestId) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_AUTH_REQUEST_3DS2_STEP_0);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
@@ -318,21 +319,37 @@ public class VPosRequestUtils {
         macBuilder.addElement(NAME_CH, pgsRequest.getHolder());
         macBuilder.addElement(NOTIF_URL, notifyUrl + CHALLENGE);
         macBuilder.addElement(THREEDS_MTD_NOTIF_URL, String.format(methodNotifyUrl, requestId));
+        return macBuilder;
+    }
+
+    private VPosMacBuilder calculateMacRevert(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String reqRefNum, String correlationId) {
+        VPosMacBuilder macBuilder = new VPosMacBuilder();
+        macBuilder.addElement(OPERATION, REFUND);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
+        macBuilder.addElement(TIMESTAMP, dateFormat.format(date));
+        macBuilder.addElement(SHOP_ID, shopId);
+        macBuilder.addElement(OPERATOR_ID, terminalId);
+        macBuilder.addElement(REQ_REF_NUM, reqRefNum);
+        macBuilder.addElement(TRANSACTION_ID, correlationId);
+        macBuilder.addElement(ORDER_ID, pgsRequest.getIdTransaction());
+        macBuilder.addElement(AMOUNT, pgsRequest.getAmount());
+        macBuilder.addElement(CURRENCY, CURRENCY_VALUE);
+        macBuilder.addElement(OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         macBuilder.addString(mac);
         return macBuilder;
     }
 
-    private VPosMacBuilder calculateMac(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, VposRequestEnum operation, String reqRefNum) {
+    private VPosMacBuilder calculateMacAccounting(Date date, String shopId, StepZeroRequest pgsRequest, String terminalId, String mac, String reqRefNum, String correlationId) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
-        macBuilder.addElement(OPERATION, operation);
+        macBuilder.addElement(OPERATION, ACCOUNTING);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
         macBuilder.addElement(TIMESTAMP, dateFormat.format(date));
         macBuilder.addElement(SHOP_ID, shopId);
-        macBuilder.addElement(ORDER_ID, pgsRequest.getIdTransaction());
         macBuilder.addElement(OPERATOR_ID, terminalId);
         macBuilder.addElement(REQ_REF_NUM, reqRefNum);
+        macBuilder.addElement(TRANSACTION_ID, correlationId);
+        macBuilder.addElement(ORDER_ID, pgsRequest.getIdTransaction());
         macBuilder.addElement(AMOUNT, pgsRequest.getAmount());
-        macBuilder.addElement(EMAIL_CH, pgsRequest.getEmailCH());
         macBuilder.addElement(CURRENCY, CURRENCY_VALUE);
         macBuilder.addElement(OPERATION_DESCRIPTION, FAKE_DESCRIPTION);
         macBuilder.addString(mac);
@@ -366,7 +383,7 @@ public class VPosRequestUtils {
         return macBuilder;
     }
 
-    private VPosMacBuilder calculateMacOrderStatus(Date date, String shopId, String terminalId, String mac, String correlationId, String reqRefNum) {
+    private VPosMacBuilder calculateMacOrderStatus(Date date, String shopId, String terminalId, String mac, String reqRefNum, StepZeroRequest pgsRequest) {
         VPosMacBuilder macBuilder = new VPosMacBuilder();
         macBuilder.addElement(OPERATION, OPERATION_ORDERSTATUS);
         SimpleDateFormat dateFormat = new SimpleDateFormat(TIMESTAMP.getFormat());
@@ -374,7 +391,7 @@ public class VPosRequestUtils {
         macBuilder.addElement(SHOP_ID, shopId);
         macBuilder.addElement(OPERATOR_ID, terminalId);
         macBuilder.addElement(REQ_REF_NUM, reqRefNum);
-        macBuilder.addElement(THREEDS_TRANS_ID, correlationId);
+        macBuilder.addElement(ORDER_ID, pgsRequest.getIdTransaction());
         macBuilder.addString(mac);
         return macBuilder;
     }
@@ -393,7 +410,7 @@ public class VPosRequestUtils {
         }
     }
 
-    @SuppressWarnings({"squid:S112", "squid:S3329"})
+    @SuppressWarnings({"squid:S112", "squid:S3329", "squid:S5542"})
     public static String encode3DSdata(String apiSecretMerchant, String jsonObject) throws Exception {
         byte[] initVector = new byte[16];
         byte[] key = apiSecretMerchant.substring(0, 16).getBytes();

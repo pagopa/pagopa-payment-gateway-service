@@ -77,7 +77,7 @@ public class VposDeleteServiceTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(vPosRequestUtils.buildOrderStatusParams(any(), any())).thenReturn(params);
+        when(vPosRequestUtils.buildOrderStatusParams(any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
         when(vPosRequestUtils.buildRevertRequestParams(any(), any())).thenReturn(params);
@@ -110,7 +110,7 @@ public class VposDeleteServiceTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(vPosRequestUtils.buildOrderStatusParams(any(), any())).thenReturn(params);
+        when(vPosRequestUtils.buildOrderStatusParams(any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
 
@@ -142,7 +142,7 @@ public class VposDeleteServiceTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(vPosRequestUtils.buildOrderStatusParams(any(), any())).thenReturn(params);
+        when(vPosRequestUtils.buildOrderStatusParams(any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
         when(vPosRequestUtils.buildRevertRequestParams(any(), any())).thenReturn(params);
@@ -209,7 +209,7 @@ public class VposDeleteServiceTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(vPosRequestUtils.buildOrderStatusParams(any(), any())).thenReturn(params);
+        when(vPosRequestUtils.buildOrderStatusParams(any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());
 
 

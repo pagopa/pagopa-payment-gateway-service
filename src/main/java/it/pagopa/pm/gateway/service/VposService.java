@@ -203,7 +203,6 @@ public class VposService {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
             String urlRedirect = vposPollingUrl + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
-            response.setStatus(CREATED.name());
         } else {
             response.setError(errorMessage);
         }

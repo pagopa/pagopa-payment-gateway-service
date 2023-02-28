@@ -262,7 +262,7 @@ public class CcResumeStep1Service {
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkRevertResultCode(response, entity);
         } catch (Exception e) {
-            log.error(GENERIC_REFUND_ERROR_MSG + entity.getIdTransaction() + " cause: " + e.getCause() + " - " + e.getMessage(), e);
+            log.error("{}{} cause: {} - {}", GENERIC_REFUND_ERROR_MSG, entity.getIdTransaction(), e.getCause(),  e.getMessage(), e);
         }
     }
 

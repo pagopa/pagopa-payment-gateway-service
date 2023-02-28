@@ -411,7 +411,7 @@ public class XPayPaymentController {
                 executeXPayRevert(entity);
             }
         } catch (Exception e) {
-            log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId);
+            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId);
         }
         log.info("End Refunding payment with requestId: " + requestId);
     }

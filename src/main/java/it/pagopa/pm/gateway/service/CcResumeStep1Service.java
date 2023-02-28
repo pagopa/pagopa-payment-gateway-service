@@ -45,6 +45,7 @@ import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 @NoArgsConstructor
 public class CcResumeStep1Service {
     private static final String CREQ_QUERY_PARAM = "?creq=";
+    public static final String RESULT_CODE_METHOD = "26";
     private ClientsConfig clientsConfig;
 
     @Value("${vpos.requestUrl}")
@@ -119,7 +120,7 @@ public class CcResumeStep1Service {
             }
 
             //If the resultCode is 26, the PATCH is not called
-            if (!"26".equals(response.getResultCode())) {
+            if (!RESULT_CODE_METHOD.equals(response.getResultCode())) {
                 executePatchTransaction(entity, request);
             }
         } catch (Exception e) {

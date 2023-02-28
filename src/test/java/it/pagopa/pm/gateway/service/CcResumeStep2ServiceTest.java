@@ -8,10 +8,8 @@ import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
-import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
-import it.pagopa.pm.gateway.dto.vpos.VposOrderStatusResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
@@ -45,13 +43,13 @@ public class CcResumeStep2ServiceTest {
 
     @Spy
     @InjectMocks
-    private CcResumeStep2Service service = new CcResumeStep2Service(clientsConfig);
+    private CcResumeStep2Service service;
 
     @Before
     public void init() {
         ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
 
-        VposClientConfig vposClientConfig= new VposClientConfig();
+        VposClientConfig vposClientConfig = new VposClientConfig();
         vposClientConfig.setClientReturnUrl("url");
         clientConfig.setVpos(vposClientConfig);
     }
@@ -103,14 +101,12 @@ public class CcResumeStep2ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep2(UUID_SAMPLE);
@@ -193,7 +189,6 @@ public class CcResumeStep2ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -201,7 +196,6 @@ public class CcResumeStep2ServiceTest {
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenThrow(RuntimeException.class);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep2(UUID_SAMPLE);
@@ -224,7 +218,6 @@ public class CcResumeStep2ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -232,7 +225,6 @@ public class CcResumeStep2ServiceTest {
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep2(UUID_SAMPLE);
@@ -256,76 +248,6 @@ public class CcResumeStep2ServiceTest {
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());
-
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResumeStep2(UUID_SAMPLE);
-        verify(service).startResumeStep2(UUID_SAMPLE);
-    }
-
-    @Test
-    public void startResume_Exception_in_executePatchTransaction() throws IOException {
-        StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
-
-        PaymentRequestEntity entity = new PaymentRequestEntity();
-        entity.setResponseType(ThreeDS2ResponseTypeEnum.CHALLENGE.name());
-        String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
-        entity.setJsonRequest(requestJson);
-        entity.setCorrelationId("CorrelationId");
-        entity.setIdTransaction("1234566");
-
-        ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
-        Map<String, String> params = new HashMap<>();
-        params.put("1", "prova");
-
-        VposOrderStatusResponse vposOrderStatusResponse = new VposOrderStatusResponse();
-        vposOrderStatusResponse.setResultCode("00");
-
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
-        when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(RuntimeException.class);
-        when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
-
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResumeStep2(UUID_SAMPLE);
-        verify(service).startResumeStep2(UUID_SAMPLE);
-    }
-
-    @Test
-    public void startResume_Exception_in_executePatchTransaction_And_Error_In_OrderStatus() throws IOException {
-        StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
-
-        PaymentRequestEntity entity = new PaymentRequestEntity();
-        entity.setResponseType(ThreeDS2ResponseTypeEnum.CHALLENGE.name());
-        String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
-        entity.setJsonRequest(requestJson);
-        entity.setCorrelationId("CorrelationId");
-        entity.setIdTransaction("1234566");
-
-        ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
-        Map<String, String> params = new HashMap<>();
-        params.put("1", "prova");
-
-        VposOrderStatusResponse vposOrderStatusResponse = new VposOrderStatusResponse();
-        vposOrderStatusResponse.setResultCode("02");
-
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
-        when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(RuntimeException.class);
-        when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep2(UUID_SAMPLE);

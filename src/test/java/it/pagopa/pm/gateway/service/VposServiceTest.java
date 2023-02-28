@@ -7,16 +7,11 @@ import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
-import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
-import it.pagopa.pm.gateway.dto.vpos.VposOrderStatusResponse;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
-import it.pagopa.pm.gateway.utils.ClientsConfig;
-import it.pagopa.pm.gateway.utils.JwtTokenUtils;
-import it.pagopa.pm.gateway.utils.VPosRequestUtils;
-import it.pagopa.pm.gateway.utils.VPosResponseUtils;
+import it.pagopa.pm.gateway.utils.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -67,12 +62,15 @@ public class VposServiceTest {
     private ClientsConfig clientsConfig;
     @Mock
     private JwtTokenUtils jwtTokenUtils;
+    @Mock
+    private VposPatchUtils vposPatchUtils;
 
     @Spy
     @InjectMocks
     private VposService service = new VposService("http://localhost:8080/",
-            paymentRequestRepository, ecommerceClient, vPosRequestUtils,
-            vPosResponseUtils, httpClient, clientsConfig, jwtTokenUtils, "http://localhost:8080/");
+            paymentRequestRepository, vPosRequestUtils,
+            vPosResponseUtils, httpClient, clientsConfig, jwtTokenUtils,
+            "http://localhost:8080/", vposPatchUtils);
 
 
     @Test
@@ -122,7 +120,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
@@ -130,7 +127,6 @@ public class VposServiceTest {
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
         StepZeroResponse realResponse = service.startCreditCardPayment(ECOMMERCE_WEB, null, requestOK);
         assertNull(realResponse.getStatus());
     }
@@ -190,7 +186,6 @@ public class VposServiceTest {
         params.put("1", "prova");
 
         when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
@@ -213,78 +208,6 @@ public class VposServiceTest {
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
         when((vPosRequestUtils.buildRevertRequestParams(any(), any()))).thenReturn(params);
-        StepZeroResponse realResponse = service.startCreditCardPayment(ECOMMERCE_WEB, null, requestOK);
-        assertNull(realResponse.getStatus());
-    }
-
-    @Test
-    public void getRequestPayment_Error_During_Patch_Test_200() throws Exception {
-        StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
-        ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
-        Map<String, String> params = new HashMap<>();
-        params.put("1", "prova");
-        VposOrderStatusResponse vposOrderStatusResponse = new VposOrderStatusResponse();
-        vposOrderStatusResponse.setResultCode("00");
-
-        when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
-        when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
-        when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(RuntimeException.class);
-        when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
-        StepZeroResponse realResponse = service.startCreditCardPayment(ECOMMERCE_WEB, null, requestOK);
-        assertNull(realResponse.getStatus());
-    }
-
-    @Test
-    public void getRequestPayment_Error_During_Patch_And_During_OrderStatus() throws Exception {
-        StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
-        ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("00");
-        Map<String, String> params = new HashMap<>();
-        params.put("1", "prova");
-        VposOrderStatusResponse vposOrderStatusResponse = new VposOrderStatusResponse();
-        vposOrderStatusResponse.setResultCode("02");
-
-        when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
-        when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
-        when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(RuntimeException.class);
-        when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
-        StepZeroResponse realResponse = service.startCreditCardPayment(ECOMMERCE_WEB, null, requestOK);
-        assertNull(realResponse.getStatus());
-    }
-
-    @Test
-    public void getRequestPayment_No_To_Account_Test_OK() throws Exception {
-        StepZeroRequest requestOK = ValidBeans.createStep0Request(false);
-        ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("12");
-        Map<String, String> params = new HashMap<>();
-        params.put("1", "prova");
-
-        when(clientsConfig.containsKey(any())).thenReturn(true);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
-        when(paymentRequestRepository.findByIdTransaction(any())).thenReturn(null);
-        when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
         StepZeroResponse realResponse = service.startCreditCardPayment(ECOMMERCE_WEB, null, requestOK);
         assertNull(realResponse.getStatus());
     }

@@ -413,7 +413,7 @@ public class XPayPaymentController {
         } catch (Exception e) {
             log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId);
         }
-        log.info("End Refunding payment with requestId: " + requestId);
+        log.info("End Refunding payment with requestId: {}", requestId);
     }
 
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {

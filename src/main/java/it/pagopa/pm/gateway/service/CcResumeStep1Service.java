@@ -255,7 +255,7 @@ public class CcResumeStep1Service {
 
     private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
-            log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
+            log.info("Calling VPOS - Revert - for requestId: {}", entity.getGuid());
             Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(pgsRequest, entity.getCorrelationId());
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());

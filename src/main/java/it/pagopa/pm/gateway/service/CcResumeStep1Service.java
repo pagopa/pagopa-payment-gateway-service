@@ -235,7 +235,7 @@ public class CcResumeStep1Service {
     }
 
     private RefundOutcome executeOrderStatus(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
-        log.info("Calling VPOS - OrderStatus - for requestId: " + entity.getGuid());
+        log.info("Calling VPOS - OrderStatus - for requestId: {}", entity.getGuid());
         Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest);
         HttpClientResponse clientResponse = callVPos(params);
         VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse.getEntity());

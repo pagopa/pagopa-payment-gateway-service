@@ -276,6 +276,6 @@ public class CcResumeStep1Service {
             entity.setErrorMessage("Error during Revert");
             entity.setIsRefunded(false);
         }
-        log.info("END - VPos Request Payment Revert for requestId " + entity.getGuid() + " - resultCode: " + resultCode);
+        log.info("END - VPos Request Payment Revert for requestId {}  - resultCode: {}" + entity.getGuid(), resultCode);
     }
 }

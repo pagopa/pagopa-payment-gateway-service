@@ -7,6 +7,7 @@ import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroResponse;
+import it.pagopa.pm.gateway.dto.enums.RefundOutcome;
 import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
 import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
@@ -37,6 +38,8 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.VposConstant.*;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.KO;
+import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @Service
@@ -126,8 +129,8 @@ public class VposService {
             }
 
             //If the resultCode is 25 or 26, the PATCH is not called
-            if(!METHOD_CHALLENGE_CODES.contains(response.getResultCode())) {
-                executePatchTransaction(entity);
+            if (!METHOD_CHALLENGE_CODES.contains(response.getResultCode())) {
+                executePatchTransaction(entity, pgsRequest);
             }
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
@@ -156,17 +159,17 @@ public class VposService {
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkRevertResultCode(response, entity);
         } catch (Exception e) {
-            log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
+            log.error(GENERIC_REFUND_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
         }
     }
 
-    private void executePatchTransaction(PaymentRequestEntity entity) {
+    private void executePatchTransaction(PaymentRequestEntity entity, StepZeroRequest pgsRequest) throws IOException {
         String requestId = entity.getGuid();
         log.info("START - PATCH updateTransaction for requestId: " + requestId);
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
 
         String authCode;
-        if(AUTHORIZED.name().equals(entity.getStatus())) {
+        if (AUTHORIZED.name().equals(entity.getStatus())) {
             authCode = entity.getAuthorizationCode();
         } else {
             authCode = entity.getErrorCode();
@@ -180,6 +183,10 @@ public class VposService {
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
             log.info("Refunding payment with requestId: " + requestId);
+            if (executeOrderStatus(entity, pgsRequest).equals(OK)) {
+                executeRevert(entity, pgsRequest);
+            }
+
         }
     }
 
@@ -301,8 +308,29 @@ public class VposService {
             entity.setStatus(CANCELLED.name());
             entity.setIsRefunded(true);
             paymentRequestRepository.save(entity);
+        } else {
+            entity.setErrorMessage("Error during Revert");
+            entity.setIsRefunded(false);
         }
-        log.info("END - VPos Request Payment Revert for requestId " + entity.getGuid());
+        log.info("END - VPos Request Payment Revert for requestId " + entity.getGuid() + " - resultCode: " + resultCode);
     }
 
+    private RefundOutcome executeOrderStatus(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
+        log.info("Calling VPOS - OrderStatus - for requestId: " + entity.getGuid());
+        Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest);
+        HttpClientResponse clientResponse = callVPos(params);
+        VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse.getEntity());
+        return computeOrderStatusResultCode(response, entity);
+    }
+
+    private RefundOutcome computeOrderStatusResultCode(VposOrderStatusResponse response, PaymentRequestEntity entity) {
+        String resultCode = response.getResultCode();
+        if (resultCode.equals(RESULT_CODE_AUTHORIZED)) {
+            return OK;
+        } else {
+            entity.setErrorMessage("Error during orderStatus");
+            paymentRequestRepository.save(entity);
+            return KO;
+        }
+    }
 }

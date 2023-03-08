@@ -1,7 +1,8 @@
 package it.pagopa.pm.gateway.client.bpay;
 
 import it.pagopa.pm.gateway.client.bpay.generated.*;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayPaymentRequest;
+import it.pagopa.pm.gateway.dto.bancomatpay.BPayRefundRequest;
 import it.pagopa.pm.gateway.utils.ClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +19,13 @@ public class BancomatPayClient {
     private WebServiceTemplate webServiceTemplate;
 
     @Value("${bancomatPay.client.group.code}")
-    public String GROUP_CODE;
+    public String groupCode;
     @Value("${bancomatPay.client.institute.code}")
-    public String INSTITUTE_CODE;
+    public String instituteCode;
     @Value("${bancomatPay.client.tag}")
-    public String TAG;
+    public String tag;
     @Value("${bancomatPay.client.token}")
-    public String TOKEN;
+    public String token;
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
@@ -39,7 +40,7 @@ public class BancomatPayClient {
         richiestaPagamentoPagoPaVO.setImporto(BigDecimal.valueOf(request.getAmount()));
         richiestaPagamentoPagoPaVO.setNumeroTelefonicoCriptato(request.getEncryptedTelephoneNumber());
         richiestaPagamentoPagoPaVO.setCausale(request.getSubject());
-        richiestaPagamentoPagoPaVO.setTag(TAG);
+        richiestaPagamentoPagoPaVO.setTag(tag);
         requestInserimentoRichiestaPagamentoPagoPaVO.setRichiestaPagamentoPagoPa(richiestaPagamentoPagoPaVO);
         inserimentoRichiestaPagamentoPagoPa.setArg0(requestInserimentoRichiestaPagamentoPagoPaVO);
         log.info("Payment request to be sent to BPay: " + inserimentoRichiestaPagamentoPagoPa);
@@ -71,12 +72,12 @@ public class BancomatPayClient {
     private ContestoVO createContesto(String guid, String language) {
         ContestoVO contestoVO = new ContestoVO();
         contestoVO.setGuid(guid);
-        contestoVO.setToken(TOKEN);
+        contestoVO.setToken(token);
         contestoVO.setLingua(LinguaEnum.fromValue(ClientUtils.getLanguageCode(language)));
         UtenteAttivoVO utenteVO = new UtenteAttivoVO();
         utenteVO.setCodUtente(null);
-        utenteVO.setCodGruppo(GROUP_CODE);
-        utenteVO.setCodIstituto(INSTITUTE_CODE);
+        utenteVO.setCodGruppo(groupCode);
+        utenteVO.setCodIstituto(instituteCode);
         contestoVO.setUtenteAttivo(utenteVO);
         return contestoVO;
     }

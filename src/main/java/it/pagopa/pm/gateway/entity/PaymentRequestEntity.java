@@ -1,6 +1,10 @@
 package it.pagopa.pm.gateway.entity;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pm.gateway.dto.vpos.VposPersistableRequest;
+import it.pagopa.pm.gateway.dto.xpay.XpayPersistableRequest;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -19,7 +23,7 @@ public class PaymentRequestEntity {
     @Column(name = "GUID", nullable = false)
     private String guid;
 
-    @Column(name = "RESOURCE_PATH", nullable = false)
+    @Column(name = "RESOURCE_PATH")
     private String resourcePath;
 
     @Column(name = "CORRELATION_ID")
@@ -58,6 +62,41 @@ public class PaymentRequestEntity {
     @Column(name = "IS_ONBOARDING")
     private Boolean isOnboarding;
 
+    @Column(name = "STATUS")
+    private String status;
 
+    @Column(name = "REQUEST_TIMESTAMP")
+    private String timeStamp;
 
+    @Column(name = "NONCE")
+    private String xpayNonce;
+
+    @Column(name = "HTML")
+    private String xpayHtml;
+
+    @Column(name = "ERROR_CODE")
+    private String errorCode;
+
+    @Column(name = "ERROR_MESSAGE")
+    private String errorMessage;
+
+    @Column(name = "IS_FIRST_PAYMENT")
+    private Boolean isFirstPayment;
+
+    @Column(name = "RESPONSE_TYPE")
+    private String responseType;
+
+    public void setJsonRequest(String request) {
+        this.jsonRequest = request;
+    }
+
+    public void setJsonRequest(VposPersistableRequest request) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        this.jsonRequest = objectMapper.writeValueAsString(request);
+    }
+
+    public void setJsonRequest(XpayPersistableRequest request) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        this.jsonRequest = objectMapper.writeValueAsString(request);
+    }
 }

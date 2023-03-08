@@ -1,10 +1,10 @@
 package it.pagopa.pm.gateway.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import it.pagopa.pm.gateway.constant.Profiles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
-import org.springframework.data.jpa.repository.config.*;
 import org.springframework.jndi.JndiTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -17,16 +17,13 @@ import java.util.HashMap;
 import java.util.Objects;
 
 @Configuration
-@EnableJpaRepositories(transactionManagerRef = "transactionManager")
+@Profile(Profiles.JBOSS_ORACLE)
 public class CoreDataSourceConfiguration {
 
-    @Autowired
-    private Environment env;
-
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(Environment env) throws NamingException {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(productDataSource());
+        em.setDataSource(productDataSource(env));
         em.setPackagesToScan("it.pagopa.pm.gateway.entity");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
@@ -39,15 +36,15 @@ public class CoreDataSourceConfiguration {
     }
 
     @Bean
-    public PlatformTransactionManager transactionManager() throws NamingException {
+    public PlatformTransactionManager transactionManager(Environment env) throws NamingException {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+        transactionManager.setEntityManagerFactory(entityManagerFactory(env).getObject());
 
         return transactionManager;
     }
 
     @Bean
-    public DataSource productDataSource() throws NamingException {
+    public DataSource productDataSource(Environment env) throws NamingException {
         return (DataSource) new JndiTemplate().lookup(Objects.requireNonNull(
                 env.getProperty("pagopa.datasource.jndi.name")));
     }

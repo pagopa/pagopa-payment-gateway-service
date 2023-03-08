@@ -9,39 +9,27 @@ import it.pagopa.pm.gateway.client.azure.AzureLoginClient;
 import it.pagopa.pm.gateway.client.restapicd.RestapiCdClientImpl;
 import it.pagopa.pm.gateway.constant.ApiPaths;
 import it.pagopa.pm.gateway.constant.Headers;
-import it.pagopa.pm.gateway.dto.*;
+import it.pagopa.pm.gateway.dto.ACKMessage;
+import it.pagopa.pm.gateway.dto.AuthMessage;
+import it.pagopa.pm.gateway.dto.PatchRequest;
 import it.pagopa.pm.gateway.dto.enums.EndpointEnum;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.microsoft.azure.login.MicrosoftAzureLoginResponse;
+import it.pagopa.pm.gateway.dto.postepay.PostePayAuthRequest;
+import it.pagopa.pm.gateway.dto.postepay.PostePayOnboardingRequest;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.exception.ExceptionsEnum;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.openapitools.client.ApiException;
 import org.openapitools.client.api.PaymentManagerControllerApi;
-import org.openapitools.client.model.CreatePaymentRequest;
-import org.openapitools.client.model.CreatePaymentResponse;
-import org.openapitools.client.model.DetailsPaymentRequest;
-import org.openapitools.client.model.RefundPaymentRequest;
-import org.openapitools.client.model.RefundPaymentResponse;
-import org.openapitools.client.model.DetailsPaymentResponse;
-import  org.openapitools.client.model.OnboardingRequest;
-import org.openapitools.client.model.OnboardingResponse;
-
-import static it.pagopa.pm.gateway.constant.Params.IS_ONBOARDING_PARAM;
-import static org.openapitools.client.model.Esito.APPROVED;
-import static org.openapitools.client.model.Esito.DECLINED;
-import static org.openapitools.client.model.EsitoStorno.OK;
-
-
 import org.openapitools.client.api.UserApi;
-import org.openapitools.client.model.PaymentChannel;
+import org.openapitools.client.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,9 +44,13 @@ import org.springframework.web.util.NestedServletException;
 import java.util.UUID;
 
 import static it.pagopa.pm.gateway.constant.Messages.*;
+import static it.pagopa.pm.gateway.constant.Params.IS_ONBOARDING_PARAM;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.openapitools.client.model.Esito.APPROVED;
+import static org.openapitools.client.model.Esito.DECLINED;
+import static org.openapitools.client.model.EsitoStorno.OK;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -98,10 +90,18 @@ public class PostePayPaymentControllerTest {
     @MockBean
     private Environment env;
 
+    @MockBean
+    private JwtTokenUtils jwtTokenUtils;
+
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 
     @Mock
     final UUID uuid = UUID.fromString(UUID_SAMPLE);
+
+    @Spy
+    @InjectMocks
+    private PostePayPaymentTransactionsController postePayController = new PostePayPaymentTransactionsController("${pgs.postepay.response.urlredirect}", "${pgs.postepay.notificationURL}", "${pgs.postepay.logo.url}",
+            azureLoginClient, restapiCdClient, paymentRequestRepository, postePayControllerApi, userApi, env, jwtTokenUtils);
 
     @Test
     public void givenPostePayPaymentRequestAPP_returnPostePayAuthResponse() throws Exception {
@@ -119,11 +119,12 @@ public class PostePayPaymentControllerTest {
             given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
             given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, appRequest)).willReturn(okResponse);
+            given(jwtTokenUtils.generateToken(any())).willReturn("exampletoken");
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                    .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                    .content(mapper.writeValueAsString(postePayAuthRequest))
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                            .content(mapper.writeValueAsString(postePayAuthRequest))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse(PaymentChannel.APP.getValue(), false, null))));
             verify(paymentRequestRepository).findByIdTransaction("1");
@@ -147,6 +148,7 @@ public class PostePayPaymentControllerTest {
             given(env.getProperty("postepay.clientId.APP.config")).willReturn(APP_CONFIG);
             given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(userApi.apiV1UserOnboardingPost(bearerToken, onboardingRequest)).willReturn(onboardingResponse);
+            given(jwtTokenUtils.generateToken(any())).willReturn("exampletoken");
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
                             .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
@@ -182,9 +184,10 @@ public class PostePayPaymentControllerTest {
             given(env.getProperty(String.format("postepay.clientId.%s.config", "WEB"))).willReturn(appConfigurationProperty);
             given(env.getProperty("postepay.logo.url")).willReturn("postepay.png");
             given(postePayControllerApi.apiV1PaymentCreatePost(bearerToken, request)).willReturn(okResponse);
+            given(jwtTokenUtils.generateToken(any())).willReturn("exampletoken");
 
             mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY).header(Headers.X_CLIENT_ID, "WEB")
-                    .content(mapper.writeValueAsString(postePayAuthRequest)).contentType(MediaType.APPLICATION_JSON))
+                            .content(mapper.writeValueAsString(postePayAuthRequest)).contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("WEB", false, null))));
             verify(paymentRequestRepository).findByIdTransaction("1");
@@ -196,9 +199,9 @@ public class PostePayPaymentControllerTest {
     public void givenRequestWithNoIdTransaction_shouldReturnBadRequestResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(false);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                .header(Headers.X_CLIENT_ID, "APP")
-                .content(mapper.writeValueAsString(postePayAuthRequest))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, "APP")
+                        .content(mapper.writeValueAsString(postePayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true, BAD_REQUEST_MSG))));
     }
@@ -207,9 +210,9 @@ public class PostePayPaymentControllerTest {
     public void givenRequestWithInvalidClientId_shouldReturnBadRequestClientIdResponse() throws Exception {
         PostePayAuthRequest postePayAuthRequest = ValidBeans.postePayAuthRequest(true);
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                .header(Headers.X_CLIENT_ID, "XXX")
-                .content(mapper.writeValueAsString(postePayAuthRequest))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, "XXX")
+                        .content(mapper.writeValueAsString(postePayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("XXX", true, BAD_REQUEST_MSG_CLIENT_ID))));
     }
@@ -222,9 +225,9 @@ public class PostePayPaymentControllerTest {
                 willReturn(ValidBeans.paymentRequestEntity(postePayAuthRequest, null, "APP"));
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                .header(Headers.X_CLIENT_ID, "APP")
-                .content(mapper.writeValueAsString(postePayAuthRequest))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, "APP")
+                        .content(mapper.writeValueAsString(postePayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true, TRANSACTION_ALREADY_PROCESSED_MSG))));
 
@@ -245,9 +248,9 @@ public class PostePayPaymentControllerTest {
                 .willReturn(null);
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                .header(Headers.X_CLIENT_ID, "APP")
-                .content(mapper.writeValueAsString(postePayAuthRequest))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, "APP")
+                        .content(mapper.writeValueAsString(postePayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true,
                         GENERIC_ERROR_MSG + postePayAuthRequest.getIdTransaction()))));
@@ -270,9 +273,9 @@ public class PostePayPaymentControllerTest {
                 .apiV1PaymentCreatePost(microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                .header(Headers.X_CLIENT_ID, "APP")
-                .content(mapper.writeValueAsString(postePayAuthRequest))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, "APP")
+                        .content(mapper.writeValueAsString(postePayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true,
                         GENERIC_ERROR_MSG + postePayAuthRequest.getIdTransaction()))));
@@ -295,9 +298,9 @@ public class PostePayPaymentControllerTest {
                 .apiV1PaymentCreatePost(microsoftAzureLoginResponse.getAccess_token(), createPaymentRequest);
 
         mvc.perform(post(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                .header(Headers.X_CLIENT_ID, "APP")
-                .content(mapper.writeValueAsString(postePayAuthRequest))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, "APP")
+                        .content(mapper.writeValueAsString(postePayAuthRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayAuthResponse("APP", true,
                         GENERIC_ERROR_MSG + postePayAuthRequest.getIdTransaction()))));
@@ -361,16 +364,16 @@ public class PostePayPaymentControllerTest {
         final String correlationID = "correlation-ID";
 
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntity(null, true, "APP");
-        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.patchRequest();
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
-        given(restapiCdClient.callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest))
+        given(restapiCdClient.callPatchTransactionV2(Long.valueOf(paymentRequestEntity.getIdTransaction()), patchRequest))
                 .willReturn(OutcomeEnum.OK.toString());
 
         mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                .header("X-Correlation-ID", correlationID)
-                .content(mapper.writeValueAsString(authMessage))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header("X-Correlation-ID", correlationID)
+                        .content(mapper.writeValueAsString(authMessage))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
         verify(paymentRequestRepository).save(paymentRequestEntity);
@@ -391,9 +394,9 @@ public class PostePayPaymentControllerTest {
 
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                    .header("X-Correlation-ID", correlationID)
-                    .content(mapper.writeValueAsString(authMessage))
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .header("X-Correlation-ID", correlationID)
+                            .content(mapper.writeValueAsString(authMessage))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
         } catch (NestedServletException | JsonProcessingException e) {
@@ -415,9 +418,9 @@ public class PostePayPaymentControllerTest {
 
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                    .header("X-Correlation-ID", correlationID)
-                    .content(mapper.writeValueAsString(authMessage))
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .header("X-Correlation-ID", correlationID)
+                            .content(mapper.writeValueAsString(authMessage))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
         } catch (NestedServletException | JsonProcessingException e) {
@@ -433,19 +436,19 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse(OutcomeEnum.KO);
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
-        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.patchRequest();
 
         doThrow(FeignException.class)
                 .when(restapiCdClient)
-                .callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest);
+                .callPatchTransactionV2(Long.valueOf(paymentRequestEntity.getIdTransaction()), patchRequest);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                    .header("X-Correlation-ID", correlationID)
-                    .content(mapper.writeValueAsString(authMessage))
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .header("X-Correlation-ID", correlationID)
+                            .content(mapper.writeValueAsString(authMessage))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isInternalServerError())
                     .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
         } catch (NestedServletException | JsonProcessingException e) {
@@ -461,19 +464,19 @@ public class PostePayPaymentControllerTest {
         ACKMessage ackMessage = ValidBeans.ackMessageResponse(OutcomeEnum.KO);
         final String correlationID = "correlation-ID";
         PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityOnboardingFalse(null, true, "APP");
-        PostePayPatchRequest postePayPatchRequest = ValidBeans.postePayPatchRequest();
+        PatchRequest patchRequest = ValidBeans.patchRequest();
 
         doThrow(RuntimeException.class)
                 .when(restapiCdClient)
-                .callUpdatePostePayTransaction(Long.valueOf(paymentRequestEntity.getIdTransaction()), postePayPatchRequest);
+                .callPatchTransactionV2(Long.valueOf(paymentRequestEntity.getIdTransaction()), patchRequest);
 
         given(paymentRequestRepository.findByCorrelationIdAndRequestEndpoint(correlationID, EndpointEnum.POSTEPAY.getValue())).willReturn(paymentRequestEntity);
 
         try {
             mvc.perform(put(ApiPaths.REQUEST_PAYMENTS_POSTEPAY)
-                    .header("X-Correlation-ID", correlationID)
-                    .content(mapper.writeValueAsString(authMessage))
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .header("X-Correlation-ID", correlationID)
+                            .content(mapper.writeValueAsString(authMessage))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isInternalServerError())
                     .andExpect(content().json(mapper.writeValueAsString(ackMessage)));
         } catch (NestedServletException | JsonProcessingException e) {
@@ -495,8 +498,8 @@ public class PostePayPaymentControllerTest {
                 .willReturn(ValidBeans.refundPaymentResponse(OK));
 
         mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", "OK", null))));
         verify(paymentRequestRepository).save(paymentRequestEntity);
@@ -508,8 +511,8 @@ public class PostePayPaymentControllerTest {
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(null);
 
         mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, null, null, "Payment request not found"))));
     }
@@ -522,8 +525,8 @@ public class PostePayPaymentControllerTest {
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
 
         mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, null, null, "Payment request not found"))));
     }
@@ -531,13 +534,13 @@ public class PostePayPaymentControllerTest {
 
     @Test
     public void givenRefundedTransaction_shouldReturn200AlreadyProcessed() throws Exception {
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, true, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", null, true, false);
 
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Refund request already processed"))));
     }
@@ -545,7 +548,7 @@ public class PostePayPaymentControllerTest {
 
     @Test
     public void givenDeclinedDetailsCheck_shouldReturn200RefundNotAuthorized() throws Exception {
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
 
         DetailsPaymentRequest detailsPaymentRequest = ValidBeans.detailsPaymentRequest();
@@ -558,9 +561,9 @@ public class PostePayPaymentControllerTest {
         given(postePayControllerApi.apiV1PaymentDetailsPost(authorization, detailsPaymentRequest))
                 .willReturn(detailsPaymentResponse);
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Transaction is not refundable: authorization has not been approved by PostePay or has been refunded already"))));
     }
@@ -569,7 +572,7 @@ public class PostePayPaymentControllerTest {
     @Test
     public void thrownApiExceptionByAzuteLogin_return500PostePayServiceException() throws Exception {
 
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
 
         given(paymentRequestRepository.findByGuid(UUID_SAMPLE)).willReturn(paymentRequestEntity);
@@ -579,19 +582,18 @@ public class PostePayPaymentControllerTest {
                 .when(azureLoginClient)
                 .requestMicrosoftAzureLoginPostepay();
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Exception during call to PostePay service"))));
     }
 
 
-
     @Test
     public void thrownApiExceptionByCheckDetails_executeRefund() throws Exception {
 
-       PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
 
         RefundPaymentRequest refundPaymentRequest = ValidBeans.refundPaymentRequest(null);
@@ -608,9 +610,9 @@ public class PostePayPaymentControllerTest {
                 .when(postePayControllerApi)
                 .apiV1PaymentDetailsPost(authorization, detailsPaymentRequest);
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", "OK", null))));
         verify(paymentRequestRepository).save(paymentRequestEntity);
@@ -619,10 +621,10 @@ public class PostePayPaymentControllerTest {
     @Test
     public void checkDetailsResponseIsNull_executeRefund() throws Exception {
 
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
 
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
-         RefundPaymentRequest refundPaymentRequest = ValidBeans.refundPaymentRequest(null);
+        RefundPaymentRequest refundPaymentRequest = ValidBeans.refundPaymentRequest(null);
         DetailsPaymentRequest detailsPaymentRequest = ValidBeans.detailsPaymentRequest();
         String authorization = "Bearer " + azureLoginResponse.getAccess_token();
 
@@ -631,14 +633,14 @@ public class PostePayPaymentControllerTest {
         given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
         given(postePayControllerApi.apiV1PaymentDetailsPost(authorization, detailsPaymentRequest))
-                .willReturn( null);
+                .willReturn(null);
         given(postePayControllerApi.apiV1PaymentRefundPost(authorization, refundPaymentRequest))
                 .willReturn(ValidBeans.refundPaymentResponse(OK));
 
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", "OK", null))));
         verify(paymentRequestRepository).save(paymentRequestEntity);
@@ -647,7 +649,7 @@ public class PostePayPaymentControllerTest {
     @Test
     public void checkDetailsResponseEsitoIsNull_executeRefund() throws Exception {
 
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", null, false, false);
 
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
         RefundPaymentRequest refundPaymentRequest = ValidBeans.refundPaymentRequest(null);
@@ -660,14 +662,14 @@ public class PostePayPaymentControllerTest {
         given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
         given(postePayControllerApi.apiV1PaymentDetailsPost(authorization, detailsPaymentRequest))
-                .willReturn( detailsPaymentResponse);
+                .willReturn(detailsPaymentResponse);
         given(postePayControllerApi.apiV1PaymentRefundPost(authorization, refundPaymentRequest))
                 .willReturn(ValidBeans.refundPaymentResponse(OK));
 
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", "OK", null))));
         verify(paymentRequestRepository).save(paymentRequestEntity);
@@ -676,7 +678,7 @@ public class PostePayPaymentControllerTest {
 
     @Test
     public void refundResponseIsNull_shouldReturn500PostePayServiceException() throws Exception {
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
         RefundPaymentRequest refundPaymentRequest = ValidBeans.refundPaymentRequest("auth_code");
         String authorization = "Bearer " + azureLoginResponse.getAccess_token();
@@ -687,9 +689,9 @@ public class PostePayPaymentControllerTest {
         given(postePayControllerApi.apiV1PaymentRefundPost(authorization, refundPaymentRequest))
                 .willReturn(null);
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Exception during call to PostePay service"))));
     }
@@ -697,7 +699,7 @@ public class PostePayPaymentControllerTest {
 
     @Test
     public void refundResponseEsitoStornoIsNull_shouldReturn500PostePayServiceException() throws Exception {
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
         RefundPaymentRequest refundPaymentRequest = ValidBeans.refundPaymentRequest("auth_code");
         DetailsPaymentRequest detailsPaymentRequest = ValidBeans.detailsPaymentRequest();
@@ -710,13 +712,13 @@ public class PostePayPaymentControllerTest {
         given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
         given(postePayControllerApi.apiV1PaymentDetailsPost(authorization, detailsPaymentRequest))
-                .willReturn( detailsPaymentResponse);
+                .willReturn(detailsPaymentResponse);
         given(postePayControllerApi.apiV1PaymentRefundPost(authorization, refundPaymentRequest))
                 .willReturn(refundPaymentResponse);
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Exception during call to PostePay service"))));
     }
@@ -725,7 +727,7 @@ public class PostePayPaymentControllerTest {
     @Test
     public void thrownApiExceptionByRefundPost_shouldReturn500PostePayServiceException() throws Exception {
 
-        PaymentRequestEntity paymentRequestEntity =ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
+        PaymentRequestEntity paymentRequestEntity = ValidBeans.paymentRequestEntityWithRefundData("APP", "auth_code", false, false);
         MicrosoftAzureLoginResponse azureLoginResponse = ValidBeans.microsoftAzureLoginResponse();
         RefundPaymentRequest refundPaymentRequest = ValidBeans.refundPaymentRequest("auth_code");
         DetailsPaymentRequest detailsPaymentRequest = ValidBeans.detailsPaymentRequest();
@@ -736,15 +738,15 @@ public class PostePayPaymentControllerTest {
         given(env.getProperty(String.format("postepay.clientId.%s.config", "APP"))).willReturn(WEB_CONFIG);
         given(azureLoginClient.requestMicrosoftAzureLoginPostepay()).willReturn(azureLoginResponse);
         given(postePayControllerApi.apiV1PaymentDetailsPost(authorization, detailsPaymentRequest))
-                .willReturn( null);
+                .willReturn(null);
 
         doThrow(ApiException.class)
                 .when(postePayControllerApi)
                 .apiV1PaymentRefundPost(authorization, refundPaymentRequest);
 
-        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH,UUID_SAMPLE)
-                .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
-                .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(delete(ApiPaths.POSTEPAY_REQUEST_PAYMENTS_PATH, UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, PaymentChannel.APP.getValue())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.postePayRefundResponse(UUID_SAMPLE, "1234", null, "Exception during call to PostePay service"))));
 

@@ -1,16 +1,8 @@
 trigger: none
-
-resources:
-  repositories:
-    - repository: pagopaPaymentTransactionGateway
-      type: github
-      name: pagopa/pagopa-payment-transactions-gateway
-      ref: develop
-      endpoint: 'io-azure-devops-github-ro'
-      pr:
-        branches:
-          include:
-          - develop
+pr:
+  branches:
+    include:
+      - develop
 
 pool:
   vmImage: ubuntu-latest

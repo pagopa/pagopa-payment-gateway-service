@@ -12,6 +12,9 @@ variables:
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
 
 steps:
+  - checkout: self
+    clean: false
+
   - task: Cache@2
     inputs:
       key: 'maven | "$(Agent.OS)" | pom.xml'
@@ -70,4 +73,3 @@ steps:
   - script: |
       [[ "$(docker ps --filter status=exited --format="{{.Image}} :: {{.Status}}" | grep liquibase | cut -d':' -f3 | sed -r "s/Exited \((.*)\) .*/\1/g" | tr -d ' ')" == "0" ]]
     displayName: 'Liquibase check'
-

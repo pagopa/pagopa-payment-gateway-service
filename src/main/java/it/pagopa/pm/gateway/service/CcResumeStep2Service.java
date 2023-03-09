@@ -167,6 +167,6 @@ public class CcResumeStep2Service {
         entity.setStatus(status);
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
-        log.info("END - XPay Request Payment Account for requestId {}", entity.getGuid());
+        log.info("END - Vpos Request Payment Account for requestId {}", entity.getGuid());
     }
 }

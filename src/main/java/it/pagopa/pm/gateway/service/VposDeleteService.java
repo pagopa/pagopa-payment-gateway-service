@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.entity.ContentType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ public class VposDeleteService {
     private HttpClient httpClient;
     private ObjectMapper objectMapper;
 
+    @Autowired
     public VposDeleteService(PaymentRequestRepository paymentRequestRepository,
                              VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
                              HttpClient httpClient, ObjectMapper objectMapper, @Value("${vpos.requestUrl}") String vposUrl) {
@@ -96,7 +98,7 @@ public class VposDeleteService {
 
     private RefundOutcome executeOrderStatus(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
         log.info("Calling VPOS - OrderStatus - for requestId: " + entity.getGuid());
-        Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest, entity.getCorrelationId());
+        Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest);
         HttpClientResponse clientResponse = callVPos(params);
         VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse.getEntity());
         return computeOrderStatusResultCode(response, entity);

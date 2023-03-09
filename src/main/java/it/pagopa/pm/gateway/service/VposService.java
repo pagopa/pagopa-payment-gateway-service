@@ -31,9 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 import static it.pagopa.pm.gateway.constant.Messages.*;
@@ -47,6 +45,7 @@ import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 public class VposService {
 
     private static final String CAUSE = " cause: ";
+    private static final List<String> METHOD_CHALLENGE_CODES = Arrays.asList("25", "26");
     private String vposUrl;
     private String vposPollingUrl;
     private PaymentRequestRepository paymentRequestRepository;
@@ -125,6 +124,11 @@ public class VposService {
             } else if (toAccount) {
                 executeAccount(entity, pgsRequest);
             }
+
+            //If the resultCode is 25 or 26, the PATCH is not called
+            if(!METHOD_CHALLENGE_CODES.contains(response.getResultCode())) {
+                executePatchTransaction(entity);
+            }
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
         }
@@ -141,7 +145,6 @@ public class VposService {
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
         }
-        executePatchTransaction(entity);
     }
 
     private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
@@ -161,7 +164,14 @@ public class VposService {
         String requestId = entity.getGuid();
         log.info("START - PATCH updateTransaction for requestId: " + requestId);
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
-        String authCode = entity.getAuthorizationCode();
+
+        String authCode;
+        if(AUTHORIZED.name().equals(entity.getStatus())) {
+            authCode = entity.getAuthorizationCode();
+        } else {
+            authCode = entity.getErrorCode();
+        }
+
         UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
         try {
             ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());

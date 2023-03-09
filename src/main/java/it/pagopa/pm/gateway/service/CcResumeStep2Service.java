@@ -1,7 +1,6 @@
 package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
@@ -11,7 +10,6 @@ import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Authorization;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
-import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import it.pagopa.pm.gateway.utils.VposPatchUtils;
@@ -39,29 +37,26 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 @NoArgsConstructor
 public class CcResumeStep2Service {
 
-    @Value("${vpos.requestUrl}")
     private String vposUrl;
-
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
-    private EcommerceClient ecommerceClient;
-
-    @Autowired
     private VPosRequestUtils vPosRequestUtils;
-
-    @Autowired
     private VPosResponseUtils vPosResponseUtils;
-
-    @Autowired
     private HttpClient httpClient;
-
-    @Autowired
     private ObjectMapper objectMapper;
+    private VposPatchUtils vposPatchUtils;
 
     @Autowired
-    private VposPatchUtils vposPatchUtils;
+    public CcResumeStep2Service(@Value("${vpos.requestUrl}") String vposUrl, PaymentRequestRepository paymentRequestRepository,
+                                VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
+                                HttpClient httpClient, ObjectMapper objectMapper, VposPatchUtils vposPatchUtils) {
+        this.vposUrl = vposUrl;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.vPosRequestUtils = vPosRequestUtils;
+        this.vPosResponseUtils = vPosResponseUtils;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+        this.vposPatchUtils = vposPatchUtils;
+    }
 
     public void startResumeStep2(String requestId) {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);

@@ -2,20 +2,17 @@ package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.beans.ValidBeans;
-import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
-import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
-import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
-import org.junit.Before;
+import it.pagopa.pm.gateway.utils.VposPatchUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -23,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -39,25 +35,7 @@ public class CcResumeStep2ServiceTest {
     private final ClientConfig clientConfig = new ClientConfig();
 
     @Mock
-    private ClientsConfig clientsConfig;
-
-    @Spy
-    @InjectMocks
-    private CcResumeStep2Service service;
-
-    @Before
-    public void init() {
-        ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
-
-        VposClientConfig vposClientConfig = new VposClientConfig();
-        vposClientConfig.setClientReturnUrl("url");
-        clientConfig.setVpos(vposClientConfig);
-    }
-
-    @Mock
     private PaymentRequestRepository paymentRequestRepository;
-    @Mock
-    private EcommerceClient ecommerceClient;
     @Mock
     private VPosRequestUtils vPosRequestUtils;
     @Mock
@@ -66,6 +44,13 @@ public class CcResumeStep2ServiceTest {
     private HttpClient httpClient;
     @Mock
     private ObjectMapper objectMapper;
+    @Mock
+    private VposPatchUtils vposPatchUtils;
+
+    @Spy
+    @InjectMocks
+    private CcResumeStep2Service service = new CcResumeStep2Service("http://localhost:8080", paymentRequestRepository,
+            vPosRequestUtils, vPosResponseUtils, httpClient, objectMapper, vposPatchUtils);
 
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 

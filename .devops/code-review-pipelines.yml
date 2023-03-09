@@ -24,18 +24,18 @@ steps:
       path: $(MAVEN_CACHE_FOLDER)
     displayName: Cache Maven local repo
 
-  - task: SonarCloudPrepare@1
-    displayName: 'Prepare SonarCloud analysis configuration'
-    inputs:
-      SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
-      organization: '$(SONARCLOUD_ORG)'
-      scannerMode: Other
-      extraProperties: |
-        sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
-        sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
-        sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*
-        sonar.coverage.jacoco.xmlReportPaths=./report/target/site/jacoco/jacoco.xml
-        sonar.junit.reportPaths=target/surefire-reports/
+#  - task: SonarCloudPrepare@1
+#    displayName: 'Prepare SonarCloud analysis configuration'
+#    inputs:
+#      SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
+#      organization: '$(SONARCLOUD_ORG)'
+#      scannerMode: Other
+#      extraProperties: |
+#        sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
+#        sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
+#        sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*
+#        sonar.coverage.jacoco.xmlReportPaths=./report/target/site/jacoco/jacoco.xml
+#        sonar.junit.reportPaths=target/surefire-reports/
 
   - task: Bash@3
     displayName: Install Ojdbc
@@ -57,10 +57,10 @@ steps:
       goals: 'clean verify'
       sonarQubeRunAnalysis: true
 
-  - task: SonarCloudPublish@1
-    displayName: 'Publish SonarCloud results on build summary'
-    inputs:
-      pollingTimeoutSec: '300'
+#  - task: SonarCloudPublish@1
+#    displayName: 'Publish SonarCloud results on build summary'
+#    inputs:
+#      pollingTimeoutSec: '300'
 
   - script: |
       docker-compose -f docker-compose-springboot-postgres.yaml up --build -d

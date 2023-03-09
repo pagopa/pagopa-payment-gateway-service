@@ -55,7 +55,7 @@ steps:
       publishJUnitResults: false
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
       goals: 'clean verify'
-      sonarQubeRunAnalysis: true
+      sonarQubeRunAnalysis: false
 
 #  - task: SonarCloudPublish@1
 #    displayName: 'Publish SonarCloud results on build summary'

@@ -139,7 +139,7 @@ public class VposPatchUtils {
     private HttpClientResponse callVPos(Map<String, String> params) throws IOException {
         HttpClientResponse clientResponse = httpClient.post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
         if (clientResponse.getStatus() != HttpStatus.OK.value()) {
-            log.error("HTTP Response Status: " + clientResponse.getStatus());
+            log.error("HTTP Response Status: {}", clientResponse.getStatus());
             throw new IOException("Non-ok response from VPos. HTTP status: " + clientResponse.getStatus());
         }
         return clientResponse;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet id="V10003__TEST" author="liquibase" failOnError="true" context="insert-uat">
+        <sqlFile path="../scripts/table-creation/V10003__TEST.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE PP_PGS_TEST DROP COLUMN PGS_TEST3;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

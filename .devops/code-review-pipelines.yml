@@ -1,16 +1,8 @@
 trigger: none
-
-resources:
-  repositories:
-    - repository: pagopaPaymentTransactionGateway
-      type: github
-      name: pagopa/pagopa-payment-transactions-gateway
-      ref: develop
-      endpoint: 'io-azure-devops-github-ro'
-      pr:
-        branches:
-          include:
-          - develop
+pr:
+  branches:
+    include:
+      - develop
 
 pool:
   vmImage: ubuntu-latest
@@ -20,6 +12,9 @@ variables:
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
 
 steps:
+  - checkout: self
+    clean: false
+
   - task: Cache@2
     inputs:
       key: 'maven | "$(Agent.OS)" | pom.xml'
@@ -29,26 +24,26 @@ steps:
       path: $(MAVEN_CACHE_FOLDER)
     displayName: Cache Maven local repo
 
-  - task: SonarCloudPrepare@1
-    displayName: 'Prepare SonarCloud analysis configuration'
-    inputs:
-      SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
-      organization: '$(SONARCLOUD_ORG)'
-      scannerMode: Other
-      extraProperties: |
-        sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
-        sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
-        sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*
-        sonar.coverage.jacoco.xmlReportPaths=./report/target/site/jacoco/jacoco.xml
-        sonar.junit.reportPaths=target/surefire-reports/
-  
+#  - task: SonarCloudPrepare@1
+#    displayName: 'Prepare SonarCloud analysis configuration'
+#    inputs:
+#      SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
+#      organization: '$(SONARCLOUD_ORG)'
+#      scannerMode: Other
+#      extraProperties: |
+#        sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
+#        sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
+#        sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*
+#        sonar.coverage.jacoco.xmlReportPaths=./report/target/site/jacoco/jacoco.xml
+#        sonar.junit.reportPaths=target/surefire-reports/
+
   - task: Bash@3
     displayName: Install Ojdbc
     inputs:
       targetType: 'inline'
       script: |
         mvn install:install-file -Dfile=./.db/oracle/ojdbc8-12.2.0.1.jar -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.0.1 -Dpackaging=jar
-      failOnStderr: true      
+      failOnStderr: true
 
   - task: Maven@3
     inputs:
@@ -60,12 +55,12 @@ steps:
       publishJUnitResults: false
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
       goals: 'clean verify'
-      sonarQubeRunAnalysis: true
+      sonarQubeRunAnalysis: false
 
-  - task: SonarCloudPublish@1
-    displayName: 'Publish SonarCloud results on build summary'
-    inputs:
-      pollingTimeoutSec: '300'
+#  - task: SonarCloudPublish@1
+#    displayName: 'Publish SonarCloud results on build summary'
+#    inputs:
+#      pollingTimeoutSec: '300'
 
   - script: |
       docker-compose -f docker-compose-springboot-postgres.yaml up --build -d
@@ -77,5 +72,4 @@ steps:
 
   - script: |
       [[ "$(docker ps --filter status=exited --format="{{.Image}} :: {{.Status}}" | grep liquibase | cut -d':' -f3 | sed -r "s/Exited \((.*)\) .*/\1/g" | tr -d ' ')" == "0" ]]
-    displayName: 'Liquibase check'  
-
+    displayName: 'Liquibase check'

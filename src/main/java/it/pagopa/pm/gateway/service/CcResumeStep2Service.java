@@ -1,23 +1,18 @@
 package it.pagopa.pm.gateway.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
-import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
-import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
-import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
-import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
 import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Authorization;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
-import it.pagopa.pm.gateway.utils.ClientsConfig;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
+import it.pagopa.pm.gateway.utils.VposPatchUtils;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +29,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import static it.pagopa.pm.gateway.constant.Messages.GENERIC_ERROR_MSG;
-import static it.pagopa.pm.gateway.constant.Messages.PATCH_CLOSE_PAYMENT_ERROR;
 import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_AUTHORIZED;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 
@@ -42,32 +36,26 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 @Slf4j
 @NoArgsConstructor
 public class CcResumeStep2Service {
-    private ClientsConfig clientsConfig;
 
-    @Value("${vpos.requestUrl}")
     private String vposUrl;
-
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
-
-    @Autowired
-    private EcommerceClient ecommerceClient;
-
-    @Autowired
     private VPosRequestUtils vPosRequestUtils;
-
-    @Autowired
     private VPosResponseUtils vPosResponseUtils;
-
-    @Autowired
     private HttpClient httpClient;
-
-    @Autowired
     private ObjectMapper objectMapper;
+    private VposPatchUtils vposPatchUtils;
 
     @Autowired
-    public CcResumeStep2Service(ClientsConfig clientsConfig) {
-        this.clientsConfig = clientsConfig;
+    public CcResumeStep2Service(@Value("${vpos.requestUrl}") String vposUrl, PaymentRequestRepository paymentRequestRepository,
+                                VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
+                                HttpClient httpClient, ObjectMapper objectMapper, VposPatchUtils vposPatchUtils) {
+        this.vposUrl = vposUrl;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.vPosRequestUtils = vPosRequestUtils;
+        this.vPosResponseUtils = vPosResponseUtils;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+        this.vposPatchUtils = vposPatchUtils;
     }
 
     public void startResumeStep2(String requestId) {
@@ -113,7 +101,7 @@ public class CcResumeStep2Service {
                 executeAccount(entity, request);
             }
 
-            executePatchTransaction(entity);
+            vposPatchUtils.executePatchTransaction(entity, request);
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }
@@ -179,29 +167,6 @@ public class CcResumeStep2Service {
         entity.setStatus(status);
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
-        log.info("END - XPay Request Payment Account for requestId {}", entity.getGuid());
-    }
-
-    private void executePatchTransaction(PaymentRequestEntity entity) {
-        String requestId = entity.getGuid();
-        log.info("START - PATCH updateTransaction for requestId: {}", requestId);
-        AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
-
-        String authCode;
-        if(AUTHORIZED.name().equals(entity.getStatus())) {
-            authCode = entity.getAuthorizationCode();
-        } else {
-            authCode = entity.getErrorCode();
-        }
-
-        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
-        try {
-            ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());
-            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
-            log.info("Response from PATCH updateTransaction for requestId {} is {}", requestId, patchResponse.toString());
-        } catch (Exception e) {
-            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
-            log.info("Refunding payment with requestId: {}", requestId);
-        }
+        log.info("END - Vpos Request Payment Account for requestId {}", entity.getGuid());
     }
 }

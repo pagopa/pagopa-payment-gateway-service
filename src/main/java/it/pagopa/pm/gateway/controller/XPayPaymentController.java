@@ -234,7 +234,7 @@ public class XPayPaymentController {
                     requestEntity.setStatus(DENIED.name());
                 }
 
-                if(DENIED.name().equals(requestEntity.getStatus())) {
+                if (DENIED.name().equals(requestEntity.getStatus())) {
                     executePatchTransaction(requestEntity);
                 }
 
@@ -385,7 +385,7 @@ public class XPayPaymentController {
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
 
         String authCode;
-        if(AUTHORIZED.name().equals(entity.getStatus())) {
+        if (AUTHORIZED.name().equals(entity.getStatus())) {
             authCode = entity.getAuthorizationCode();
         } else {
             authCode = entity.getErrorCode();
@@ -400,7 +400,20 @@ public class XPayPaymentController {
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
             log.info("Refunding payment with requestId: " + requestId);
+            executeRevertAfterPatch(entity);
         }
+    }
+
+    private void executeRevertAfterPatch(PaymentRequestEntity entity) {
+        String requestId = entity.getGuid();
+        try {
+            if (executeXPayOrderStatus(entity).equals(OK)) {
+                executeXPayRevert(entity);
+            }
+        } catch (Exception e) {
+            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId);
+        }
+        log.info("End Refunding payment with requestId: {}", requestId);
     }
 
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {

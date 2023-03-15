@@ -13,7 +13,8 @@ info:
       <li>postepay</li>
     </ol> 
 externalDocs:   
-  url: https://pagopa.atlassian.net/wiki/spaces/TKM/overview 
+  url: https://pagopa.atlassian.net/wiki/spaces/TKM/overview
+  description: Design review 
 servers:
   - url: http://localhost:8080/
     description: Generated server url

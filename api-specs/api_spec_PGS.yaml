@@ -408,13 +408,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /payment-authorizations/xpay:     
+  /xpay/authorizations:     
     post:       
-      summary: New payment authorization request to xpay       
-      description: Creation of a new payment authorization request to *xpay* and return url on which to complete the frontend authorization flow       
+      summary: New authorization with xpay       
+      description: Creation of a new authorization with *xpay* and return url on which to complete the frontend authorization 3DS2 flow       
       tags:         
         - XPay       
-      operationId: new-auth-payment-request-xpay       
+      operationId: new-authorization-xpay       
       parameters:         
       - in: header           
         name: x-client-id           
@@ -463,7 +463,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayPaymentAuthorizationError'
-  /payment-authorizations/xpay/{paymentAuthorizationId}:     
+  /xpay/authorizations/{paymentAuthorizationId}:     
     get:       
       summary: Retrieve xpay payment authorization
       description:  Retrieve xpay payment authorization given paymentAuthorizationId
@@ -538,7 +538,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayPaymentAuthorizationError' 
-  /payment-authorizations/xpay/{paymentAuthorizationId}/resume:     
+  /xpay/authorizations/{paymentAuthorizationId}/resume:     
     get:       
       summary: Resume of a xpay payment authorization       
       description: Resume of a xpay payment authorization and redirect on touchpoint client frontend
@@ -585,8 +585,8 @@ paths:
         "302":
           description: Resume completed
           headers:
-            location:
-              description: CheckOut Url 
+            Location:
+              description: client Url 
               schema:
                 type: string
                 format: uri
@@ -596,9 +596,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/XPayPaymentAuthorizationError'
-  /request-payments/vpos:
+  /vpos/authorizations:
     post:
-      summary: payment authorization request to Vpos
+      summary: New authorization with Vpos
+      description: Creation of a new authorization with vpos and return url on which to complete the frontend authorization 3DS2 flow
       tags:
         - Vpos
       operationId: step0-creditCard
@@ -624,7 +625,7 @@ paths:
               $ref: '#/components/schemas/CreditCardAuthRequest'
         required: true
       responses:
-        "200":
+        "202":
           description: OK
           content:
             application/json:
@@ -648,15 +649,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreditCardAuthResponseGenericError'
-  /request-payments/vpos/{requestId}:
+  /vpos/authorizations/{paymentAuthorizationId}:
     get:
-      summary: retrieve vpos payment request
+      summary: retrieve vpos payment authorization
       tags:
         - Vpos
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -691,7 +692,7 @@ paths:
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -715,15 +716,15 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/VposDeleteResponse500'
-  /request-payments/vpos/{requestId}/resume/method:
+  /vpos/authorizations/{paymentAuthorizationId}/resume/method:
     post:
-      summary: resume vpos payment request
+      summary: resume vpos payment authorization
       tags:
         - Vpos
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -749,7 +750,7 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/VposResumeResponse'
-  /request-payments/vpos/{requestId}/resume/challenge:
+  /vpos/authorizations/{paymentAuthorizationId}/resume/challenge:
     post:
       summary: resume vpos payment request
       tags:
@@ -757,7 +758,7 @@ paths:
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -772,7 +773,7 @@ paths:
       responses:
         "302":
           description: "FOUND, Redirect to url"
-  /request-payments/vpos/{requestId}/method/notifications:
+  /vpos/authorizations/{paymentAuthorizationId}/method/notifications:
     post:
       summary: created webView to execute 'method'
       tags:
@@ -780,7 +781,7 @@ paths:
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:

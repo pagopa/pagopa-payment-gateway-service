@@ -520,11 +520,11 @@ public class ValidBeans {
         AuthPaymentXPayRequest authPaymentXPayRequest = new AuthPaymentXPayRequest();
         String timeStamp = String.valueOf(System.currentTimeMillis());
         authPaymentXPayRequest.setApiKey("ExampleApiKey");
-        authPaymentXPayRequest.setPan(xPayAuthRequest.getPan());
-        authPaymentXPayRequest.setScadenza(xPayAuthRequest.getExpiryDate());
+        authPaymentXPayRequest.setPan(xPayAuthRequest.unmaskedPan());
+        authPaymentXPayRequest.setScadenza(xPayAuthRequest.unmaskedExpiryDate());
         authPaymentXPayRequest.setCodiceTransazione(xPayAuthRequest.getIdTransaction());
         authPaymentXPayRequest.setImporto(xPayAuthRequest.getGrandTotal());
-        authPaymentXPayRequest.setCvv(xPayAuthRequest.getCvv());
+        authPaymentXPayRequest.setCvv(xPayAuthRequest.unmaskedCvv());
         authPaymentXPayRequest.setUrlRisposta("localhost");
         authPaymentXPayRequest.setDivisa("978");
         authPaymentXPayRequest.setTimeStamp(timeStamp);

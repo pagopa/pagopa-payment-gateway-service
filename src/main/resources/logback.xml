@@ -1,0 +1,23 @@
+<configuration>
+    <appender name="mask" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="it.pagopa.pm.gateway.config.MaskingPatternLayout">
+                <maskPattern>\"pan\w*\"\s*:\s*\"(.*?)\"</maskPattern> <!-- pan -->
+                <maskPattern>\d{16}</maskPattern> <!-- 16 digits -->
+                <maskPattern>\"cvv\w*\"\s*:\s*\"(.*?)\"</maskPattern> <!-- cvv -->
+                <maskPattern>\"securityCode\"\s*:\s*\"(.*?)\"</maskPattern> <!-- securityCode -->
+                <maskPattern>\"holder\w*\"\s*:\s*\"(.*?)\"</maskPattern> <!-- holder -->
+                <maskPattern>\"scadenza\"\s*:\s*\"(.*?)\"</maskPattern> <!-- scadenza -->
+                <maskPattern>\"nome\"\s*:\s*\"(.*?)\"</maskPattern> <!-- nome -->
+                <maskPattern>\"cognome\"\s*:\s*\"(.*?)\"</maskPattern> <!-- cognome -->
+                <maskPattern>\"\w*[eE]xp\w*[dD]ate\w*\"\s*:\s*\"(.*?)\"</maskPattern> <!-- expDate variants -->
+                <maskPattern>([a-z0-9.-]+@[a-z]+\.[a-z]{2,3})</maskPattern> <!-- email -->
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%logger{36}] (%thread) %msg%ex%n</pattern>
+            </layout>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="mask" />
+    </root>
+</configuration>

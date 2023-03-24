@@ -206,6 +206,10 @@ public class XPayPaymentController {
 
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         AuthPaymentXPayRequest xPayAuthRequest = createXpayAuthRequest(pgsRequest);
+
+        xPayAuthRequest = null;
+        xPayAuthRequest.equals(xPayAuthRequest);
+
         generateRequestEntity(clientId, mdcFields, transactionId, paymentRequestEntity, xPayAuthRequest);
         xPayAuthRequest.setUrlRisposta(String.format(xpayResumeUrl, paymentRequestEntity.getGuid()));
         executeXPayAuthorizationCall(xPayAuthRequest, paymentRequestEntity, transactionId);
@@ -551,14 +555,23 @@ public class XPayPaymentController {
         AuthPaymentXPayRequest xPayRequest = new AuthPaymentXPayRequest();
         xPayRequest.setApiKey(apiKey);
         xPayRequest.setImporto(grandTotal);
-        xPayRequest.setCvv(pgsRequest.getCvv());
-        xPayRequest.setPan(pgsRequest.getPan());
+        xPayRequest.setCvv(pgsRequest.unmaskedCvv());
+        xPayRequest.setPan(pgsRequest.unmaskedPan());
         xPayRequest.setDivisa(EUR_CURRENCY);
         xPayRequest.setMac(mac);
-        xPayRequest.setScadenza(pgsRequest.getExpiryDate());
+        xPayRequest.setScadenza(pgsRequest.unmaskedExpiryDate());
         xPayRequest.setTimeStamp(timeStamp);
         xPayRequest.setCodiceTransazione(codTrans);
+        xPayRequest.setMail("ciao@gmail");
         log.info("Request body to call autenticazione3DS created for transactionId " + idTransaction);
+
+        try {
+            log.info(new ObjectMapper().writeValueAsString(xPayRequest));
+            log.info(xPayRequest.toString());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         return xPayRequest;
     }
 

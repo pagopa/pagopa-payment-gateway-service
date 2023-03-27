@@ -273,6 +273,7 @@ public class XPayPaymentController {
                 }
                 break;
             case AUTHORIZED:
+            case CANCELLED:
             case DENIED:
                 String authOutcome = BooleanUtils.toBoolean(entity.getAuthorizationOutcome()) ? OK.name() : KO.name();
                 log.info(String.format("Authorization outcome for requestId %s is %s", requestId, authOutcome));

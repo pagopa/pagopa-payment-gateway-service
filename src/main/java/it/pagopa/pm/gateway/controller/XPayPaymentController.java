@@ -81,7 +81,7 @@ public class XPayPaymentController {
         this.clientsConfig = clientsConfig;
     }
 
-    @PostMapping()
+    @PostMapping
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                 @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                 @Valid @RequestBody XPayAuthRequest pgsRequest) {

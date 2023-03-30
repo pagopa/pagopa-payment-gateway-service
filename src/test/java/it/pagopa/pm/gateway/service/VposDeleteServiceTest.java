@@ -36,6 +36,8 @@ public class VposDeleteServiceTest {
 
     public static final String RESULT_CODE_OK = "00";
     public static final String RESULT_CODE_KO = "02";
+    public static final String CREATED = "CREATED";
+    public static final String AUTHORIZED = "AUTHORIZED";
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 
     @Mock
@@ -100,6 +102,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
+        entity.setStatus(CREATED);
 
         //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
@@ -115,10 +118,10 @@ public class VposDeleteServiceTest {
         when(vPosResponseUtils.buildOrderStatusResponse(any())).thenReturn(vposOrderStatusResponse);
 
 
-        VposDeleteResponse resposeTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, "Error during orderStatus", false);
+        VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, "Error during orderStatus", false);
         VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
 
-        assertEquals(resposeTest, responseService);
+        assertEquals(responseTest, responseService);
     }
 
     @Test
@@ -130,6 +133,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
+        entity.setStatus(CREATED);
 
         //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
@@ -149,18 +153,20 @@ public class VposDeleteServiceTest {
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
 
 
-        VposDeleteResponse resposeTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, "Error during Revert", false);
+        VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, "Error during Revert", false);
         VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
 
-        assertEquals(resposeTest, responseService);
+        assertEquals(responseTest, responseService);
     }
 
     @Test
     public void startDelete_Test_EntityNull() {
-        VposDeleteResponse resposeTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, REQUEST_ID_NOT_FOUND_MSG, false);
+        VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, REQUEST_ID_NOT_FOUND_MSG, false);
         when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
         VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
-        assertEquals(resposeTest, responseService);
+
+        responseTest.setStatus(null);
+        assertEquals(responseTest, responseService);
     }
 
     @Test
@@ -168,10 +174,13 @@ public class VposDeleteServiceTest {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setIdTransaction("1235");
         entity.setIsRefunded(true);
-        VposDeleteResponse resposeTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, String.format(TRANSACTION_ALREADY_REFUND, entity.getIdTransaction()), false);
+        entity.setStatus(AUTHORIZED);
+        VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, String.format(TRANSACTION_ALREADY_REFUND, entity.getIdTransaction()), false);
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
-        assertEquals(resposeTest, responseService);
+
+        responseTest.setStatus(AUTHORIZED);
+        assertEquals(responseTest, responseService);
     }
 
     @Test
@@ -183,6 +192,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
+        entity.setStatus(CREATED);
 
         VposDeleteResponse resposeTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, GENERIC_REFUND_ERROR_MSG + UUID_SAMPLE, false);
 
@@ -202,6 +212,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
+        entity.setStatus(CREATED);
 
         //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();

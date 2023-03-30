@@ -54,8 +54,6 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.XPayParams.*;
 import static it.pagopa.pm.gateway.dto.enums.CardCircuit.MASTERCARD;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
-import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.KO;
-import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
 import static org.openapitools.client.model.AuthorizationType.IMMEDIATA;
 
@@ -1043,9 +1041,9 @@ public class ValidBeans {
         VposDeleteResponse response = new VposDeleteResponse();
         response.setRequestId(uuid_sample);
         if (isValid) {
-            response.setRefundOutcome(OK.name());
+            response.setStatus("CANCELLED");
         } else {
-            response.setRefundOutcome(KO.name());
+            response.setStatus("CREATED");
         }
         response.setError(error);
         return response;

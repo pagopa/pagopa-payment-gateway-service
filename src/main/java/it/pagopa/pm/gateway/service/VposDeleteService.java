@@ -101,6 +101,7 @@ public class VposDeleteService {
         Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest);
         HttpClientResponse clientResponse = callVPos(params);
         VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse.getEntity());
+        log.info("Result code from VPOS - OrderStatus - for RequestId {} is {}", entity.getGuid(), response.getResultCode());
         return computeOrderStatusResultCode(response, entity);
     }
 
@@ -109,6 +110,7 @@ public class VposDeleteService {
         Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(stepZeroRequest, entity.getCorrelationId());
         HttpClientResponse clientResponse = callVPos(params);
         AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
+        log.info("END - Vpos Request Payment Revert for requestId  - resultCode: {} " + entity.getGuid(), response.getResultCode());
         return saveRevertResultCode(response, entity);
     }
 

@@ -106,6 +106,7 @@ public class CcResumeStep1Service {
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), request);
+            log.info("Result code from VPOS - Step 1 - for RequestId {} is {}", requestId, response.getResultCode());
             if (isStepOneResultCodeOk(response, entity)) {
                 executeAccount(entity, request);
             }
@@ -197,6 +198,6 @@ public class CcResumeStep1Service {
         entity.setStatus(status);
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
-        log.info("END - XPay Request Payment Account for requestId {}", entity.getGuid());
+        log.info("END - Vpos Request Payment Account for requestId  - resultCode: {} " + entity.getGuid(), resultCode);
     }
 }

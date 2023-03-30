@@ -109,6 +109,7 @@ public class VposService {
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
+            log.info("Result code from VPOS - Step 0 - for RequestId {} is {}", requestId, response.getResultCode());
             boolean toAccount = checkResultCode(response, entity);
             if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
                 log.info("RequestId {} is for a first payment with credit card. Reverting", requestId);
@@ -261,7 +262,7 @@ public class VposService {
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
-        log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());
+        log.info("END - Vpos Request Payment Account for requestId  - resultCode: {} " + entity.getGuid(), resultCode);
     }
 
     private void checkRevertResultCode(AuthResponse response, PaymentRequestEntity entity) {

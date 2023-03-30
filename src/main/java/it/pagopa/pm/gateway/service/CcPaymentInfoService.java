@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
@@ -32,6 +34,7 @@ public class CcPaymentInfoService {
     private static final String CHALLENGE = "CHALLENGE";
     private static final String CANCELLED = "CANCELLED";
     private static final String CREATED = "CREATED";
+    private static final List<String> UNFINISHED_STATES = Arrays.asList(CREATED, METHOD, CHALLENGE);
     private String methodNotifyUrl;
     private PaymentRequestRepository paymentRequestRepository;
     private ClientsConfig clientsConfig;
@@ -76,7 +79,7 @@ public class CcPaymentInfoService {
             response.setVposUrl(paymentInfo.getAuthorizationUrl());
         }
 
-        if(!CREATED.equals(paymentInfo.getStatus())) {
+        if(!UNFINISHED_STATES.contains(paymentInfo.getStatus())) {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
             response.setRedirectUrl(StringUtils.join(clientReturnUrl, idTransaction));

@@ -191,6 +191,7 @@ public class VposService {
         entity.setRequestEndpoint(REQUEST_PAYMENTS_VPOS);
         entity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         entity.setJsonRequest(vposPersistableRequest);
+        entity.setIsFirstPayment(request.getIsFirstPayment());
         return entity;
     }
 

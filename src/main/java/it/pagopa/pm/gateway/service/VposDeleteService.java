@@ -110,7 +110,7 @@ public class VposDeleteService {
         Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(stepZeroRequest, entity.getCorrelationId());
         HttpClientResponse clientResponse = callVPos(params);
         AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
-        log.info("END - Vpos Request Payment Revert for requestId  - resultCode: {} " + entity.getGuid(), response.getResultCode());
+        log.info("END - Vpos Request Payment Revert for requestId {} - resultCode: {} ", entity.getGuid(), response.getResultCode());
         return saveRevertResultCode(response, entity);
     }
 

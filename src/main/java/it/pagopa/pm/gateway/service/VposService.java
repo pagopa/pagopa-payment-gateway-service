@@ -263,7 +263,7 @@ public class VposService {
         entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
-        log.info("END - Vpos Request Payment Account for requestId  - resultCode: {} " + entity.getGuid(), resultCode);
+        log.info("END - Vpos Request Payment Account for requestId {} - resultCode: {} ", entity.getGuid(), resultCode);
     }
 
     private void checkRevertResultCode(AuthResponse response, PaymentRequestEntity entity) {

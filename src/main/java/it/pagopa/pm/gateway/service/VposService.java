@@ -88,7 +88,7 @@ public class VposService {
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
-            log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s", idTransaction, e));
+            log.error(String.format("Error while constructing requestBody for idTransaction %s", idTransaction), e);
             return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null);
         }
     }

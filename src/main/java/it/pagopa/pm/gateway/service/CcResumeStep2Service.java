@@ -150,7 +150,7 @@ public class CcResumeStep2Service {
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkAccountResultCode(response, entity);
         } catch (Exception e) {
-            log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + " stackTrace: " + Arrays.toString(e.getStackTrace()));
+            log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }
     }
 

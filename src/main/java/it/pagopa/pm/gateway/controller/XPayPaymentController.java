@@ -500,7 +500,7 @@ public class XPayPaymentController {
             response.setError(REQUEST_ID_NOT_FOUND_MSG);
         } else if (httpStatus.is2xxSuccessful() && Objects.isNull(refundOutcome)) {
             response.setError("RequestId " + requestId + " has been refunded already. Skipping refund");
-        } else {
+        } else if(!httpStatus.is2xxSuccessful()) {
             response.setError(GENERIC_REFUND_ERROR_MSG + requestId);
         }
 

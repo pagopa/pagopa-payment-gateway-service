@@ -14,7 +14,6 @@ public class XPayPollingResponse {
     private String status;
     private XPayPollingResponseError error;
     private String html;
-    private String authOutcome;
     private String authCode;
     private String redirectUrl;
     private String requestId;

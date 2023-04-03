@@ -110,10 +110,7 @@ public class VposService {
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             boolean toAccount = checkResultCode(response, entity);
-            if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                log.info("RequestId {} is for a first payment with credit card. Reverting", requestId);
-                executeRevert(entity, pgsRequest);
-            } else if (toAccount) {
+            if (toAccount) {
                 executeAccount(entity, pgsRequest);
             }
 
@@ -136,19 +133,6 @@ public class VposService {
             checkAccountResultCode(response, entity);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
-        }
-    }
-
-    private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
-        try {
-            log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(pgsRequest, entity.getCorrelationId());
-            HttpClientResponse clientResponse = callVPos(params);
-            AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
-            vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
-            checkRevertResultCode(response, entity);
-        } catch (Exception e) {
-            log.error(GENERIC_REFUND_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
         }
     }
 

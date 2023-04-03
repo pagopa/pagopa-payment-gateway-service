@@ -145,7 +145,6 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when(vPosRequestUtils.buildRevertRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
         StepZeroResponse realResponse = service.startCreditCardPayment(ECOMMERCE_WEB, null, requestOK);
@@ -207,7 +206,6 @@ public class VposServiceTest {
         when(vPosRequestUtils.buildStepZeroRequestParams(any(), any())).thenReturn(params);
         when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos()).thenThrow(RuntimeException.class);
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildRevertRequestParams(any(), any()))).thenReturn(params);
         StepZeroResponse realResponse = service.startCreditCardPayment(ECOMMERCE_WEB, null, requestOK);
         assertNull(realResponse.getStatus());
     }

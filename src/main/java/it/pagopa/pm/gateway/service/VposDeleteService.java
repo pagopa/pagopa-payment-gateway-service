@@ -67,7 +67,7 @@ public class VposDeleteService {
 
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
-            return createDeleteResponse(requestId, String.format(TRANSACTION_ALREADY_REFUND, entity.getIdTransaction()), entity);
+            return createDeleteResponse(requestId, null, entity);
         }
 
         RefundOutcome refundOutcome;

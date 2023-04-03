@@ -175,7 +175,7 @@ public class VposDeleteServiceTest {
         entity.setIdTransaction("1235");
         entity.setIsRefunded(true);
         entity.setStatus(AUTHORIZED);
-        VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, String.format(TRANSACTION_ALREADY_REFUND, entity.getIdTransaction()), false);
+        VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, null, true);
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
 

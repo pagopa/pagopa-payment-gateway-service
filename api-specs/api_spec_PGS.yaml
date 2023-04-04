@@ -942,15 +942,11 @@ components:
           type: string
         paymentId:
           type: string
-        refundOutcome:
-          type: string
-          enum: [OK, KO]
         error:
           type: string
       required:
         - transactionId
         - paymentId
-        - refundOutcome
         - error
     XPayAuthRequest:
       required:
@@ -1062,6 +1058,7 @@ components:
       required:
         - status
         - requestId
+        - redirectUrl
       properties:
         html:
           type: string
@@ -1076,10 +1073,6 @@ components:
           enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
           description: status
           example: CREATED
-        authOutcome:
-          type: string
-          description: authorization outcome received from XPay
-          example: OK
         authCode:
           type: string
           description: authorization code received from XPay
@@ -1114,15 +1107,14 @@ components:
         requestId:
           type: string
           example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
-        refundOutcome:
-          type: string
-          enum: [OK, KO]
-          example: "OK"
         error:
           type: string
+        status:
+          type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
       required:
         - transactionId
-        - refundOutcome
+        - status
     XPayRefundResponse404:
       type: object
       properties:
@@ -1144,9 +1136,13 @@ components:
         error:
           type: string
           example: "Error while requesting refund for requestId: xxx"
+        status:
+          type: string
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
       required:
         - transactionId
         - error
+        - status
     BPayInfoResponse:
       type: object
       properties:
@@ -1267,14 +1263,11 @@ components:
         status:
           type: string
           enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
-        responseType:
-          type: string
-          enum: [METHOD, CHALLENGE, AUTHORIZATION, ERROR]
         requestId:
           type: string
         vposUrl:
           type: string
-        clientReturnUrl:
+        redirectUrl:
           type: string
         threeDsMethodData:
           type: string
@@ -1314,21 +1307,34 @@ components:
           enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         requestId:
           type: string
-        clientReturnUrl:
+        redirectUrl:
           type: string
         creq:
           type: string
           format: base64
+        authCode:
+          type: string
+          description: authorization code received from XPay
+          example: 123
       required:
         - status
         - requestId
-        - clientReturnUrl
+        - redirectUrl
+        - authCode
     CcPaymentInfoError:
       type: object
       properties:
-        reason:
+        redirectUrl:
           type: string
-          example: "RequestId non trovato"
+        status:
+          type: string
+          enum: [DENIED, CANCELLED]
+        requestId:
+          type: string
+      required:
+        - status
+        - requestId
+        - redirectUrl
     CreditCardResumeRequest:
       type: object
       required:
@@ -1350,15 +1356,10 @@ components:
       type: object
       required:
         - requestId
-        - refundOutcome
         - status
       properties:
         requestId:
           type: string
-        refundOutcome:
-          type: string
-          enum:
-            [OK, KO]
         status:
           type: string
           enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
@@ -1369,15 +1370,10 @@ components:
       type: object
       required:
         - requestId
-        - refundOutcome
         - error
       properties:
         requestId:
           type: string
-        refundOutcome:
-          type: string
-          enum:
-            [OK, KO]
         status:
           type: string
           enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
@@ -1387,16 +1383,11 @@ components:
       type: object
       required:
         - requestId
-        - refundOutcome
         - status
         - error
       properties:
         requestId:
           type: string
-        refundOutcome:
-          type: string
-          enum:
-            [OK, KO]
         status:
           type: string
           enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]

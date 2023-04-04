@@ -88,7 +88,7 @@ public class VposService {
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
-            log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()));
+            log.error(String.format("Error while constructing requestBody for idTransaction %s", idTransaction), e);
             return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null);
         }
     }
@@ -123,14 +123,14 @@ public class VposService {
         }
     }
 
-    private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
+    private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest, String authNumber) {
         try {
             log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
             Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest, entity.getCorrelationId());
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
-            checkAccountResultCode(response, entity);
+            checkAccountResultCode(response, entity, authNumber);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
         }
@@ -156,6 +156,7 @@ public class VposService {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
             String urlRedirect = vposPollingUrl + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
+            response.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         } else {
             response.setError(errorMessage);
         }
@@ -229,7 +230,7 @@ public class VposService {
         return url + "?creq=" + creq;
     }
 
-    private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
+    private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity, String authNumber) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
         String errorCode = StringUtils.EMPTY;
@@ -239,10 +240,9 @@ public class VposService {
             authorizationOutcome = false;
             errorCode = resultCode;
         }
-        entity.setAuthorizationCode(response.getAuthorizationNumber());
+        entity.setAuthorizationCode(authNumber);
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
-        entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());

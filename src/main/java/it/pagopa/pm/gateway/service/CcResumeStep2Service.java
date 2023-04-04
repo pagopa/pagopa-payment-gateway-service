@@ -102,7 +102,7 @@ public class CcResumeStep2Service {
                 executeAccount(entity, request);
             }
 
-            vposPatchUtils.executePatchTransaction(entity, request);
+            vposPatchUtils.executePatchTransaction(entity);
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }

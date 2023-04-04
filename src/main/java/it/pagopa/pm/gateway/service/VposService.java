@@ -117,7 +117,7 @@ public class VposService {
 
             //If the resultCode is 25 or 26, the PATCH is not called
             if (!METHOD_CHALLENGE_CODES.contains(response.getResultCode())) {
-                vposPatchUtils.executePatchTransaction(entity, pgsRequest);
+                vposPatchUtils.executePatchTransaction(entity);
             }
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);

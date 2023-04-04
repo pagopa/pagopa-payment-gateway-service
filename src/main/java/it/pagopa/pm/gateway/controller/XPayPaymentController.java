@@ -403,21 +403,7 @@ public class XPayPaymentController {
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
             log.error(PATCH_CLOSE_PAYMENT_ERROR + requestId, e);
-            log.info("Refunding payment with requestId: " + requestId);
-            executeRevertAfterPatch(entity);
         }
-    }
-
-    private void executeRevertAfterPatch(PaymentRequestEntity entity) {
-        String requestId = entity.getGuid();
-        try {
-            if (executeXPayOrderStatus(entity).equals(OK)) {
-                executeXPayRevert(entity);
-            }
-        } catch (Exception e) {
-            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
-        }
-        log.info("End Refunding payment with requestId: {}", requestId);
     }
 
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {

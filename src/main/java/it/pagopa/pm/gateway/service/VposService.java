@@ -11,7 +11,6 @@ import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.*;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
@@ -111,7 +110,8 @@ public class VposService {
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             boolean toAccount = checkResultCode(response, entity);
             if (toAccount) {
-                executeAccount(entity, pgsRequest);
+                String authNumber = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getAuthorizationNumber();
+                executeAccount(entity, pgsRequest, authNumber);
             }
 
             //If the resultCode is 25 or 26, the PATCH is not called
@@ -246,19 +246,6 @@ public class VposService {
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());
-    }
-
-    private void checkRevertResultCode(AuthResponse response, PaymentRequestEntity entity) {
-        String resultCode = response.getResultCode();
-        if (resultCode.equals(RESULT_CODE_AUTHORIZED)) {
-            entity.setStatus(CANCELLED.name());
-            entity.setIsRefunded(true);
-            paymentRequestRepository.save(entity);
-        } else {
-            entity.setErrorMessage("Error during Revert");
-            entity.setIsRefunded(false);
-        }
-        log.info("END - VPos Request Payment Revert for requestId {} - resultCode: {}", entity.getGuid(), resultCode);
     }
 
 }

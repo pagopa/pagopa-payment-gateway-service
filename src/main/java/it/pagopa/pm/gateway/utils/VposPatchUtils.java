@@ -133,7 +133,7 @@ public class VposPatchUtils {
             entity.setErrorMessage("Error during Revert");
             entity.setIsRefunded(false);
         }
-        log.info("END - VPos Request Payment Revert for requestId {}  - resultCode: {}" + entity.getGuid(), resultCode);
+        log.info("END - VPos Request Payment Revert for requestId {} - resultCode: {}", entity.getGuid(), resultCode);
     }
 
     private HttpClientResponse callVPos(Map<String, String> params) throws IOException {

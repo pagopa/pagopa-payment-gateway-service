@@ -10,11 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class XPayAuthResponse {
-
     private String urlRedirect;
     private String error;
     private String requestId;
     private String status;
     private String timeStamp;
-
 }

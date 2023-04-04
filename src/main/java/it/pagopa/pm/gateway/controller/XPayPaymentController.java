@@ -141,7 +141,7 @@ public class XPayPaymentController {
         }
 
         if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)
-                && "CREATED".equals(entity.getStatus())) {
+                && CREATED.name().equals(entity.getStatus())) {
 
             executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
         } else {

@@ -140,7 +140,9 @@ public class XPayPaymentController {
             return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(pollingUrlRedirect)).build();
         }
 
-        if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)) {
+        if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)
+                && "CREATED".equals(entity.getStatus())) {
+
             executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
         } else {
             log.info(String.format("Outcome is %s: setting status as DENIED for requestId %s", outcome, requestId));
@@ -180,12 +182,12 @@ public class XPayPaymentController {
 
         if (Objects.isNull(entity)) {
             log.error(REQUEST_ID_NOT_FOUND_MSG);
-            return createXPayRefundResponse(requestId, HttpStatus.NOT_FOUND, null);
+            return createXPayRefundResponse(requestId, HttpStatus.NOT_FOUND, null, null);
         }
 
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
-            return createXPayRefundResponse(requestId, HttpStatus.OK, null);
+            return createXPayRefundResponse(requestId, HttpStatus.OK, null, entity);
         }
 
         EsitoXpay refundOutcome = null;
@@ -194,9 +196,9 @@ public class XPayPaymentController {
             if (outcomeOrderStatus.equals(OK)) {
                 refundOutcome = executeXPayRevert(entity);
             }
-            return createXPayRefundResponse(requestId, HttpStatus.OK, refundOutcome);
+            return createXPayRefundResponse(requestId, HttpStatus.OK, refundOutcome, entity);
         } catch (Exception e) {
-            return createXPayRefundResponse(requestId, HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return createXPayRefundResponse(requestId, HttpStatus.INTERNAL_SERVER_ERROR, null, entity);
         }
     }
 
@@ -262,6 +264,8 @@ public class XPayPaymentController {
         String status = entity.getStatus();
         log.info(String.format("Request status for requestId %s is %s", requestId, status));
 
+        String clientReturnUrl = clientsConfig.getByKey(entity.getClientId()).getXpay().getClientReturnUrl();
+
         response.setStatus(status);
         PaymentRequestStatusEnum statusEnum = getEnumValueFromString(status);
         switch (statusEnum) {
@@ -277,16 +281,16 @@ public class XPayPaymentController {
             case DENIED:
                 String authOutcome = BooleanUtils.toBoolean(entity.getAuthorizationOutcome()) ? OK.name() : KO.name();
                 log.info(String.format("Authorization outcome for requestId %s is %s", requestId, authOutcome));
-                response.setAuthOutcome(authOutcome);
                 response.setAuthCode(entity.getAuthorizationCode());
 
-                String clientReturnUrl = clientsConfig.getByKey(entity.getClientId()).getXpay().getClientReturnUrl();
                 response.setRedirectUrl(StringUtils.join(clientReturnUrl, entity.getIdTransaction()));
                 break;
             default:
                 log.info(BooleanUtils.toBoolean(entity.getIsRefunded()) ?
                         String.format("XPay request with requestId %s has been refunded", requestId) :
                         String.format("XPay request with requestId %s has not been refunded yet", requestId));
+
+                response.setRedirectUrl(StringUtils.join(clientReturnUrl, entity.getIdTransaction()));
                 break;
         }
 
@@ -483,19 +487,19 @@ public class XPayPaymentController {
         }
     }
 
-    private ResponseEntity<XPayRefundResponse> createXPayRefundResponse(String requestId, HttpStatus httpStatus, EsitoXpay refundOutcome) {
+    private ResponseEntity<XPayRefundResponse> createXPayRefundResponse(String requestId, HttpStatus httpStatus,
+                                                                        EsitoXpay refundOutcome, PaymentRequestEntity entity) {
         XPayRefundResponse response = new XPayRefundResponse();
         response.setRequestId(requestId);
 
+        if(entity != null)
+            response.setStatus(entity.getStatus());
+
         if (httpStatus.is4xxClientError()) {
             response.setError(REQUEST_ID_NOT_FOUND_MSG);
-        } else if (httpStatus.is2xxSuccessful()) {
-            if (Objects.isNull(refundOutcome)) {
-                response.setError("RequestId " + requestId + " has been refunded already. Skipping refund");
-            } else {
-                response.setRefundOutcome(String.valueOf(refundOutcome));
-            }
-        } else {
+        } else if (httpStatus.is2xxSuccessful() && Objects.isNull(refundOutcome)) {
+            response.setError("RequestId " + requestId + " has been refunded already. Skipping refund");
+        } else if(!httpStatus.is2xxSuccessful()) {
             response.setError(GENERIC_REFUND_ERROR_MSG + requestId);
         }
 

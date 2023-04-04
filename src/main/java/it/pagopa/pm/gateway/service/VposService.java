@@ -11,7 +11,6 @@ import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.*;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
@@ -111,11 +110,9 @@ public class VposService {
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             log.info("Result code from VPOS - Step 0 - for RequestId {} is {}", requestId, response.getResultCode());
             boolean toAccount = checkResultCode(response, entity);
-            if (BooleanUtils.isTrue(pgsRequest.getIsFirstPayment())) {
-                log.info("RequestId {} is for a first payment with credit card. Reverting", requestId);
-                executeRevert(entity, pgsRequest);
-            } else if (toAccount) {
-                executeAccount(entity, pgsRequest);
+            if (toAccount) {
+                String authNumber = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getAuthorizationNumber();
+                executeAccount(entity, pgsRequest, authNumber);
             }
 
             //If the resultCode is 25 or 26, the PATCH is not called
@@ -127,29 +124,16 @@ public class VposService {
         }
     }
 
-    private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
+    private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest, String authNumber) {
         try {
             log.info("Calling VPOS - Accounting - for requestId: " + entity.getGuid());
             Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest, entity.getCorrelationId());
             HttpClientResponse clientResponse = callVPos(params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
-            checkAccountResultCode(response, entity);
+            checkAccountResultCode(response, entity, authNumber);
         } catch (Exception e) {
             log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
-        }
-    }
-
-    private void executeRevert(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
-        try {
-            log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
-            Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(pgsRequest, entity.getCorrelationId());
-            HttpClientResponse clientResponse = callVPos(params);
-            AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
-            vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
-            checkRevertResultCode(response, entity);
-        } catch (Exception e) {
-            log.error(GENERIC_REFUND_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
         }
     }
 
@@ -173,6 +157,7 @@ public class VposService {
             String sessionToken = jwtTokenUtils.generateToken(requestId);
             String urlRedirect = vposPollingUrl + requestId + "#token=" + sessionToken;
             response.setUrlRedirect(urlRedirect);
+            response.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         } else {
             response.setError(errorMessage);
         }
@@ -247,7 +232,7 @@ public class VposService {
         return url + "?creq=" + creq;
     }
 
-    private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity) {
+    private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity, String authNumber) {
         String resultCode = response.getResultCode();
         String status = AUTHORIZED.name();
         String errorCode = StringUtils.EMPTY;
@@ -257,26 +242,12 @@ public class VposService {
             authorizationOutcome = false;
             errorCode = resultCode;
         }
-        entity.setAuthorizationCode(response.getAuthorizationNumber());
+        entity.setAuthorizationCode(authNumber);
         entity.setAuthorizationOutcome(authorizationOutcome);
         entity.setStatus(status);
-        entity.setAuthorizationCode(response.getAuthorizationNumber());
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
         log.info("END - Vpos Request Payment Account for requestId {} - resultCode: {} ", entity.getGuid(), resultCode);
-    }
-
-    private void checkRevertResultCode(AuthResponse response, PaymentRequestEntity entity) {
-        String resultCode = response.getResultCode();
-        if (resultCode.equals(RESULT_CODE_AUTHORIZED)) {
-            entity.setStatus(CANCELLED.name());
-            entity.setIsRefunded(true);
-            paymentRequestRepository.save(entity);
-        } else {
-            entity.setErrorMessage("Error during Revert");
-            entity.setIsRefunded(false);
-        }
-        log.info("END - VPos Request Payment Revert for requestId {} - resultCode: {}", entity.getGuid(), resultCode);
     }
 
 }

@@ -332,8 +332,7 @@ public class XPayPaymentController {
                     }
                 }
             } catch (Exception e) {
-                log.error(String.format("An exception occurred while calling XPay's /paga3DS for requestId: %s. " +
-                        "Cause: %s, message: %s", requestId, e.getCause(), e.getMessage()),e);
+                log.error("An exception occurred while calling XPay's /paga3DS for requestId: {}. Cause: {}, message: {}", requestId, e.getCause(), e.getMessage(), e);
                 log.error("Complete exception:", e);
                 retryCount++;
                 entity.setStatus(DENIED.name());
@@ -576,7 +575,7 @@ public class XPayPaymentController {
         try {
             paymentRequestEntity.setJsonRequest(xpayPersistableRequest);
         } catch (JsonProcessingException e) {
-            log.error("Error while serializing request as JSON. Request object is: " + request, e);
+            log.error("Error while serializing request as JSON. Request object is: {}", request, e);
         }
     }
 

@@ -87,7 +87,7 @@ public class VposService {
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
-            log.error(String.format("Error while constructing requestBody for idTransaction %s", idTransaction), e);
+            log.error(String.format("Error while constructing requestBody for idTransaction %s, cause: %s - %s", idTransaction, e.getCause(), e.getMessage()),e);
             return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null);
         }
     }
@@ -108,6 +108,7 @@ public class VposService {
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
+            log.info("Result code from VPOS - Step 0 - for RequestId {} is {}", requestId, response.getResultCode());
             boolean toAccount = checkResultCode(response, entity);
             if (toAccount) {
                 String authNumber = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getAuthorizationNumber();
@@ -175,6 +176,7 @@ public class VposService {
         entity.setRequestEndpoint(REQUEST_PAYMENTS_VPOS);
         entity.setTimeStamp(String.valueOf(System.currentTimeMillis()));
         entity.setJsonRequest(vposPersistableRequest);
+        entity.setIsFirstPayment(request.getIsFirstPayment());
         return entity;
     }
 
@@ -245,7 +247,7 @@ public class VposService {
         entity.setStatus(status);
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
-        log.info("END - Vpos Request Payment Account for requestId " + entity.getGuid());
+        log.info("END - Vpos Request Payment Account for requestId {} - resultCode: {} ", entity.getGuid(), resultCode);
     }
 
 }

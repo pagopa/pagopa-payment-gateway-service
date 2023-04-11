@@ -57,6 +57,7 @@ public class XPayPaymentController {
     public static final String ZERO_CHAR = "0";
     private static final int MAX_RETRIES = 3;
     private static final int MAX_ERROR_MESSAGE_ENTITY_SIZE = 50;
+    private static final String ERROR_MESSAGE_TRUNCATE_SUFFIX = "...";
     private String xpayPollingUrl;
     private String xpayResumeUrl;
     private ClientsConfig clientsConfig;
@@ -383,8 +384,8 @@ public class XPayPaymentController {
             log.info("RequestId {} has error code: {} - message: {}", requestId,
                     errorCode, errorMessage);
             String truncatedMessage = errorMessage;
-            if (truncatedMessage.length() > MAX_ERROR_MESSAGE_ENTITY_SIZE) {
-                truncatedMessage = StringUtils.truncate(errorMessage, MAX_ERROR_MESSAGE_ENTITY_SIZE - 3) + "...";
+            if (StringUtils.length(truncatedMessage) > MAX_ERROR_MESSAGE_ENTITY_SIZE) {
+                truncatedMessage = StringUtils.truncate(errorMessage, MAX_ERROR_MESSAGE_ENTITY_SIZE - ERROR_MESSAGE_TRUNCATE_SUFFIX.length()) + ERROR_MESSAGE_TRUNCATE_SUFFIX;
             }
             entity.setErrorCode(errorCode);
             entity.setErrorMessage(truncatedMessage);

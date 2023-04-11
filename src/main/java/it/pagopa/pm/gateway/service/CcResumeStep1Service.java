@@ -113,7 +113,7 @@ public class CcResumeStep1Service {
 
             //If the resultCode is 26, the PATCH is not called
             if (!RESULT_CODE_METHOD.equals(response.getResultCode())) {
-                vposPatchUtils.executePatchTransaction(entity, request);
+                vposPatchUtils.executePatchTransaction(entity);
             }
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);

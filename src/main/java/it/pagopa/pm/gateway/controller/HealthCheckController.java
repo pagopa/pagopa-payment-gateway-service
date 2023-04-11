@@ -15,7 +15,7 @@ public class HealthCheckController {
     @GetMapping
     public ResponseEntity healthcheck() {
         try {
-            log.debug("pagopa-payment-transaction-gateway healthcheck");
+            log.info("pagopa-payment-transaction-gateway healthcheck");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Exception calling healthcheck controller", e);

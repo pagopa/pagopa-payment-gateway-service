@@ -20,6 +20,8 @@ import org.springframework.util.Base64Utils;
 import java.util.Optional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
 
 @Slf4j
 @Service
@@ -27,10 +29,6 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 public class CcPaymentInfoService {
 
     public static final String CREQ = "?creq=";
-    private static final String STATUS_AUTHORIZED = "AUTHORIZED";
-    private static final String RESP_TYPE_METHOD = "METHOD";
-    private static final String RESP_TYPE_CHALLENGE = "CHALLENGE";
-    private static final String STATUS_CREATED = "CREATED";
     private String methodNotifyUrl;
     private PaymentRequestRepository paymentRequestRepository;
     private ClientsConfig clientsConfig;
@@ -60,14 +58,14 @@ public class CcPaymentInfoService {
         response.setStatus(paymentInfo.getStatus());
         response.setRequestId(requestId);
 
-        if (STATUS_AUTHORIZED.equals(paymentInfo.getStatus())) {
+        if (AUTHORIZED.name().equals(paymentInfo.getStatus())) {
             response.setAuthCode(paymentInfo.getAuthorizationCode());
-        } else if(STATUS_CREATED.equals(paymentInfo.getStatus())) {
-            if (RESP_TYPE_METHOD.equals(paymentInfo.getResponseType())) {
+        } else if(CREATED.name().equals(paymentInfo.getStatus())) {
+            if (METHOD.name().equals(paymentInfo.getResponseType())) {
                 String threeDsMethodData = generate3DsMethodData(requestId);
                 response.setThreeDsMethodData(threeDsMethodData);
                 response.setResponseType(paymentInfo.getResponseType());
-            } else if (RESP_TYPE_CHALLENGE.equals(paymentInfo.getResponseType())) {
+            } else if (CHALLENGE.name().equals(paymentInfo.getResponseType())) {
                 String creq = getCreqFromChallengeUrl(paymentInfo);
                 response.setCreq(creq);
                 response.setResponseType(paymentInfo.getResponseType());
@@ -75,7 +73,7 @@ public class CcPaymentInfoService {
             response.setVposUrl(paymentInfo.getAuthorizationUrl());
         }
 
-        if(!STATUS_CREATED.equals(paymentInfo.getStatus())) {
+        if(!CREATED.name().equals(paymentInfo.getStatus())) {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
             response.setRedirectUrl(StringUtils.join(clientReturnUrl, idTransaction));

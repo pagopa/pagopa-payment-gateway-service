@@ -139,9 +139,9 @@ public class ClientConfig {
                 .setProxy(createProxy(this.getClass().getName()))
                 .build();
         HttpComponentsMessageSender httpComponentsMessageSender = new HttpComponentsMessageSender();
-        httpComponentsMessageSender.setHttpClient(httpClient);
         httpComponentsMessageSender.setConnectionTimeout(bpayClientTimeoutMs);
         httpComponentsMessageSender.setReadTimeout(bpayClientTimeoutMs);
+        httpComponentsMessageSender.setHttpClient(httpClient);
         return httpComponentsMessageSender;
     }
 

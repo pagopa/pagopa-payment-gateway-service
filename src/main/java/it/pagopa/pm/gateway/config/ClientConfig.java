@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.ssl.*;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.HttpHost;
@@ -22,21 +23,24 @@ import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.ws.client.core.WebServiceTemplate;
-import org.springframework.ws.transport.WebServiceMessageSender;
-import org.springframework.ws.transport.http.HttpUrlConnectionMessageSender;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.time.Duration;
+import java.nio.file.*;
+import java.security.*;
 import java.util.Objects;
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.ws.transport.http.HttpComponentsMessageSender;
+
 
 @Slf4j
 @Configuration
 @EnableAsync
 public class ClientConfig {
 
-    private static final String HTTPS_PROXY_HOST_PROPERTY = "https.proxyHost";
-    private static final String HTTPS_PROXY_PORT_PROPERTY = "https.proxyPort";
     private static final int XPAY_DEFAULT_TIMEOUT = 10000;
     private static final int XPAY_DEFAULT_MAX_TOTAL = 100;
     private static final int XPAY_DEFAULT_MAX_PER_ROUTE = 50;
@@ -70,6 +74,18 @@ public class ClientConfig {
 
     @Value("${pgs.xpay.client.timeOut}")
     private String xpayClientTimeout;
+
+    @Value("${bpay.keystore.location}")
+    private String bpayKeyStoreLocation;
+
+    @Value("${bpay.keystore.password}")
+    private String bpayKeyStorePassword;
+
+    @Value("${https.proxyHost}")
+    private static String proxyHost;
+
+    @Value("${https.proxyPort}")
+    private static String proxyPort;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -111,18 +127,26 @@ public class ClientConfig {
     }
 
     @Bean
-    public WebServiceTemplate bancomatPayWebServiceTemplate() {
+    public WebServiceTemplate bancomatPayWebServiceTemplate() throws Exception {
+        char[] keyStorePass = bpayKeyStorePassword.toCharArray();
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        keyStore.load(Files.newInputStream(Paths.get(bpayKeyStoreLocation)), keyStorePass);
+        SSLContext sslContext = SSLContextBuilder.create()
+                .loadKeyMaterial(keyStore, keyStorePass)
+                .loadTrustMaterial(new TrustSelfSignedStrategy()).build();
+        HttpClient httpClient = HttpClientBuilder.create()
+                .setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext))
+                .setProxy(createProxy(this.getClass().getName()))
+                .build();
+        HttpComponentsMessageSender httpComponentsMessageSender = new HttpComponentsMessageSender();
+        httpComponentsMessageSender.setHttpClient(httpClient);
+        httpComponentsMessageSender.setConnectionTimeout(bpayClientTimeoutMs);
+        httpComponentsMessageSender.setReadTimeout(bpayClientTimeoutMs);
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
+        webServiceTemplate.setMessageSender(httpComponentsMessageSender);
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(bpayClientUrl);
-        for (WebServiceMessageSender sender : webServiceTemplate.getMessageSenders()) {
-            Duration durationTimeout = Duration.ofMillis(bpayClientTimeoutMs);
-            if (sender instanceof HttpUrlConnectionMessageSender) {
-                ((HttpUrlConnectionMessageSender) sender).setConnectionTimeout(durationTimeout);
-                ((HttpUrlConnectionMessageSender) sender).setReadTimeout(durationTimeout);
-            }
-        }
         log.info("bancomatPayWebServiceTemplate - bancomatPayClientUrl " + bpayClientUrl);
         return webServiceTemplate;
     }
@@ -185,8 +209,6 @@ public class ClientConfig {
     }
 
     public static HttpHost createProxy(String className) {
-        String proxyHost = System.getProperty(HTTPS_PROXY_HOST_PROPERTY);
-        String proxyPort = System.getProperty(HTTPS_PROXY_PORT_PROPERTY);
         HttpHost proxy = null;
         if (StringUtils.isNoneBlank(proxyHost, proxyPort) && NumberUtils.isParsable(proxyPort)) {
             log.info(String.format("%s uses proxy: %s:%s", className, proxyHost, proxyPort));
@@ -207,4 +229,5 @@ public class ClientConfig {
         }
         return apiClient;
     }
+
 }

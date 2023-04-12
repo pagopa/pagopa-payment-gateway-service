@@ -29,6 +29,7 @@ public class BancomatPayClient {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
+    @SuppressWarnings("unchecked")
     public InserimentoRichiestaPagamentoPagoPaResponse sendPaymentRequest(BPayPaymentRequest request, String guid) {
         log.info("START sendPaymentRequest");
         InserimentoRichiestaPagamentoPagoPa inserimentoRichiestaPagamentoPagoPa = new InserimentoRichiestaPagamentoPagoPa();
@@ -52,6 +53,7 @@ public class BancomatPayClient {
         return inserimentoRichiestaPagamentoPagoPaResponse;
     }
 
+    @SuppressWarnings("unchecked")
     public StornoPagamentoResponse sendRefundRequest(BPayRefundRequest request, String guid) {
         log.info("START sendRefundRequest");
         RequestStornoPagamentoVO requestStornoPagamentoVO = new RequestStornoPagamentoVO();
@@ -82,6 +84,7 @@ public class BancomatPayClient {
         return contestoVO;
     }
 
+    @SuppressWarnings("unchecked")
     public InquiryTransactionStatusResponse sendInquiryRequest(BPayRefundRequest bPayRefundRequest, String guid) {
         log.info("START sendInquiryRequest");
         InquiryTransactionStatus inquiryTransactionStatus = new InquiryTransactionStatus();
@@ -98,9 +101,6 @@ public class BancomatPayClient {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse = inquiryTransactionStatusResponseJAXBElement.getValue();
         log.info("END sendInquiryRequest");
         return inquiryTransactionStatusResponse;
-
     }
-
-
 
 }

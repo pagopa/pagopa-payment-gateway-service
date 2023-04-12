@@ -137,6 +137,7 @@ public class ClientConfig {
         HttpClient httpClient = HttpClientBuilder.create()
                 .setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext))
                 .setProxy(createProxy(this.getClass().getName()))
+                .addInterceptorFirst(new HttpComponentsMessageSender.RemoveSoapHeadersInterceptor())
                 .build();
         HttpComponentsMessageSender httpComponentsMessageSender = new HttpComponentsMessageSender();
         httpComponentsMessageSender.setConnectionTimeout(bpayClientTimeoutMs);

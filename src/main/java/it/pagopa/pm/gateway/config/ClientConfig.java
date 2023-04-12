@@ -44,6 +44,8 @@ public class ClientConfig {
     private static final int XPAY_DEFAULT_TIMEOUT = 10000;
     private static final int XPAY_DEFAULT_MAX_TOTAL = 100;
     private static final int XPAY_DEFAULT_MAX_PER_ROUTE = 50;
+    private static final String HTTPS_PROXY_HOST_PROPERTY = "https.proxyHost";
+    private static final String HTTPS_PROXY_PORT_PROPERTY = "https.proxyPort";
 
     @Value("${bancomatPay.client.url}")
     private String bpayClientUrl;
@@ -80,12 +82,6 @@ public class ClientConfig {
 
     @Value("${bpay.keystore.password}")
     private String bpayKeyStorePassword;
-
-    @Value("${https.proxyHost}")
-    private static String proxyHost;
-
-    @Value("${https.proxyPort}")
-    private static String proxyPort;
 
     @Bean
     public Jaxb2Marshaller jaxb2Marshaller() {
@@ -216,6 +212,8 @@ public class ClientConfig {
 
     public static HttpHost createProxy(String className) {
         HttpHost proxy = null;
+        String proxyHost = System.getProperty(HTTPS_PROXY_HOST_PROPERTY);
+        String proxyPort = System.getProperty(HTTPS_PROXY_PORT_PROPERTY);
         if (StringUtils.isNoneBlank(proxyHost, proxyPort) && NumberUtils.isParsable(proxyPort)) {
             log.info(String.format("%s uses proxy: %s:%s", className, proxyHost, proxyPort));
             proxy = new HttpHost(proxyHost, Integer.parseInt(proxyPort));

@@ -127,7 +127,7 @@ public class ClientConfig {
     }
 
     @Bean
-    public WebServiceTemplate bancomatPayWebServiceTemplate() throws Exception {
+    public HttpComponentsMessageSender httpComponentsMessageSender() throws Exception {
         char[] keyStorePass = bpayKeyStorePassword.toCharArray();
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(Files.newInputStream(Paths.get(bpayKeyStoreLocation)), keyStorePass);
@@ -142,8 +142,13 @@ public class ClientConfig {
         httpComponentsMessageSender.setHttpClient(httpClient);
         httpComponentsMessageSender.setConnectionTimeout(bpayClientTimeoutMs);
         httpComponentsMessageSender.setReadTimeout(bpayClientTimeoutMs);
+        return httpComponentsMessageSender;
+    }
+
+    @Bean
+    public WebServiceTemplate bancomatPayWebServiceTemplate() throws Exception {
         WebServiceTemplate webServiceTemplate = new WebServiceTemplate();
-        webServiceTemplate.setMessageSender(httpComponentsMessageSender);
+        webServiceTemplate.setMessageSender(httpComponentsMessageSender());
         webServiceTemplate.setMarshaller(jaxb2Marshaller());
         webServiceTemplate.setUnmarshaller(jaxb2Marshaller());
         webServiceTemplate.setDefaultUri(bpayClientUrl);

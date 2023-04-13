@@ -17,11 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
 
 @Slf4j
 @Service
@@ -29,12 +29,6 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 public class CcPaymentInfoService {
 
     public static final String CREQ = "?creq=";
-    private static final String AUTHORIZED = "AUTHORIZED";
-    private static final String METHOD = "METHOD";
-    private static final String CHALLENGE = "CHALLENGE";
-    private static final String CANCELLED = "CANCELLED";
-    private static final String CREATED = "CREATED";
-    private static final List<String> UNFINISHED_STATES = Arrays.asList(CREATED, METHOD, CHALLENGE);
     private String methodNotifyUrl;
     private PaymentRequestRepository paymentRequestRepository;
     private ClientsConfig clientsConfig;
@@ -64,14 +58,14 @@ public class CcPaymentInfoService {
         response.setStatus(paymentInfo.getStatus());
         response.setRequestId(requestId);
 
-        if (AUTHORIZED.equals(paymentInfo.getStatus())) {
+        if (AUTHORIZED.name().equals(paymentInfo.getStatus())) {
             response.setAuthCode(paymentInfo.getAuthorizationCode());
-        } else if(!CANCELLED.equals(paymentInfo.getStatus())) {
-            if (METHOD.equals(paymentInfo.getResponseType())) {
+        } else if(CREATED.name().equals(paymentInfo.getStatus())) {
+            if (METHOD.name().equals(paymentInfo.getResponseType())) {
                 String threeDsMethodData = generate3DsMethodData(requestId);
                 response.setThreeDsMethodData(threeDsMethodData);
                 response.setResponseType(paymentInfo.getResponseType());
-            } else if (CHALLENGE.equals(paymentInfo.getResponseType())) {
+            } else if (CHALLENGE.name().equals(paymentInfo.getResponseType())) {
                 String creq = getCreqFromChallengeUrl(paymentInfo);
                 response.setCreq(creq);
                 response.setResponseType(paymentInfo.getResponseType());
@@ -79,7 +73,7 @@ public class CcPaymentInfoService {
             response.setVposUrl(paymentInfo.getAuthorizationUrl());
         }
 
-        if(!UNFINISHED_STATES.contains(paymentInfo.getStatus())) {
+        if(!CREATED.name().equals(paymentInfo.getStatus())) {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
             response.setRedirectUrl(StringUtils.join(clientReturnUrl, idTransaction));

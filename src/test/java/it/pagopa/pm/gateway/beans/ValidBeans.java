@@ -451,11 +451,7 @@ public class ValidBeans {
         xPayAuthResponse.setRequestId(requestId);
         if (isError) {
             xPayAuthResponse.setError(errorMessage);
-        } else if (isDenied) {
-            xPayAuthResponse.setStatus("DENIED");
-            xPayAuthResponse.setUrlRedirect("http://localhost:8080/payment-gateway/" + requestId);
         } else {
-            xPayAuthResponse.setStatus("CREATED");
             xPayAuthResponse.setUrlRedirect("http://localhost:8080/payment-gateway/" + requestId);
         }
         return xPayAuthResponse;
@@ -1016,7 +1012,6 @@ public class ValidBeans {
         if (httpStatus.is2xxSuccessful()) {
             response.setRequestId("requestId");
             response.setUrlRedirect("http://localhost:8080/payment-gateway/\"");
-            response.setStatus(CREATED.name());
         } else if (httpStatus.value() == 400) {
             response.setError(BAD_REQUEST_MSG);
         } else if (httpStatus.value() == 401) {

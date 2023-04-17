@@ -1,27 +1,33 @@
-package it.pagopa.pm.gateway.service;
+package it.pagopa.pm.gateway.service.async;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
+import it.pagopa.pm.gateway.client.vpos.HttpClient;
+import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
-import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
-import it.pagopa.pm.gateway.dto.vpos.MethodCompletedEnum;
+import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
-import it.pagopa.pm.gateway.service.async.CcResumeStep1AsyncService;
+import it.pagopa.pm.gateway.utils.EcommercePatchUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
+import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.Objects;
+
+import static it.pagopa.pm.gateway.constant.Messages.GENERIC_ERROR_MSG;
+import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_AUTHORIZED;
+import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_CHALLENGE;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 
 @Service
 @Slf4j
 @NoArgsConstructor
-public class CcResumeStep1Service {
+public class CcResumeStep1AsyncService {
     private static final String CREQ_QUERY_PARAM = "?creq=";
     public static final String RESULT_CODE_METHOD = "26";
 
@@ -35,50 +41,20 @@ public class CcResumeStep1Service {
     private VPosRequestUtils vPosRequestUtils;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private VPosResponseUtils vPosResponseUtils;
 
     @Autowired
-    private CcResumeStep1AsyncService ccResumeStep1AsyncService;
+    private HttpClient httpClient;
 
-    public void startResumeStep1(CreditCardResumeRequest request, String requestId) {
-        PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
-
-        if (Objects.isNull(entity)) {
-            log.error("No CreditCard request entity has been found for requestId: " + requestId);
-            return;
-        }
-
-        if (Objects.nonNull(entity.getAuthorizationOutcome())) {
-            log.warn(String.format("requestId %s already processed", requestId));
-            entity.setErrorMessage("requestId already processed");
-            return;
-        }
-        processResume(request, entity, requestId);
-    }
-
-    private void processResume(CreditCardResumeRequest request, PaymentRequestEntity entity, String requestId) {
-        String methodCompleted = request.getMethodCompleted();
-        String responseType = entity.getResponseType();
-        String correlationId = entity.getCorrelationId();
-        try {
-            StepZeroRequest stepZeroRequest = objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class);
-            stepZeroRequest.setIsFirstPayment(false);
-            MethodCompletedEnum methodCompletedEnum = MethodCompletedEnum.valueOf(methodCompleted);
-            if (Objects.nonNull(responseType) && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
-                Map<String, String> params = vPosRequestUtils.buildStepOneRequestParams(methodCompletedEnum, stepZeroRequest, correlationId);
-                ccResumeStep1AsyncService.executeStep1(params, entity, stepZeroRequest);
-            }
-        } catch (Exception e) {
-            log.error("error during execution of resume for requestId {}", requestId, e);
-        }
-    }
+    @Autowired
+    private EcommercePatchUtils vposPatchUtils;
 
     @Async
-    private void executeStep1(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
+    public void executeStep1(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
         try {
             String requestId = entity.getGuid();
             log.info("Calling VPOS - Step 1 - for requestId: " + requestId);
-            HttpClientResponse clientResponse = callVPos(params);
+            HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), request);
             log.info("Result code from VPOS - Step 1 - for RequestId {} is {}", requestId, response.getResultCode());
@@ -95,15 +71,6 @@ public class CcResumeStep1Service {
         }
     }
 
-    private HttpClientResponse callVPos(Map<String, String> params) throws IOException {
-        HttpClientResponse clientResponse = httpClient.post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
-        if (clientResponse.getStatus() != HttpStatus.OK.value()) {
-            log.error("HTTP Response Status: {}", clientResponse.getStatus());
-            throw new IOException("Non-ok response from VPos. HTTP status: " + clientResponse.getStatus());
-        }
-        return clientResponse;
-    }
-
     private boolean isStepOneResultCodeOk(ThreeDS2Response response, PaymentRequestEntity entity) {
         String resultCode = response.getResultCode();
         String status = CREATED.name();
@@ -111,16 +78,13 @@ public class CcResumeStep1Service {
         String responseVposUrl = StringUtils.EMPTY;
         String correlationId = entity.getCorrelationId();
         String errorCode = StringUtils.EMPTY;
-        String rrn = entity.getRrn();
         boolean isToAccount = false;
         ThreeDS2ResponseElement threeDS2ResponseElement = response.getThreeDS2ResponseElement();
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
-                ThreeDS2Authorization authorizedResponse = ((ThreeDS2Authorization) threeDS2ResponseElement);
                 responseType = response.getResponseType().name();
                 isToAccount = true;
-                correlationId = authorizedResponse.getTransactionId();
-                rrn = authorizedResponse.getRrn();
+                correlationId = ((ThreeDS2Authorization) threeDS2ResponseElement).getTransactionId();
                 break;
             case RESULT_CODE_CHALLENGE:
                 ThreeDS2Challenge challengeResponse = (ThreeDS2Challenge) threeDS2ResponseElement;
@@ -138,7 +102,6 @@ public class CcResumeStep1Service {
         entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
         entity.setErrorCode(errorCode);
-        entity.setRrn(rrn);
         paymentRequestRepository.save(entity);
         return isToAccount;
     }
@@ -153,7 +116,7 @@ public class CcResumeStep1Service {
         try {
             log.info("Calling VPOS - Accounting - for requestId: {}", entity.getGuid());
             Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest, entity.getCorrelationId());
-            HttpClientResponse clientResponse = callVPos(params);
+            HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkAccountResultCode(response, entity);

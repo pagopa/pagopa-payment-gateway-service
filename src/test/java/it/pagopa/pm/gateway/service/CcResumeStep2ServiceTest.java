@@ -10,9 +10,11 @@ import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.service.async.CcResumeStep2AsyncService;
+import it.pagopa.pm.gateway.utils.EcommercePatchUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
-import it.pagopa.pm.gateway.utils.VposPatchUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -20,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -45,14 +48,21 @@ public class CcResumeStep2ServiceTest {
     @Mock
     private ObjectMapper objectMapper;
     @Mock
-    private VposPatchUtils vposPatchUtils;
-
+    private EcommercePatchUtils vposPatchUtils;
     @Spy
     @InjectMocks
-    private CcResumeStep2Service service = new CcResumeStep2Service("http://localhost:8080", paymentRequestRepository,
-            vPosRequestUtils, vPosResponseUtils, httpClient, objectMapper, vposPatchUtils);
+    private CcResumeStep2Service service;
+    @Spy
+    @InjectMocks
+    private CcResumeStep2AsyncService asyncService;
 
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+
+    @Before
+    public void setUpProperties() {
+        ReflectionTestUtils.setField(asyncService, "vposUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(service, "ccResumeStep2AsyncService", asyncService);
+    }
 
     @Test
     public void startResume_Test_EntityNull() {

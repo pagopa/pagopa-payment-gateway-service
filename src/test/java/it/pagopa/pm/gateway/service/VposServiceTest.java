@@ -11,6 +11,7 @@ import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
+import it.pagopa.pm.gateway.service.async.VposAsyncService;
 import it.pagopa.pm.gateway.utils.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +29,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static it.pagopa.pm.gateway.constant.Messages.BAD_REQUEST_MSG_CLIENT_ID;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -37,15 +39,6 @@ import static org.mockito.Mockito.when;
 public class VposServiceTest {
     public static final String ECOMMERCE_WEB = "ECOMMERCE_WEB";
     private final ClientConfig clientConfig = new ClientConfig();
-
-    @Before
-    public void init() {
-        ReflectionTestUtils.setField(service, "vposUrl", "http://localhost:8080");
-
-        VposClientConfig vposClientConfig = new VposClientConfig();
-        vposClientConfig.setClientReturnUrl("url");
-        clientConfig.setVpos(vposClientConfig);
-    }
 
     @Mock
     private PaymentRequestRepository paymentRequestRepository;
@@ -62,15 +55,26 @@ public class VposServiceTest {
     @Mock
     private JwtTokenUtils jwtTokenUtils;
     @Mock
-    private VposPatchUtils vposPatchUtils;
+    private EcommercePatchUtils ecommercePatchUtils;
 
     @Spy
     @InjectMocks
-    private VposService service = new VposService("http://localhost:8080/",
-            paymentRequestRepository, vPosRequestUtils,
-            vPosResponseUtils, httpClient, clientsConfig, jwtTokenUtils,
-            "http://localhost:8080/", vposPatchUtils);
+    private VposService service;
 
+    @Spy
+    @InjectMocks
+    private VposAsyncService asyncService;
+
+    @Before
+    public void init() {
+        ReflectionTestUtils.setField(service, "vposPollingUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(asyncService, "vposUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(service, "vposAsyncService", asyncService);
+
+        VposClientConfig vposClientConfig = new VposClientConfig();
+        vposClientConfig.setClientReturnUrl("url");
+        clientConfig.setVpos(vposClientConfig);
+    }
 
     @Test
     public void getRequestPayment_Invalid_ClientId_Test_400() {

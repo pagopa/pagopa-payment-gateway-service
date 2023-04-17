@@ -12,8 +12,10 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -35,7 +37,16 @@ public class HttpClient {
     private static final int VPOS_TIMEOUT = getTimeout();
     private static final Charset DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
 
-    public HttpClientResponse post(String url, String contentType, Map<String, String> params) throws IOException {
+    public HttpClientResponse callVPos(String vposUrl, Map<String, String> params) throws IOException {
+        HttpClientResponse clientResponse = post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
+        if (clientResponse.getStatus() != HttpStatus.OK.value()) {
+            log.error("HTTP Response Status: {}", clientResponse.getStatus());
+            throw new IOException("Non-ok response from VPos. HTTP status: " + clientResponse.getStatus());
+        }
+        return clientResponse;
+    }
+
+    private HttpClientResponse post(String url, String contentType, Map<String, String> params) throws IOException {
         String trace = String.format("POST - %s", url);
         log.info("INIT " + trace);
         try(CloseableHttpClientWrapper client = createClient()) {

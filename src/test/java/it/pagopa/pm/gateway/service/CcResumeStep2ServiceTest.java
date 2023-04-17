@@ -97,10 +97,10 @@ public class CcResumeStep2ServiceTest {
         params.put("1", "prova");
 
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -138,7 +138,7 @@ public class CcResumeStep2ServiceTest {
         entity.setIdTransaction("1234566");
 
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenThrow(RuntimeException.class);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -161,7 +161,7 @@ public class CcResumeStep2ServiceTest {
         response.setResultCode("99");
 
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -186,10 +186,10 @@ public class CcResumeStep2ServiceTest {
 
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenThrow(RuntimeException.class);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -215,10 +215,10 @@ public class CcResumeStep2ServiceTest {
 
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
         when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -242,7 +242,7 @@ public class CcResumeStep2ServiceTest {
 
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepTwoRequestParams(any(), any())).thenReturn(params);
-        when(httpClient.post(any(), any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());
+        when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep2(UUID_SAMPLE);

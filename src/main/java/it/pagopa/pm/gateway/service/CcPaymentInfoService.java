@@ -75,7 +75,7 @@ public class CcPaymentInfoService {
 
         if(!CREATED.name().equals(paymentInfo.getStatus())) {
             ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
-            String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
+            String clientReturnUrl = clientConfig.getVpos().getClientReturnUrl();
             response.setRedirectUrl(StringUtils.join(clientReturnUrl, idTransaction));
         }
 

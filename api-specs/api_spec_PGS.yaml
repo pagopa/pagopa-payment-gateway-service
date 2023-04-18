@@ -3,7 +3,7 @@ info:
   title: Openapi for pagopa-payment-transactions-gateway (PGS)   
   version: 0.0.1   
   description: |      
-    Openapi definition for the API exposed by the *pagopa-payment-transactions-gateway* (**PGS**) and
+    Openapi definitåion for the API exposed by the *pagopa-payment-transactions-gateway* (**PGS**) and
     consumed by the pagoPA touchpoints (for example *pagopPA - checkout* via *pagoPA - ecommerce*) to
     authorize payments via the following payment gateway:
     <ol>

@@ -97,11 +97,12 @@ public class CcResumeStep2Service {
             HttpClientResponse clientResponse = callVPos(params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), request);
+            log.info("Result code from VPOS - Step 2 - for RequestId {} is {}", requestId, response.getResultCode());
             if (isStepTwoResultCodeOk(response, entity)) {
                 executeAccount(entity, request);
             }
 
-            vposPatchUtils.executePatchTransaction(entity, request);
+            vposPatchUtils.executePatchTransaction(entity);
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }
@@ -149,7 +150,7 @@ public class CcResumeStep2Service {
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkAccountResultCode(response, entity);
         } catch (Exception e) {
-            log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + " stackTrace: " + Arrays.toString(e.getStackTrace()));
+            log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }
     }
 
@@ -167,6 +168,6 @@ public class CcResumeStep2Service {
         entity.setStatus(status);
         entity.setErrorCode(errorCode);
         paymentRequestRepository.save(entity);
-        log.info("END - Vpos Request Payment Account for requestId {}", entity.getGuid());
+        log.info("END - Vpos Request Payment Account for requestId {} - resultCode: {} ", entity.getGuid(), resultCode);
     }
 }

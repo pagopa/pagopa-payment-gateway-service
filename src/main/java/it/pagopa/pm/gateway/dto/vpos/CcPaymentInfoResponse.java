@@ -10,7 +10,8 @@ public class CcPaymentInfoResponse {
     private String responseType;
     private String requestId;
     private String vposUrl;
-    private String clientReturnUrl;
+    private String redirectUrl;
     private String threeDsMethodData;
     private String creq;
+    private String authCode;
 }

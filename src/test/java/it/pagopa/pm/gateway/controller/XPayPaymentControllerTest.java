@@ -181,6 +181,7 @@ public class XPayPaymentControllerTest {
         PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
         XPayPollingResponse expectedResponse = ValidBeans.createXpayAuthPollingResponse(true, null, false);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE)).thenReturn(entity);
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url)).andExpect(content().json(mapper.writeValueAsString(expectedResponse)));
     }
@@ -205,7 +206,7 @@ public class XPayPaymentControllerTest {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(ValidBeans.paymentRequestEntityxPayWithoutHtml(xPayAuthRequest, ECOMMERCE_APP_ORIGIN));
-
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, null, false))));
@@ -262,8 +263,6 @@ public class XPayPaymentControllerTest {
         entity.setJsonRequest(jsonRequest);
 
         TransactionInfo patchResponse = new TransactionInfo();
-
-        PaymentXPayResponse xPayResponse = ValidBeans.createPaymentXPayResponse(true);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
@@ -394,11 +393,6 @@ public class XPayPaymentControllerTest {
         String jsonRequest = mapper.writeValueAsString(authPaymentXPayRequest);
         entity.setJsonRequest(jsonRequest);
 
-        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
-
-        XPayRevertResponse revertResponse = ValidBeans.createXPayRevertResponse(true);
-
-
         PaymentXPayResponse xPayResponse = ValidBeans.createPaymentXPayResponse(true);
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
@@ -408,9 +402,6 @@ public class XPayPaymentControllerTest {
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
         when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(new RuntimeException());
-
-        when(xpayService.callSituazioneOrdine(any())).thenReturn(orderStatusResponse);
-        when(xpayService.callStorna(any())).thenReturn(revertResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -502,10 +493,6 @@ public class XPayPaymentControllerTest {
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
 
-        XPayOrderStatusResponse orderStatusResponse = ValidBeans.createXPayOrderStatusResponse(true);
-
-        XPayRevertResponse revertResponse = ValidBeans.createXPayRevertResponse(true);
-
         mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -593,6 +580,7 @@ public class XPayPaymentControllerTest {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CANCELLED, false));
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
@@ -606,6 +594,7 @@ public class XPayPaymentControllerTest {
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CANCELLED,
                         true));
+        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))

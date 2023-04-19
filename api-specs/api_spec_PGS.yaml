@@ -1006,7 +1006,7 @@ components:
         - requestId
         - urlRedirect
         - timeStamp
-       properties:
+      properties:
         paymentAuthorizationId:
           type: string
           description: payment authorization Id         

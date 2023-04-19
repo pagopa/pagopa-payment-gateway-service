@@ -41,7 +41,7 @@ public class VposPatchUtils {
             authCode = entity.getErrorCode();
         }
 
-        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
+        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode, entity.getRrn());
         try {
             ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());
             TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);

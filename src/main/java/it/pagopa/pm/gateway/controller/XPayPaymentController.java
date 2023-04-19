@@ -403,7 +403,7 @@ public class XPayPaymentController {
             authCode = entity.getErrorCode();
         }
 
-        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
+        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode, entity.getRrn());
 
         try {
             ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());

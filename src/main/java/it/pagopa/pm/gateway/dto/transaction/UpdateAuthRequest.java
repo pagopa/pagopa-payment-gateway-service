@@ -19,9 +19,12 @@ public class UpdateAuthRequest {
     @NotBlank
     private String authorizationCode;
 
-    public UpdateAuthRequest(AuthResultEnum authorizationResult, String authorizationCode) {
+    private String rrn;
+
+    public UpdateAuthRequest(AuthResultEnum authorizationResult, String authorizationCode, String rrn) {
         this.authorizationResult = authorizationResult;
         this.authorizationCode = authorizationCode;
         this.timestampOperation = OffsetDateTime.now();
+        this.rrn = rrn;
     }
 }

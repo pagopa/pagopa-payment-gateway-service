@@ -1,8 +1,8 @@
 package it.pagopa.pm.gateway.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,12 +16,11 @@ import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 @RequestMapping(REQUEST_PAYMENTS_VPOS)
 public class WebViewVposController {
 
-    @Autowired
-    private Environment environment;
+    @Value("${vpos.method.origin}")
+    private String origin;
 
     @PostMapping(METHOD_NOTIFICATIONS)
-    public String methodNotifications(Model model) {
-        String origin = environment.getProperty("vpos.method.origin");
+    public String methodNotifications(@NotNull Model model) {
         model.addAttribute("origin", origin);
         return "methodNotification";
     }

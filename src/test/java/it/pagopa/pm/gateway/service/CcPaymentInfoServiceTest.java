@@ -57,7 +57,7 @@ public class CcPaymentInfoServiceTest {
         when(clientsConfig.getByKey(any())).thenReturn(clientConfigToReturn);
 
         CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
-        assertNotNull(response.getStatus());
+        assertNotNull(response.getPaymentRequestStatusEnum());
         assertNotNull(response.getRequestId());
     }
 
@@ -75,9 +75,9 @@ public class CcPaymentInfoServiceTest {
                 .thenReturn(Optional.of(paymentInfo));
 
         CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
-        assertNotNull(response.getStatus());
+        assertNotNull(response.getPaymentRequestStatusEnum());
         assertNotNull(response.getRequestId());
-        assertNotNull(response.getResponseType());
+        assertNotNull(response.getThreeDS2ResponseTypeEnum());
         assertNotNull(response.getVposUrl());
     }
 
@@ -95,9 +95,9 @@ public class CcPaymentInfoServiceTest {
                 .thenReturn(Optional.of(paymentInfo));
 
         CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
-        assertNotNull(response.getStatus());
+        assertNotNull(response.getPaymentRequestStatusEnum());
         assertNotNull(response.getRequestId());
-        assertNotNull(response.getResponseType());
+        assertNotNull(response.getThreeDS2ResponseTypeEnum());
         assertNotNull(response.getVposUrl());
         assertEquals("https://local?TK=tkFromVpos", response.getVposUrl());
         assertEquals("realcreq", response.getCreq());

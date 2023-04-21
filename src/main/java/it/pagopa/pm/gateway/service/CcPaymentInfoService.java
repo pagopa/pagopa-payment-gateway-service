@@ -2,8 +2,12 @@ package it.pagopa.pm.gateway.service;
 
 import com.google.gson.Gson;
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
+import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
+import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
 import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
+import it.pagopa.pm.gateway.dto.vpos.OutcomeVposGateway;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDsMethodData;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -20,8 +24,9 @@ import org.springframework.util.Base64Utils;
 import java.util.Optional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.*;
 import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.VposErrorCodeEnum.*;
 
 @Slf4j
 @Service
@@ -48,38 +53,63 @@ public class CcPaymentInfoService {
             throw new CcHttpException(HttpStatus.NOT_FOUND, "RequestId non trovato");
         }
 
-        return createInfoPaymentResponse(paymentInfo.get());
+        return buildCcPaymentInfoResponse(paymentInfo.get());
     }
 
-    private CcPaymentInfoResponse createInfoPaymentResponse(PaymentRequestEntity paymentInfo) {
+    private CcPaymentInfoResponse buildCcPaymentInfoResponse(PaymentRequestEntity paymentRequestEntity) {
         CcPaymentInfoResponse response = new CcPaymentInfoResponse();
-        String requestId = paymentInfo.getGuid();
-        String idTransaction = paymentInfo.getIdTransaction();
-        response.setStatus(paymentInfo.getStatus());
+        String requestId = paymentRequestEntity.getGuid();
+        PaymentRequestStatusEnum paymentRequestStatusEnum =
+                PaymentRequestStatusEnum.getEnumValueFromString(paymentRequestEntity.getStatus());
+        response.setPaymentRequestStatusEnum(paymentRequestStatusEnum);
         response.setRequestId(requestId);
 
-        if (AUTHORIZED.name().equals(paymentInfo.getStatus())) {
-            response.setAuthCode(paymentInfo.getAuthorizationCode());
-        } else if(CREATED.name().equals(paymentInfo.getStatus())) {
-            if (METHOD.name().equals(paymentInfo.getResponseType())) {
-                String threeDsMethodData = generate3DsMethodData(requestId);
-                response.setThreeDsMethodData(threeDsMethodData);
-                response.setResponseType(paymentInfo.getResponseType());
-            } else if (CHALLENGE.name().equals(paymentInfo.getResponseType())) {
-                String creq = getCreqFromChallengeUrl(paymentInfo);
-                response.setCreq(creq);
-                response.setResponseType(paymentInfo.getResponseType());
-            }
-            response.setVposUrl(paymentInfo.getAuthorizationUrl());
+        switch (paymentRequestStatusEnum) {
+            case CREATED:
+                ThreeDS2ResponseTypeEnum responseTypeEnum = getEnumFromValue(paymentRequestEntity.getResponseType());
+                response.setThreeDS2ResponseTypeEnum(responseTypeEnum);
+                response.setVposUrl(paymentRequestEntity.getAuthorizationUrl());
+                fillStepInformation(paymentRequestEntity, response, requestId, responseTypeEnum);
+                break;
+            case AUTHORIZED:
+                response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
+                response.setCreq(getCreqFromChallengeUrl(paymentRequestEntity.getAuthorizationUrl()));
+                response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, OK));
+                break;
+            default: // DENIED/CANCELLED
+                response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, KO));
         }
-
-        if(!CREATED.name().equals(paymentInfo.getStatus())) {
-            ClientConfig clientConfig = clientsConfig.getByKey(paymentInfo.getClientId());
-            String clientReturnUrl = clientConfig.getVpos().getClientReturnUrl();
-            response.setRedirectUrl(StringUtils.join(clientReturnUrl, idTransaction));
-        }
-
         return response;
+    }
+
+    private OutcomeVposGateway buildOutcomeVposGateway(PaymentRequestEntity paymentRequestEntity, OutcomeEnum outcomeEnum) {
+        OutcomeVposGateway outcomeVposGateway = new OutcomeVposGateway();
+        outcomeVposGateway.setOutcomeEnum(outcomeEnum);
+        outcomeVposGateway.setRrn(paymentRequestEntity.getRrn());
+        outcomeVposGateway.setAuthorizationCode(paymentRequestEntity.getAuthorizationCode());
+        outcomeVposGateway.setVposErrorCodeEnum(getEnumFromCode(paymentRequestEntity.getErrorCode()));
+        return outcomeVposGateway;
+    }
+
+    private void fillStepInformation(PaymentRequestEntity paymentRequestEntity, CcPaymentInfoResponse response,
+                                     String requestId, ThreeDS2ResponseTypeEnum responseTypeEnum) {
+        switch (responseTypeEnum) {
+            case METHOD:
+                response.setThreeDsMethodData(generate3DsMethodData(requestId));
+                break;
+            case CHALLENGE:
+                response.setCreq(getCreqFromChallengeUrl(paymentRequestEntity.getAuthorizationUrl()));
+                break;
+            default: // AUTHORIZATION/ERROR
+                response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
+                break;
+        }
+    }
+
+    private String getRedirectUrl(PaymentRequestEntity paymentRequestEntity) {
+        ClientConfig clientConfig = clientsConfig.getByKey(paymentRequestEntity.getClientId());
+        String clientReturnUrl = clientConfig.getVpos().getClientReturnUrl();
+        return StringUtils.join(clientReturnUrl, paymentRequestEntity.getIdTransaction());
     }
 
     private String generate3DsMethodData(String requestId) {
@@ -92,11 +122,8 @@ public class CcPaymentInfoService {
         return Base64Utils.encodeToString(new Gson().toJson(threeDsMethodData).getBytes());
     }
 
-    private String getCreqFromChallengeUrl(PaymentRequestEntity entity) {
-        String challengeUrl = entity.getAuthorizationUrl();
-        int index = challengeUrl.lastIndexOf(CREQ);
-        String url = challengeUrl.substring(0, index);
-        entity.setAuthorizationUrl(url);
-        return challengeUrl.substring(index + CREQ.length());
+    private String getCreqFromChallengeUrl(String challengeUrl) {
+        int creqStart = challengeUrl.lastIndexOf(CREQ);
+        return challengeUrl.substring(creqStart + CREQ.length());
     }
 }

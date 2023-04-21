@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet id="V17__PM_1462_ADD_RRN" author="liquibase" failOnError="true" context="incremental or incremental-uat or incremental-prod">
+        <sqlFile path="../scripts/table-creation/V17__PM_1462_ADD_RRN.sql" stripComments="true" relativeToChangelogFile="true" dbms="oracle" encoding="UTF-8" />
+        <rollback>
+            ALTER TABLE PP_PGS_REQUEST_INFO DROP COLUMN RRN;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -396,14 +396,7 @@ public class XPayPaymentController {
         log.info("START - PATCH updateTransaction for requestId: " + requestId);
         AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
 
-        String authCode;
-        if (AUTHORIZED.name().equals(entity.getStatus())) {
-            authCode = entity.getAuthorizationCode();
-        } else {
-            authCode = entity.getErrorCode();
-        }
-
-        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, authCode);
+        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, entity.getRrn(), entity.getAuthorizationCode(), entity.getErrorCode());
 
         try {
             ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());

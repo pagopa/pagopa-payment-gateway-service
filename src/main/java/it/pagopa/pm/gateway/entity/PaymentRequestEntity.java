@@ -86,6 +86,9 @@ public class PaymentRequestEntity {
     @Column(name = "RESPONSE_TYPE")
     private String responseType;
 
+    @Column(name = "RRN")
+    private String rrn;
+
     public void setJsonRequest(String request) {
         this.jsonRequest = request;
     }

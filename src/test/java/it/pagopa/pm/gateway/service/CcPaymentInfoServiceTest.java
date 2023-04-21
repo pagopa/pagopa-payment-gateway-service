@@ -56,7 +56,7 @@ public class CcPaymentInfoServiceTest {
                 .thenReturn(Optional.of(paymentInfo));
         when(clientsConfig.getByKey(any())).thenReturn(clientConfigToReturn);
 
-        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo("123");
         assertNotNull(response.getPaymentRequestStatusEnum());
         assertNotNull(response.getRequestId());
     }
@@ -74,7 +74,7 @@ public class CcPaymentInfoServiceTest {
         when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any()))
                 .thenReturn(Optional.of(paymentInfo));
 
-        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo("123");
         assertNotNull(response.getPaymentRequestStatusEnum());
         assertNotNull(response.getRequestId());
         assertNotNull(response.getThreeDS2ResponseTypeEnum());
@@ -94,7 +94,7 @@ public class CcPaymentInfoServiceTest {
         when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any()))
                 .thenReturn(Optional.of(paymentInfo));
 
-        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo("123");
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo("123");
         assertNotNull(response.getPaymentRequestStatusEnum());
         assertNotNull(response.getRequestId());
         assertNotNull(response.getThreeDS2ResponseTypeEnum());
@@ -108,7 +108,7 @@ public class CcPaymentInfoServiceTest {
         when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any())).thenReturn(Optional.empty());
 
         CcHttpException exception = assertThrows(CcHttpException.class,
-                () -> ccPaymentInfoService.getPaymentoInfo("123"));
+                () -> ccPaymentInfoService.getPaymentInfo("123"));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
     }

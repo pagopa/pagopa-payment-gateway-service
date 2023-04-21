@@ -64,7 +64,7 @@ public class CreditCardPaymentControllerTest {
 
     @Test
     public void getPaymentInfoTest() throws Exception {
-        when(ccPaymentInfoService.getPaymentoInfo(any())).thenReturn(new CcPaymentInfoResponse());
+        when(ccPaymentInfoService.getPaymentInfo(any())).thenReturn(new CcPaymentInfoResponse());
 
         mvc.perform(get(REQUEST_PAYMENTS_VPOS + "/123"))
                 .andExpect(status().isOk());

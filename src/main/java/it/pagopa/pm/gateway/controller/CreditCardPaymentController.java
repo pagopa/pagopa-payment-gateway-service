@@ -61,7 +61,7 @@ public class CreditCardPaymentController {
         log.info("START - GET CreditCard request info for requestId: " + requestId);
         MdcUtils.setMdcFields(mdcFields);
 
-        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo(requestId);
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo(requestId);
         return ResponseEntity.ok(response);
     }
 

@@ -21,12 +21,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
-import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.*;
-import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
-import static it.pagopa.pm.gateway.dto.enums.VposErrorCodeEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
+import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.getEnumFromValue;
+import static it.pagopa.pm.gateway.dto.enums.VposErrorCodeEnum.getEnumFromCode;
 
 @Slf4j
 @Service
@@ -45,7 +48,7 @@ public class CcPaymentInfoService {
         this.clientsConfig = clientsConfig;
     }
 
-    public CcPaymentInfoResponse getPaymentoInfo(String requestId) {
+    public CcPaymentInfoResponse getPaymentInfo(String requestId) {
         Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, REQUEST_PAYMENTS_VPOS);
 
         if (!paymentInfo.isPresent()) {
@@ -63,17 +66,20 @@ public class CcPaymentInfoService {
                 PaymentRequestStatusEnum.getEnumValueFromString(paymentRequestEntity.getStatus());
         response.setPaymentRequestStatusEnum(paymentRequestStatusEnum);
         response.setRequestId(requestId);
-
+        String authorizationUrl = paymentRequestEntity.getAuthorizationUrl();
+        String[] vposUrlAndCreq = StringUtils.splitByWholeSeparatorPreserveAllTokens(authorizationUrl, CREQ);
+        String vposUrl = vposUrlAndCreq[0];
+        String creq = vposUrlAndCreq.length == 2 ? vposUrlAndCreq[1] : null;
         switch (paymentRequestStatusEnum) {
             case CREATED:
                 ThreeDS2ResponseTypeEnum responseTypeEnum = getEnumFromValue(paymentRequestEntity.getResponseType());
                 response.setThreeDS2ResponseTypeEnum(responseTypeEnum);
-                response.setVposUrl(paymentRequestEntity.getAuthorizationUrl());
-                fillStepInformation(paymentRequestEntity, response, requestId, responseTypeEnum);
+                response.setVposUrl(vposUrl);
+                fillStepInformation(paymentRequestEntity, response, requestId, responseTypeEnum, creq);
                 break;
             case AUTHORIZED:
                 response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
-                response.setCreq(getCreqFromChallengeUrl(paymentRequestEntity.getAuthorizationUrl()));
+                response.setCreq(creq);
                 response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, OK));
                 break;
             default: // DENIED/CANCELLED
@@ -92,13 +98,13 @@ public class CcPaymentInfoService {
     }
 
     private void fillStepInformation(PaymentRequestEntity paymentRequestEntity, CcPaymentInfoResponse response,
-                                     String requestId, ThreeDS2ResponseTypeEnum responseTypeEnum) {
+                                     String requestId, ThreeDS2ResponseTypeEnum responseTypeEnum, String creq) {
         switch (responseTypeEnum) {
             case METHOD:
                 response.setThreeDsMethodData(generate3DsMethodData(requestId));
                 break;
             case CHALLENGE:
-                response.setCreq(getCreqFromChallengeUrl(paymentRequestEntity.getAuthorizationUrl()));
+                response.setCreq(creq);
                 break;
             default: // AUTHORIZATION/ERROR
                 response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
@@ -120,10 +126,5 @@ public class CcPaymentInfoService {
         threeDsMethodData.setThreeDSMethodNotificationURL(notifyUrl);
 
         return Base64Utils.encodeToString(new Gson().toJson(threeDsMethodData).getBytes());
-    }
-
-    private String getCreqFromChallengeUrl(String challengeUrl) {
-        int creqStart = challengeUrl.lastIndexOf(CREQ);
-        return challengeUrl.substring(creqStart + CREQ.length());
     }
 }

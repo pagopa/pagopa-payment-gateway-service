@@ -47,7 +47,7 @@ public class CcResumeStep1AsyncService {
     private HttpClient httpClient;
 
     @Autowired
-    private EcommercePatchUtils vposPatchUtils;
+    private EcommercePatchUtils ecommercePatchUtils;
 
     @Async
     public void executeStep1(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
@@ -64,7 +64,7 @@ public class CcResumeStep1AsyncService {
 
             //If the resultCode is 26, the PATCH is not called
             if (!RESULT_CODE_METHOD.equals(response.getResultCode())) {
-                vposPatchUtils.executePatchTransaction(entity);
+                ecommercePatchUtils.executePatchTransaction(entity);
             }
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);

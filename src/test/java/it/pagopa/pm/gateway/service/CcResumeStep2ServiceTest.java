@@ -48,7 +48,7 @@ public class CcResumeStep2ServiceTest {
     @Mock
     private ObjectMapper objectMapper;
     @Mock
-    private EcommercePatchUtils vposPatchUtils;
+    private EcommercePatchUtils ecommercePatchUtils;
     @Spy
     @InjectMocks
     private CcResumeStep2Service service;

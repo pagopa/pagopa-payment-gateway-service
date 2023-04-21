@@ -58,6 +58,7 @@
 				<column name="ERROR_MESSAGE" type="VARCHAR(50)"></column>
 				<column name="IS_FIRST_PAYMENT" type="BOOLEAN"></column>
 				<column name="RESPONSE_TYPE" type="VARCHAR(15)"></column>
+				<column name="RRN" type="VARCHAR(50)"></column>
 			</createTable>
 			<createSequence sequenceName="SEQ_PGS_REQUEST_INFO" incrementBy="1" startValue="1" />
 		    <createIndex indexName="PGS_REQUEST_GUID_IDX" tableName="PP_PGS_REQUEST_INFO">

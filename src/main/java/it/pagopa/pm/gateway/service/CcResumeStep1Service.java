@@ -136,13 +136,16 @@ public class CcResumeStep1Service {
         String responseVposUrl = StringUtils.EMPTY;
         String correlationId = entity.getCorrelationId();
         String errorCode = StringUtils.EMPTY;
+        String rrn = entity.getRrn();
         boolean isToAccount = false;
         ThreeDS2ResponseElement threeDS2ResponseElement = response.getThreeDS2ResponseElement();
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
+                ThreeDS2Authorization authorizedResponse = ((ThreeDS2Authorization) threeDS2ResponseElement);
                 responseType = response.getResponseType().name();
                 isToAccount = true;
-                correlationId = ((ThreeDS2Authorization) threeDS2ResponseElement).getTransactionId();
+                correlationId = authorizedResponse.getTransactionId();
+                rrn = authorizedResponse.getRrn();
                 break;
             case RESULT_CODE_CHALLENGE:
                 ThreeDS2Challenge challengeResponse = (ThreeDS2Challenge) threeDS2ResponseElement;
@@ -160,6 +163,7 @@ public class CcResumeStep1Service {
         entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
         entity.setErrorCode(errorCode);
+        entity.setRrn(rrn);
         paymentRequestRepository.save(entity);
         return isToAccount;
     }

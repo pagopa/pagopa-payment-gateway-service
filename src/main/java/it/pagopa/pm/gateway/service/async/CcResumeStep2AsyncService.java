@@ -74,11 +74,14 @@ public class CcResumeStep2AsyncService {
         String responseType = entity.getResponseType();
         String correlationId = entity.getCorrelationId();
         String errorCode = StringUtils.EMPTY;
+        String rrn = entity.getRrn();
         boolean isToAccount = false;
         if (RESULT_CODE_AUTHORIZED.equals(resultCode)) {
+            ThreeDS2Authorization authorizedResponse = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement());
             responseType = response.getResponseType().name();
             isToAccount = true;
-            correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
+            correlationId = authorizedResponse.getTransactionId();
+            rrn = authorizedResponse.getRrn();
         } else {
             log.error("Error resultCode {} from Vpos for requestId {}", resultCode, entity.getGuid());
             status = DENIED.name();
@@ -88,6 +91,7 @@ public class CcResumeStep2AsyncService {
         entity.setStatus(status);
         entity.setResponseType(responseType);
         entity.setErrorCode(errorCode);
+        entity.setRrn(rrn);
         paymentRequestRepository.save(entity);
         return isToAccount;
     }

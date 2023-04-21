@@ -95,12 +95,15 @@ public class VposAsyncService {
         String correlationId = StringUtils.EMPTY;
         String responseVposUrl = StringUtils.EMPTY;
         String errorCode = StringUtils.EMPTY;
+        String rrn = StringUtils.EMPTY;
         boolean isToAccount = false;
         switch (resultCode) {
             case RESULT_CODE_AUTHORIZED:
+                ThreeDS2Authorization authorizedResponse = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement());
                 responseType = response.getResponseType().name();
                 isToAccount = true;
-                correlationId = ((ThreeDS2Authorization) response.getThreeDS2ResponseElement()).getTransactionId();
+                correlationId = authorizedResponse.getTransactionId();
+                rrn = authorizedResponse.getRrn();
                 break;
             case RESULT_CODE_METHOD:
                 ThreeDS2Method methodResponse = (ThreeDS2Method) response.getThreeDS2ResponseElement();
@@ -124,6 +127,7 @@ public class VposAsyncService {
         entity.setAuthorizationUrl(responseVposUrl);
         entity.setResponseType(responseType);
         entity.setErrorCode(errorCode);
+        entity.setRrn(rrn);
         paymentRequestRepository.save(entity);
         return isToAccount;
     }

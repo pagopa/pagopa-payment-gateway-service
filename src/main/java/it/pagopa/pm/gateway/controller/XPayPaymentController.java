@@ -291,37 +291,6 @@ public class XPayPaymentController {
 
     }
 
-    private void setErrorCodeAndMessage(String requestId, PaymentRequestEntity entity, XpayError xpayError) {
-        if (ObjectUtils.isNotEmpty(xpayError)) {
-            String errorCode = String.valueOf(xpayError.getCodice());
-            String errorMessage = xpayError.getMessaggio();
-            log.info("RequestId {} has error code: {} - message: {}", requestId,
-                    errorCode, errorMessage);
-            String truncatedMessage = errorMessage;
-            if (StringUtils.length(truncatedMessage) > MAX_ERROR_MESSAGE_ENTITY_SIZE) {
-                truncatedMessage = StringUtils.truncate(errorMessage, MAX_ERROR_MESSAGE_ENTITY_SIZE - ERROR_MESSAGE_TRUNCATE_SUFFIX.length()) + ERROR_MESSAGE_TRUNCATE_SUFFIX;
-            }
-            entity.setErrorCode(errorCode);
-            entity.setErrorMessage(truncatedMessage);
-        }
-    }
-
-    private void executePatchTransaction(PaymentRequestEntity entity) {
-        String requestId = entity.getGuid();
-        log.info("START - PATCH updateTransaction for requestId: " + requestId);
-        AuthResultEnum authResult = entity.getStatus().equals(AUTHORIZED.name()) ? AuthResultEnum.OK : AuthResultEnum.KO;
-
-        UpdateAuthRequest patchRequest = new UpdateAuthRequest(authResult, entity.getRrn(), entity.getAuthorizationCode(), entity.getErrorCode());
-
-        try {
-            ClientConfig clientConfig = clientsConfig.getByKey(entity.getClientId());
-            TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
-            log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
-        } catch (Exception e) {
-            log.error("{}{}",PATCH_CLOSE_PAYMENT_ERROR,requestId, e);
-        }
-    }
-
     private XPay3DSResponse buildXPay3DSResponse(Map<String, String> params) {
         log.debug("Building XPay3DSResponse");
         XPay3DSResponse xPay3DSResponse = new XPay3DSResponse();

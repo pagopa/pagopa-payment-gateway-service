@@ -21,14 +21,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
-import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.getEnumFromValue;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
 import static it.pagopa.pm.gateway.dto.enums.VposErrorCodeEnum.getEnumFromCode;
 
 @Slf4j
@@ -63,7 +62,7 @@ public class CcPaymentInfoService {
         CcPaymentInfoResponse response = new CcPaymentInfoResponse();
         String requestId = paymentRequestEntity.getGuid();
         PaymentRequestStatusEnum paymentRequestStatusEnum =
-                PaymentRequestStatusEnum.getEnumValueFromString(paymentRequestEntity.getStatus());
+                getEnumValueFromString(paymentRequestEntity.getStatus());
         response.setPaymentRequestStatusEnum(paymentRequestStatusEnum);
         response.setRequestId(requestId);
         String authorizationUrl = paymentRequestEntity.getAuthorizationUrl();
@@ -75,7 +74,7 @@ public class CcPaymentInfoService {
                 ThreeDS2ResponseTypeEnum responseTypeEnum = getEnumFromValue(paymentRequestEntity.getResponseType());
                 response.setThreeDS2ResponseTypeEnum(responseTypeEnum);
                 response.setVposUrl(vposUrl);
-                fillStepInformation(paymentRequestEntity, response, requestId, responseTypeEnum, creq);
+                fillStepInformation(response, requestId, responseTypeEnum, creq);
                 break;
             case AUTHORIZED:
                 response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
@@ -83,7 +82,10 @@ public class CcPaymentInfoService {
                 response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, OK));
                 break;
             default: // DENIED/CANCELLED
-                response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, KO));
+                OutcomeEnum outcomeEnum = paymentRequestStatusEnum.equals(CANCELLED) ? OK : KO;
+                response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, outcomeEnum));
+                response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
+                break;
         }
         return response;
     }
@@ -97,18 +99,12 @@ public class CcPaymentInfoService {
         return outcomeVposGateway;
     }
 
-    private void fillStepInformation(PaymentRequestEntity paymentRequestEntity, CcPaymentInfoResponse response,
-                                     String requestId, ThreeDS2ResponseTypeEnum responseTypeEnum, String creq) {
-        switch (responseTypeEnum) {
-            case METHOD:
-                response.setThreeDsMethodData(generate3DsMethodData(requestId));
-                break;
-            case CHALLENGE:
-                response.setCreq(creq);
-                break;
-            default: // AUTHORIZATION/ERROR
-                response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
-                break;
+    private void fillStepInformation(CcPaymentInfoResponse response, String requestId,
+                                     ThreeDS2ResponseTypeEnum responseTypeEnum, String creq) {
+        if (responseTypeEnum.equals(METHOD)) {
+            response.setThreeDsMethodData(generate3DsMethodData(requestId));
+        } else if (responseTypeEnum.equals(CHALLENGE)) {
+            response.setCreq(creq);
         }
     }
 

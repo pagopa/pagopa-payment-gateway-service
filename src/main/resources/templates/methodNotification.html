@@ -1,15 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-
-        var getOrigin = /*[[${origin}]]*/;
-        window.parent.postMessage("3DS.Notification.Received", getOrigin);
-
-        /*]]>*/
-    </script>
-
-</body>
+<html>
+<head>
+    <script>
+		var getOrigin = [[${origin}]];
+		window.parent.postMessage("3DS.Notification.Received", getOrigin);
+	</script>
+</head>
+<body></body>
 </html>

@@ -14,6 +14,7 @@ import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,11 +24,13 @@ import org.springframework.util.Base64Utils;
 
 import java.util.Optional;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
+import static it.pagopa.pm.gateway.constant.ApiPaths.VPOS_AUTHORIZATIONS;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
-import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.getEnumValueFromString;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.CHALLENGE;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.getEnumFromValue;
 import static it.pagopa.pm.gateway.dto.enums.VposErrorCodeEnum.getEnumFromCode;
 
 @Slf4j
@@ -48,7 +51,7 @@ public class CcPaymentInfoService {
     }
 
     public CcPaymentInfoResponse getPaymentInfo(String requestId) {
-        Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, REQUEST_PAYMENTS_VPOS);
+        Optional<PaymentRequestEntity> paymentInfo = paymentRequestRepository.findByGuidAndRequestEndpoint(requestId, VPOS_AUTHORIZATIONS);
 
         if (!paymentInfo.isPresent()) {
             log.error("No CreditCard request entity has been found for requestId: " + requestId);
@@ -67,8 +70,12 @@ public class CcPaymentInfoService {
         response.setRequestId(requestId);
         String authorizationUrl = paymentRequestEntity.getAuthorizationUrl();
         String[] vposUrlAndCreq = StringUtils.splitByWholeSeparatorPreserveAllTokens(authorizationUrl, CREQ);
-        String vposUrl = vposUrlAndCreq[0];
-        String creq = vposUrlAndCreq.length == 2 ? vposUrlAndCreq[1] : null;
+        String vposUrl = null;
+        String creq = null;
+        if (ObjectUtils.isNotEmpty(vposUrlAndCreq)) {
+            vposUrl = vposUrlAndCreq[0];
+            creq = vposUrlAndCreq.length == 2 ? vposUrlAndCreq[1] : null;
+        }
         switch (paymentRequestStatusEnum) {
             case CREATED:
                 ThreeDS2ResponseTypeEnum responseTypeEnum = getEnumFromValue(paymentRequestEntity.getResponseType());
@@ -101,9 +108,8 @@ public class CcPaymentInfoService {
 
     private void fillStepInformation(CcPaymentInfoResponse response, String requestId,
                                      ThreeDS2ResponseTypeEnum responseTypeEnum, String creq) {
-        if (responseTypeEnum.equals(METHOD)) {
-            response.setThreeDsMethodData(generate3DsMethodData(requestId));
-        } else if (responseTypeEnum.equals(CHALLENGE)) {
+        response.setThreeDsMethodData(generate3DsMethodData(requestId));
+        if (responseTypeEnum.equals(CHALLENGE)) {
             response.setCreq(creq);
         }
     }

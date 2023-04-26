@@ -24,7 +24,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
+import static it.pagopa.pm.gateway.constant.ApiPaths.VPOS_AUTHORIZATIONS;
 import static it.pagopa.pm.gateway.constant.Messages.GENERIC_REFUND_ERROR_MSG;
 import static it.pagopa.pm.gateway.constant.Messages.REQUEST_ID_NOT_FOUND_MSG;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
@@ -66,7 +66,7 @@ public class CreditCardPaymentControllerTest {
     public void getPaymentInfoTest() throws Exception {
         when(ccPaymentInfoService.getPaymentInfo(any())).thenReturn(new CcPaymentInfoResponse());
 
-        mvc.perform(get(REQUEST_PAYMENTS_VPOS + "/123"))
+        mvc.perform(get(VPOS_AUTHORIZATIONS + "/123"))
                 .andExpect(status().isOk());
     }
 
@@ -79,7 +79,7 @@ public class CreditCardPaymentControllerTest {
         StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.OK, null);
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
-        mvc.perform(post(REQUEST_PAYMENTS_VPOS)
+        mvc.perform(post(VPOS_AUTHORIZATIONS)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -92,7 +92,7 @@ public class CreditCardPaymentControllerTest {
         StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.BAD_REQUEST, null);
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
-        mvc.perform(post(REQUEST_PAYMENTS_VPOS)
+        mvc.perform(post(VPOS_AUTHORIZATIONS)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -105,7 +105,7 @@ public class CreditCardPaymentControllerTest {
         StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.UNAUTHORIZED, null);
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
-        mvc.perform(post(REQUEST_PAYMENTS_VPOS)
+        mvc.perform(post(VPOS_AUTHORIZATIONS)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -118,7 +118,7 @@ public class CreditCardPaymentControllerTest {
         StepZeroResponse stepZeroResponse = ValidBeans.createStepzeroResponse(HttpStatus.INTERNAL_SERVER_ERROR, null);
         when(vposService.startCreditCardPayment(any(), any(), any())).thenReturn(stepZeroResponse);
 
-        mvc.perform(post(REQUEST_PAYMENTS_VPOS)
+        mvc.perform(post(VPOS_AUTHORIZATIONS)
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_WEB)
                         .content(mapper.writeValueAsString(requestOK))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -129,7 +129,7 @@ public class CreditCardPaymentControllerTest {
     public void resumeCreditCardPayment_Step1_Test_200() throws Exception {
         CreditCardResumeRequest request = ValidBeans.createCreditCardResumeRequest(true);
         String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
-        mvc.perform(post(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE + "/resume/method")
+        mvc.perform(post(VPOS_AUTHORIZATIONS + "/" + UUID_SAMPLE + "/resume/method")
                         .content(mapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -138,7 +138,7 @@ public class CreditCardPaymentControllerTest {
     @Test
     public void resumeCreditCardPayment_Step2_Test_302() throws Exception {
         String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
-        mvc.perform(post(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE + "/resume/challenge")
+        mvc.perform(post(VPOS_AUTHORIZATIONS + "/" + UUID_SAMPLE + "/resume/challenge")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isFound());
     }
@@ -150,7 +150,7 @@ public class CreditCardPaymentControllerTest {
         response.setStatus(CANCELLED.name());
         when(deleteService.startDelete(any())).thenReturn(response);
 
-        mvc.perform(delete(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE)
+        mvc.perform(delete(VPOS_AUTHORIZATIONS + "/" + UUID_SAMPLE)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -162,7 +162,7 @@ public class CreditCardPaymentControllerTest {
         response.setStatus(CANCELLED.name());
         when(deleteService.startDelete(any())).thenReturn(response);
 
-        mvc.perform(delete(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE)
+        mvc.perform(delete(VPOS_AUTHORIZATIONS + "/" + UUID_SAMPLE)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -174,7 +174,7 @@ public class CreditCardPaymentControllerTest {
         response.setStatus(CANCELLED.name());
         when(deleteService.startDelete(any())).thenReturn(response);
 
-        mvc.perform(delete(REQUEST_PAYMENTS_VPOS + "/" + UUID_SAMPLE)
+        mvc.perform(delete(VPOS_AUTHORIZATIONS + "/" + UUID_SAMPLE)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
     }

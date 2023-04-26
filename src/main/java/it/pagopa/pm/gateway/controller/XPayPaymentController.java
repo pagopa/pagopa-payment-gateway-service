@@ -207,9 +207,6 @@ public class XPayPaymentController {
         PaymentRequestEntity paymentRequestEntity = new PaymentRequestEntity();
         AuthPaymentXPayRequest xPayAuthRequest = createXpayAuthRequest(pgsRequest);
 
-        xPayAuthRequest = null;
-        xPayAuthRequest.equals(xPayAuthRequest);
-
         generateRequestEntity(clientId, mdcFields, transactionId, paymentRequestEntity, xPayAuthRequest);
         xPayAuthRequest.setUrlRisposta(String.format(xpayResumeUrl, paymentRequestEntity.getGuid()));
         executeXPayAuthorizationCall(xPayAuthRequest, paymentRequestEntity, transactionId);

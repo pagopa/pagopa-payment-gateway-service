@@ -31,23 +31,29 @@ public class CcResumeStep1AsyncService {
     private static final String CREQ_QUERY_PARAM = "?creq=";
     public static final String RESULT_CODE_METHOD = "26";
 
-    @Value("${vpos.requestUrl}")
     private String vposUrl;
 
-    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
 
-    @Autowired
     private VPosRequestUtils vPosRequestUtils;
 
-    @Autowired
     private VPosResponseUtils vPosResponseUtils;
 
-    @Autowired
     private HttpClient httpClient;
 
-    @Autowired
     private EcommercePatchUtils ecommercePatchUtils;
+
+    @Autowired
+    public CcResumeStep1AsyncService(@Value("${vpos.requestUrl}") String vposUrl, PaymentRequestRepository paymentRequestRepository,
+                                     VPosRequestUtils vPosRequestUtils, VPosResponseUtils vPosResponseUtils,
+                                     HttpClient httpClient, EcommercePatchUtils ecommercePatchUtils) {
+        this.vposUrl = vposUrl;
+        this.paymentRequestRepository = paymentRequestRepository;
+        this.vPosRequestUtils = vPosRequestUtils;
+        this.vPosResponseUtils = vPosResponseUtils;
+        this.httpClient = httpClient;
+        this.ecommercePatchUtils = ecommercePatchUtils;
+    }
 
     @Async
     public void executeStep1(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {

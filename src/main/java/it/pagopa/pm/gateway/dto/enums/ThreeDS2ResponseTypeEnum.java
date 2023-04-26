@@ -13,6 +13,6 @@ public enum ThreeDS2ResponseTypeEnum {
     public static ThreeDS2ResponseTypeEnum getEnumFromValue(String value) {
         return Arrays.stream(ThreeDS2ResponseTypeEnum.values())
                 .filter(enumValue -> StringUtils.equals(enumValue.name(), value))
-                .findFirst().orElse(null);
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Invalid response type: " + value));
     }
 }

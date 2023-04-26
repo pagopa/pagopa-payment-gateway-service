@@ -179,9 +179,8 @@ public class XPayPaymentControllerTest {
     public void xPay_shouldReturnAuthPollingResponseOK() throws Exception {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, CREATED, false);
-        XPayPollingResponse expectedResponse = ValidBeans.createXpayAuthPollingResponse(true, null, false);
+        XPayPollingResponse expectedResponse = ValidBeans.createXpayAuthPollingResponse(true, false);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE)).thenReturn(entity);
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url)).andExpect(content().json(mapper.writeValueAsString(expectedResponse)));
     }
@@ -192,13 +191,10 @@ public class XPayPaymentControllerTest {
         PaymentRequestEntity requestEntity = ValidBeans.paymentRequestEntityxPayWithError(xPayAuthRequest, ECOMMERCE_APP_ORIGIN);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(requestEntity);
-
-        XPayPollingResponseError error = new XPayPollingResponseError(Long.valueOf(requestEntity.getErrorCode()), requestEntity.getErrorMessage());
-
         when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, error, false))));
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, false))));
     }
 
     @Test
@@ -206,10 +202,9 @@ public class XPayPaymentControllerTest {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(ValidBeans.paymentRequestEntityxPayWithoutHtml(xPayAuthRequest, ECOMMERCE_APP_ORIGIN));
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
-                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false, null, false))));
+                .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthOkPollingResponseWithNoHtml())));
     }
 
     @Test
@@ -585,7 +580,7 @@ public class XPayPaymentControllerTest {
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false,
-                        null, true))));
+                        true))));
     }
 
     @Test
@@ -599,6 +594,6 @@ public class XPayPaymentControllerTest {
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.createXpayAuthPollingResponse(false,
-                        null, true))));
+                        true))));
     }
 }

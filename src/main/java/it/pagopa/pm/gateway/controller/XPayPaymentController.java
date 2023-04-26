@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
+import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
+import it.pagopa.pm.gateway.dto.enums.XpayErrorCodeEnum;
 import it.pagopa.pm.gateway.dto.transaction.AuthResultEnum;
 import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
 import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -119,10 +122,11 @@ public class XPayPaymentController {
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
         if (Objects.isNull(entity) || !StringUtils.equals(entity.getRequestEndpoint(), REQUEST_PAYMENTS_XPAY)) {
             log.error("No XPay request entity has been found for requestId: " + requestId);
-            XPayPollingResponseError error = new XPayPollingResponseError(404L, REQUEST_ID_NOT_FOUND_MSG);
-            return createXPayAuthPollingResponse(HttpStatus.NOT_FOUND, error, null);
+            XPayPollingResponse xPayPollingResponse = new XPayPollingResponse();
+            xPayPollingResponse.setErrorDetail("requestId " + requestId + " not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(xPayPollingResponse);
         }
-        return createXPayAuthPollingResponse(HttpStatus.OK, null, entity);
+        return createXPayAuthPollingResponse(entity);
     }
 
     @GetMapping(REQUEST_PAYMENTS_RESUME)
@@ -130,7 +134,7 @@ public class XPayPaymentController {
                                                     @RequestParam Map<String, String> params) {
 
         log.info("START - GET {}{} for requestId {}", REQUEST_PAYMENTS_XPAY, REQUEST_PAYMENTS_RESUME, requestId);
-        log.info("Params received from XPay{} for requestId: {}",params, requestId);
+        log.info("Params received from XPay{} for requestId: {}", params, requestId);
 
         XPay3DSResponse xPay3DSResponse = buildXPay3DSResponse(params);
         EsitoXpay outcome = xPay3DSResponse.getOutcome();
@@ -255,58 +259,57 @@ public class XPayPaymentController {
         }
     }
 
-    private ResponseEntity<XPayPollingResponse> createXPayAuthPollingResponse(HttpStatus httpStatus, XPayPollingResponseError error, PaymentRequestEntity entity) {
+    private ResponseEntity<XPayPollingResponse> createXPayAuthPollingResponse(PaymentRequestEntity paymentRequestEntity) {
+        String requestId = paymentRequestEntity.getGuid();
+        PaymentRequestStatusEnum statusEnum = getEnumValueFromString(paymentRequestEntity.getStatus());
+        log.info("START - create XPay polling response for requestId {} - status {}", requestId, statusEnum);
+
         XPayPollingResponse response = new XPayPollingResponse();
-
-        if (Objects.nonNull(error)) {
-            log.info("START - create XPay polling response - error case");
-            response.setError(error);
-            return ResponseEntity.status(httpStatus).body(response);
-        }
-
-        String requestId = entity.getGuid();
+        response.setHtml(paymentRequestEntity.getXpayHtml());
         response.setRequestId(requestId);
+        response.setPaymentRequestStatusEnum(statusEnum);
 
-        log.info("START - create XPay polling response for requestId: " + requestId);
-        String status = entity.getStatus();
-        log.info(String.format("Request status for requestId %s is %s", requestId, status));
+        OutcomeXpayGateway outcomeXpayGateway = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),
+                paymentRequestEntity.getAuthorizationCode(), statusEnum);
+        response.setOutcomeXpayGateway(outcomeXpayGateway);
 
-        String clientReturnUrl = clientsConfig.getByKey(entity.getClientId()).getXpay().getClientReturnUrl();
-
-        response.setStatus(status);
-        PaymentRequestStatusEnum statusEnum = getEnumValueFromString(status);
-        switch (statusEnum) {
-            case CREATED:
-                String xpayHtml = entity.getXpayHtml();
-                response.setHtml(xpayHtml);
-                if (StringUtils.isBlank(xpayHtml)) {
-                    log.info(String.format("HTML from XPay for requestId %s has not been acquired yet", requestId));
-                }
-                break;
-            case AUTHORIZED:
-                response.setAuthCode(entity.getAuthorizationCode());
-                response.setRedirectUrl(StringUtils.join(clientReturnUrl, entity.getIdTransaction()));
-                break;
-            case CANCELLED:
-            case DENIED:
-                response.setRedirectUrl(StringUtils.join(clientReturnUrl, entity.getIdTransaction()));
-                break;
-            default:
-                log.info(BooleanUtils.toBoolean(entity.getIsRefunded()) ?
-                        String.format("XPay request with requestId %s has been refunded", requestId) :
-                        String.format("XPay request with requestId %s has not been refunded yet", requestId));
-
-                response.setRedirectUrl(StringUtils.join(clientReturnUrl, entity.getIdTransaction()));
-                break;
-        }
-
-        if (ObjectUtils.allNotNull(entity.getErrorCode(), entity.getErrorMessage())) {
-            response.setError(new XPayPollingResponseError(Long.valueOf(entity.getErrorCode()), entity.getErrorMessage()));
-            return ResponseEntity.ok().body(response);
+        if (isStatusOneOfGiven(statusEnum, AUTHORIZED, DENIED, CANCELLED)) {
+            ClientConfig clientConfig = clientsConfig.getByKey(paymentRequestEntity.getClientId());
+            String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
+            response.setRedirectUrl(StringUtils.join(clientReturnUrl, paymentRequestEntity.getIdTransaction()));
         }
 
         log.info("END - create XPay polling response for requestId " + requestId);
         return ResponseEntity.ok().body(response);
+    }
+
+    private boolean isStatusOneOfGiven(PaymentRequestStatusEnum referenceStatus, PaymentRequestStatusEnum... given) {
+        List<PaymentRequestStatusEnum> paymentRequestStatusEnums = Arrays.asList(given);
+        return paymentRequestStatusEnums.contains(referenceStatus);
+    }
+
+    private static OutcomeXpayGateway buildOutcomeXpayGateway(String errorCode, String authorizationCode,
+                                                              PaymentRequestStatusEnum paymentRequestStatusEnum) {
+        OutcomeXpayGateway outcomeXpayGateway = new OutcomeXpayGateway();
+        Long errorCodeLong = NumberUtils.createLong(errorCode);
+        if (Objects.nonNull(errorCodeLong)) {
+            outcomeXpayGateway.setXPayErrorCodeEnum(XpayErrorCodeEnum.getEnumFromCode((errorCodeLong)));
+        }
+        switch (paymentRequestStatusEnum) {
+            case AUTHORIZED:
+                outcomeXpayGateway.setOutcomeEnum(OutcomeEnum.OK);
+                outcomeXpayGateway.setAuthorizationCode(authorizationCode);
+                break;
+            case CANCELLED:
+                outcomeXpayGateway.setOutcomeEnum(OutcomeEnum.OK);
+                break;
+            case DENIED:
+                outcomeXpayGateway.setOutcomeEnum(OutcomeEnum.KO);
+                break;
+            default:
+                break;
+        }
+        return outcomeXpayGateway;
     }
 
     @Async
@@ -403,7 +406,7 @@ public class XPayPaymentController {
             TransactionInfo patchResponse = ecommerceClient.callPatchTransaction(patchRequest, entity.getIdTransaction(), clientConfig);
             log.info(String.format("Response from PATCH updateTransaction for requestId %s is %s", requestId, patchResponse.toString()));
         } catch (Exception e) {
-            log.error("{}{}",PATCH_CLOSE_PAYMENT_ERROR,requestId, e);
+            log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
         }
     }
 
@@ -477,7 +480,7 @@ public class XPayPaymentController {
         XPayRefundResponse response = new XPayRefundResponse();
         response.setRequestId(requestId);
 
-        if(entity != null)
+        if (entity != null)
             response.setStatus(entity.getStatus());
 
         if (httpStatus.is4xxClientError()) {

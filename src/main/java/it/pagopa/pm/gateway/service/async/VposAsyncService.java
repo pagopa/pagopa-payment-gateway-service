@@ -71,7 +71,7 @@ public class VposAsyncService {
                 ecommercePatchUtils.executePatchTransaction(entity);
             }
         } catch (Exception e) {
-            log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + CAUSE + e.getCause() + " - " + e.getMessage(), e);
+            log.error("{}{}{}{} - {}",GENERIC_ERROR_MSG,entity.getIdTransaction(),CAUSE,e.getCause(), e.getMessage(), e);
         }
     }
 

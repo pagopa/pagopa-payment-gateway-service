@@ -42,6 +42,6 @@ public enum XpayErrorCodeEnum {
     public static XpayErrorCodeEnum getEnumFromCode(long code) {
         return Arrays.stream(XpayErrorCodeEnum.values())
                 .filter(enumValue -> enumValue.errorCode.equals(code))
-                .findFirst().orElse(null);
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Error code " + code + " not supported"));
     }
 }

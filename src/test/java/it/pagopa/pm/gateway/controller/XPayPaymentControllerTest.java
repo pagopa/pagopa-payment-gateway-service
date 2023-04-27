@@ -11,7 +11,9 @@ import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
+import it.pagopa.pm.gateway.service.async.XPayPaymentAsyncService;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
+import it.pagopa.pm.gateway.utils.EcommercePatchUtils;
 import it.pagopa.pm.gateway.utils.JwtTokenUtils;
 import it.pagopa.pm.gateway.utils.XPayUtils;
 import org.junit.Before;
@@ -64,14 +66,18 @@ public class XPayPaymentControllerTest {
     private JwtTokenUtils jwtTokenUtils;
     @Mock
     private ClientsConfig clientsConfig;
-
     private MockMvc mvc;
 
     @Before
     public void init() {
         MockitoAnnotations.openMocks(this);
+
+        EcommercePatchUtils ecommercePatchUtils = new EcommercePatchUtils(ecommerceClient, clientsConfig);
+
+        XPayPaymentAsyncService xPayPaymentAsyncService = new XPayPaymentAsyncService(paymentRequestRepository,xpayService,xPayUtils,
+                "apiKey", clientsConfig, ecommerceClient, ecommercePatchUtils);
         XPayPaymentController xpayController = new XPayPaymentController("http://localhost:8080/", "http://localhost:8080/", "apiKey",
-                paymentRequestRepository, xpayService, ecommerceClient, xPayUtils, jwtTokenUtils, clientsConfig);
+                paymentRequestRepository, xpayService, xPayUtils, jwtTokenUtils, clientsConfig, xPayPaymentAsyncService, ecommercePatchUtils);
         mvc = MockMvcBuilders.standaloneSetup(xpayController).build();
 
         XpayClientConfig xpayClientConfig = new XpayClientConfig();
@@ -396,7 +402,7 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenThrow(new RuntimeException());
+        when(ecommerceClient.callPatchTransaction(any(),any(),any())).thenThrow(new RuntimeException());
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
-import it.pagopa.pm.gateway.dto.enums.XpayErrorCodeEnum;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -20,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -257,10 +255,7 @@ public class XPayPaymentController {
     private static OutcomeXpayGateway buildOutcomeXpayGateway(String errorCode, String authorizationCode,
                                                               PaymentRequestStatusEnum paymentRequestStatusEnum) {
         OutcomeXpayGateway outcomeXpayGateway = new OutcomeXpayGateway();
-        Long errorCodeLong = NumberUtils.createLong(errorCode);
-        if (Objects.nonNull(errorCodeLong)) {
-            outcomeXpayGateway.setXPayErrorCodeEnum(XpayErrorCodeEnum.getEnumFromCode((errorCodeLong)));
-        }
+        outcomeXpayGateway.setErrorCode(errorCode);
         switch (paymentRequestStatusEnum) {
             case AUTHORIZED:
                 outcomeXpayGateway.setOutcomeEnum(OutcomeEnum.OK);

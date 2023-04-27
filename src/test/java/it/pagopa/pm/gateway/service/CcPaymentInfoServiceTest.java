@@ -83,7 +83,7 @@ public class CcPaymentInfoServiceTest {
 
     @Test
     public void getPaymentInfoChallengeSuccessTest() {
-        String authUrl = "https://local?TK=tkFromVpos?creq=realcreq";
+        String authUrl = "https://local?TK=tkFromVpos&creq=realcreq";
         PaymentRequestEntity paymentInfo = new PaymentRequestEntity();
         paymentInfo.setStatus(CREATED.name());
         paymentInfo.setGuid("guid");

@@ -52,7 +52,7 @@ public class VposService {
 
     public StepZeroResponse startCreditCardPayment(String clientId, String mdcFields, StepZeroRequest request) {
         setMdcFields(mdcFields);
-        log.info("START - POST " + VPOS_AUTHORIZATIONS);
+        log.info("START - POST {}", VPOS_AUTHORIZATIONS);
 
         if (!clientsConfig.containsKey(clientId)) {
             log.error(String.format("Client id %s is not valid", clientId));
@@ -65,7 +65,7 @@ public class VposService {
         }
 
         String idTransaction = request.getIdTransaction();
-        log.info(String.format("START - POST %s for idTransaction %s", VPOS_AUTHORIZATIONS, idTransaction));
+        log.info("START - POST {} for idTransaction {}", VPOS_AUTHORIZATIONS, idTransaction);
         if ((Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction)))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
             return createStepZeroResponse(TRANSACTION_ALREADY_PROCESSED_MSG, null);
@@ -74,7 +74,7 @@ public class VposService {
         try {
             return processStepZero(request, clientId, mdcFields);
         } catch (Exception e) {
-            log.error("Error while constructing requestBody for idTransaction {}", idTransaction,e);
+            log.error("Error while constructing requestBody for idTransaction {}", idTransaction, e);
             return createStepZeroResponse(GENERIC_ERROR_MSG + request.getIdTransaction(), null);
         }
     }
@@ -102,7 +102,7 @@ public class VposService {
             response.setError(errorMessage);
         }
 
-        log.info(String.format("END - POST %s for requestId %s", VPOS_AUTHORIZATIONS, requestId));
+        log.info("END - POST {} for requestId {}", VPOS_AUTHORIZATIONS, requestId);
         return response;
     }
 

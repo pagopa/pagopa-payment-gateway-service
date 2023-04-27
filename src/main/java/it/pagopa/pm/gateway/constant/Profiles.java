@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 public class Profiles {
     public static final String JBOSS_ORACLE = "jboss-oracle";
     public static final String SPRINGBOOT_POSTGRES = "springboot-postgres";
+    public static final String ASYNC_METHOD_ENABLED = "asyncMethodEnabled";
 }

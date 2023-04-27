@@ -78,7 +78,10 @@ public class EcommerceClient {
         HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
         String transactionPatchUrl = String.format(clientConfig.getAuthorizationUpdateUrl(), transactionId);
 
-        log.info("Calling PATCH for transaction " + transactionId + " with authorizationCode " + request.getOutcomeGateway().getAuthorizationCode());
+        log.info("Calling PATCH for transaction {} with outcome {}, authorizationCode {}, rrn {}, errorCode {} ",
+                transactionId, request.getOutcomeGateway().getOutcome(), request.getOutcomeGateway().getAuthorizationCode(),
+                request.getOutcomeGateway().getRrn(), request.getOutcomeGateway().getErrorCode());
+
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }
 }

@@ -99,7 +99,7 @@ public class VposDeleteService {
     private RefundOutcome executeOrderStatus(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
         log.info("Calling VPOS - OrderStatus - for requestId: " + entity.getGuid());
         Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest);
-        HttpClientResponse clientResponse = callVPos(params);
+        HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
         VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse.getEntity());
         log.info("Result code from VPOS - OrderStatus - for RequestId {} is {}", entity.getGuid(), response.getResultCode());
         return computeOrderStatusResultCode(response, entity);
@@ -108,7 +108,7 @@ public class VposDeleteService {
     private RefundOutcome executeRevert(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
         log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
         Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(stepZeroRequest, entity.getCorrelationId());
-        HttpClientResponse clientResponse = callVPos(params);
+        HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
         AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
         log.info("END - Vpos Request Payment Revert for requestId {} - resultCode: {} ", entity.getGuid(), response.getResultCode());
         return saveRevertResultCode(response, entity);
@@ -124,15 +124,6 @@ public class VposDeleteService {
 
         log.info("END - Vpos refund for requestId: " + requestId);
         return response;
-    }
-
-    private HttpClientResponse callVPos(Map<String, String> params) throws IOException {
-        HttpClientResponse clientResponse = httpClient.post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
-        if (clientResponse.getStatus() != HttpStatus.OK.value()) {
-            log.error("HTTP Response Status: " + clientResponse.getStatus());
-            throw new IOException("Non-ok response from VPos. HTTP status: " + clientResponse.getStatus());
-        }
-        return clientResponse;
     }
 
     private RefundOutcome computeOrderStatusResultCode(VposOrderStatusResponse response, PaymentRequestEntity entity) {

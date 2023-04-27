@@ -19,8 +19,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-@SpringBootTest(classes = VposPatchUtils.class)
-public class VposPatchUtilsTest {
+@SpringBootTest(classes = EcommercePatchUtils.class)
+public class EcommercePatchUtilsTest {
 
     @Mock
     private EcommerceClient ecommerceClient;
@@ -30,7 +30,7 @@ public class VposPatchUtilsTest {
 
     @Spy
     @InjectMocks
-    private VposPatchUtils vposPatchUtils = new VposPatchUtils(ecommerceClient, clientsConfig);
+    private EcommercePatchUtils ecommercePatchUtils = new EcommercePatchUtils(ecommerceClient, clientsConfig);
 
     @Test
     public void executePatch_AUTHORIZED_Test() {
@@ -40,8 +40,8 @@ public class VposPatchUtilsTest {
         entity.setClientId("clientId");
         when(clientsConfig.getByKey(any())).thenReturn(new ClientConfig());
         when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
-        vposPatchUtils.executePatchTransaction(entity);
-        verify(vposPatchUtils).executePatchTransaction(entity);
+        ecommercePatchUtils.executePatchTransaction(entity);
+        verify(ecommercePatchUtils).executePatchTransaction(entity);
     }
 
     @Test
@@ -54,8 +54,8 @@ public class VposPatchUtilsTest {
         when(clientsConfig.getByKey(any())).thenReturn(new ClientConfig());
         when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(new TransactionInfo());
 
-        vposPatchUtils.executePatchTransaction(entity);
-        verify(vposPatchUtils).executePatchTransaction(entity);
+        ecommercePatchUtils.executePatchTransaction(entity);
+        verify(ecommercePatchUtils).executePatchTransaction(entity);
     }
 
 }

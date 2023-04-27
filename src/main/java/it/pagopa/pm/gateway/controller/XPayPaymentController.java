@@ -223,23 +223,19 @@ public class XPayPaymentController {
         String requestId = paymentRequestEntity.getGuid();
         PaymentRequestStatusEnum statusEnum = getEnumValueFromString(paymentRequestEntity.getStatus());
         log.info("START - create XPay polling response for requestId {} - status {}", requestId, statusEnum);
-
         XPayPollingResponse response = new XPayPollingResponse();
         response.setRequestId(requestId);
         response.setPaymentRequestStatusEnum(statusEnum);
         if (statusEnum.equals(CREATED)) {
             response.setHtml(paymentRequestEntity.getXpayHtml());
-        }
-        OutcomeXpayGateway outcomeXpayGateway = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),
-                paymentRequestEntity.getAuthorizationCode(), statusEnum);
-        response.setOutcomeXpayGateway(outcomeXpayGateway);
-
-        if (isStatusOneOf(statusEnum, AUTHORIZED, DENIED, CANCELLED)) {
+        } else if (isStatusOneOf(statusEnum, AUTHORIZED, DENIED, CANCELLED)) {
+            OutcomeXpayGateway outcomeXpayGateway = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),
+                    paymentRequestEntity.getAuthorizationCode(), statusEnum);
+            response.setOutcomeXpayGateway(outcomeXpayGateway);
             ClientConfig clientConfig = clientsConfig.getByKey(paymentRequestEntity.getClientId());
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
             response.setRedirectUrl(StringUtils.join(clientReturnUrl, paymentRequestEntity.getIdTransaction()));
         }
-
         log.info("END - create XPay polling response for requestId {}", requestId);
         return ResponseEntity.ok().body(response);
     }

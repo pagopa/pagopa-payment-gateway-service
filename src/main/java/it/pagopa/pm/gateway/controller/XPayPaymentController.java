@@ -227,10 +227,11 @@ public class XPayPaymentController {
         log.info("START - create XPay polling response for requestId {} - status {}", requestId, statusEnum);
 
         XPayPollingResponse response = new XPayPollingResponse();
-        response.setHtml(paymentRequestEntity.getXpayHtml());
         response.setRequestId(requestId);
         response.setPaymentRequestStatusEnum(statusEnum);
-
+        if (statusEnum.equals(CREATED)) {
+            response.setHtml(paymentRequestEntity.getXpayHtml());
+        }
         OutcomeXpayGateway outcomeXpayGateway = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),
                 paymentRequestEntity.getAuthorizationCode(), statusEnum);
         response.setOutcomeXpayGateway(outcomeXpayGateway);

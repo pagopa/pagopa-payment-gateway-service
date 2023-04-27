@@ -34,7 +34,8 @@ public enum XpayErrorCodeEnum {
     ERROR_97(97L, "Errore generico"),
     ERROR_98(98L, "Metodo non ancora implementato"),
     ERROR_99(99L, "Operazione non permessa, il merchant non ha i requisiti per effettuare l’operazione richiesta"),
-    ERROR_100(100L, "Errore interno");
+    ERROR_100(100L, "Errore interno"),
+    ERROR_1000(1000L, "PGS generic error code");
 
     private final Long errorCode;
     private final String description;

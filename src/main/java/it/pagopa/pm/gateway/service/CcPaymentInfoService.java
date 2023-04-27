@@ -34,8 +34,7 @@ import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.KO;
 import static it.pagopa.pm.gateway.dto.enums.OutcomeEnum.OK;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.getEnumValueFromString;
-import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.CHALLENGE;
-import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.valueOf;
+import static it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum.*;
 
 @Slf4j
 @Service
@@ -133,8 +132,9 @@ public class CcPaymentInfoService {
 
     private void fillStepInformation(CcPaymentInfoResponse response, String requestId,
                                      ThreeDS2ResponseTypeEnum responseTypeEnum, String creq) {
-        response.setThreeDsMethodData(generate3DsMethodData(requestId));
-        if (responseTypeEnum.equals(CHALLENGE)) {
+        if (responseTypeEnum.equals(METHOD)) {
+            response.setThreeDsMethodData(generate3DsMethodData(requestId));
+        } else if (responseTypeEnum.equals(CHALLENGE)) {
             response.setCreq(creq);
         }
     }

@@ -22,7 +22,6 @@ import java.util.Objects;
 @Slf4j
 @NoArgsConstructor
 public class CcResumeStep1Service {
-    private static final String CREQ_QUERY_PARAM = "?creq=";
     public static final String RESULT_CODE_METHOD = "26";
 
     @Value("${vpos.requestUrl}")

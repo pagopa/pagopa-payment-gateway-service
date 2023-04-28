@@ -114,7 +114,7 @@ public class VposAsyncService {
             case RESULT_CODE_CHALLENGE:
                 ThreeDS2Challenge challengeResponse = ((ThreeDS2Challenge) response.getThreeDS2ResponseElement());
                 responseType = response.getResponseType().name();
-                responseVposUrl = getChallengeUrl(challengeResponse);
+                responseVposUrl = vPosResponseUtils.getChallengeUrl(challengeResponse);
                 correlationId = (challengeResponse.getThreeDSTransId());
                 break;
             default:
@@ -130,13 +130,6 @@ public class VposAsyncService {
         entity.setRrn(rrn);
         paymentRequestRepository.save(entity);
         return isToAccount;
-    }
-
-    private String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {
-        String url = threeDS2Challenge.getAcsUrl();
-        String creq = threeDS2Challenge.getCReq();
-
-        return url + "?creq=" + creq;
     }
 
     private void checkAccountResultCode(AuthResponse response, PaymentRequestEntity entity, String authNumber) {

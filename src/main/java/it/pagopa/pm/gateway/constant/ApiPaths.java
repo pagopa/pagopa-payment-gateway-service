@@ -35,7 +35,7 @@ public class ApiPaths {
 
     //Vpos
     private static final String METHOD = "/method";
-    public static final String REQUEST_PAYMENTS_VPOS = VPOS + AUTHORIZATIONS;
+    public static final String VPOS_AUTHORIZATIONS = VPOS + AUTHORIZATIONS;
     public static final String REQUEST_PAYMENTS_RESUME_METHOD = REQUEST_PAYMENTS_RESUME + METHOD;
     public static final String REQUEST_PAYMENTS_RESUME_CHALLENGE = REQUEST_PAYMENTS_RESUME + "/challenge";
     public static final String METHOD_NOTIFICATIONS = REQUEST_ID + METHOD +"/notifications";

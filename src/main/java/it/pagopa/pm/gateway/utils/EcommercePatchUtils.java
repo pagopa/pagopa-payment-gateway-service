@@ -12,19 +12,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static it.pagopa.pm.gateway.constant.Messages.PATCH_CLOSE_PAYMENT_ERROR;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.AUTHORIZED;
 
 @Slf4j
 @NoArgsConstructor
 @Component
-public class VposPatchUtils {
+public class EcommercePatchUtils {
 
     private EcommerceClient ecommerceClient;
 
     private ClientsConfig clientsConfig;
 
     @Autowired
-    public VposPatchUtils(EcommerceClient ecommerceClient, ClientsConfig clientsConfig) {
+    public EcommercePatchUtils(EcommerceClient ecommerceClient, ClientsConfig clientsConfig) {
         this.ecommerceClient = ecommerceClient;
         this.clientsConfig = clientsConfig;
     }
@@ -43,5 +43,4 @@ public class VposPatchUtils {
             log.error("{}{}", PATCH_CLOSE_PAYMENT_ERROR, requestId, e);
         }
     }
-
 }

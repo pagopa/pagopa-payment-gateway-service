@@ -37,6 +37,7 @@ public class VPosResponseUtils {
     private static final String DISALLOW_DOCTYPE_DECL = APACHE_FEATURES_BASE_URL + "disallow-doctype-decl";
     private static final String EXTERNAL_GENERAL_ENTITIES = XML_FEATURES_BASE_URL + "external-general-entities";
     private static final String EXTERNAL_PARAMETER_ENTITIES = XML_FEATURES_BASE_URL + "external-parameter-entities";
+    private static final String CREQ_QUERY_PARAM = "creq=";
 
     @Autowired
     VPosUtils vPosUtils;
@@ -318,5 +319,16 @@ public class VPosResponseUtils {
             authorizationDto.setTransactionStatus(getVposResponseField(authorization, TRANSACTION_STATUS));
             authorizationsDto.add(authorizationDto);
         }
+    }
+
+    public String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {
+        String url = threeDS2Challenge.getAcsUrl();
+        String creq = threeDS2Challenge.getCReq();
+        String paramSep = "?";
+        if (StringUtils.contains(url,paramSep)) {
+            paramSep = "&";
+        }
+
+        return StringUtils.join(url, paramSep, CREQ_QUERY_PARAM, creq);
     }
 }

@@ -168,8 +168,7 @@ public class ValidBeans {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse = new InquiryTransactionStatusResponse();
         ResponseInquiryTransactionStatusVO responseInquiryTransactionStatusVO = new ResponseInquiryTransactionStatusVO();
         responseInquiryTransactionStatusVO.setEsitoPagamento("EFF");
-        if (hasReturn)
-            inquiryTransactionStatusResponse.setReturn(responseInquiryTransactionStatusVO);
+        if (hasReturn) inquiryTransactionStatusResponse.setReturn(responseInquiryTransactionStatusVO);
 
         return inquiryTransactionStatusResponse;
 
@@ -181,8 +180,7 @@ public class ValidBeans {
         EsitoVO esitoVO = new EsitoVO();
         esitoVO.setEsito(esito);
         responseStornoPagamentoVO.setEsito(esitoVO);
-        if (hasReturn)
-            stornoPagamentoResponse.setReturn(responseStornoPagamentoVO);
+        if (hasReturn) stornoPagamentoResponse.setReturn(responseStornoPagamentoVO);
 
         return stornoPagamentoResponse;
     }
@@ -457,9 +455,7 @@ public class ValidBeans {
         return xPayAuthResponse;
     }
 
-    public static PaymentRequestEntity paymentRequestEntityxPay(XPayAuthRequest XPayAuthRequest, String clientId,
-                                                                Boolean isValid, PaymentRequestStatusEnum statusEnum,
-                                                                boolean isRefunded) {
+    public static PaymentRequestEntity paymentRequestEntityxPay(XPayAuthRequest XPayAuthRequest, String clientId, Boolean isValid, PaymentRequestStatusEnum statusEnum, boolean isRefunded) {
         String authRequestJson = null;
 
 
@@ -548,25 +544,28 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayPollingResponse createXpayAuthPollingResponse(boolean isOk, XPayPollingResponseError error,
-                                                                    boolean isCancelled) {
+    public static XPayPollingResponse createXpayAuthPollingResponse(boolean isOk, boolean isCancelled) {
         XPayPollingResponse response = new XPayPollingResponse();
         if (isOk) {
             response.setHtml("<html><body></body></html>");
-            response.setStatus(CREATED.name());
-        } else if (Objects.nonNull(error)) {
-            response.setStatus(DENIED.name());
-            response.setError(error);
+            response.setPaymentRequestStatusEnum(CREATED);
+        } else {
+            response.setPaymentRequestStatusEnum(DENIED);
         }
         if (isCancelled) {
-            response.setStatus(CANCELLED.name());
+            response.setPaymentRequestStatusEnum(CANCELLED);
         }
         return response;
     }
 
+    public static XPayPollingResponse createXpayAuthOkPollingResponseWithNoHtml() {
+        XPayPollingResponse response = new XPayPollingResponse();
+        response.setPaymentRequestStatusEnum(CREATED);
+        return response;
+    }
+
     private static String createMac(BigInteger importo, String timeStamp) throws NoSuchAlgorithmException {
-        String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s",
-                "apiKey", "02", "978", importo, timeStamp, "secretKey");
+        String macString = String.format("apiKey=%scodiceTransazione=%sdivisa=%simporto=%stimeStamp=%s%s", "apiKey", "02", "978", importo, timeStamp, "secretKey");
         return hashMac(macString);
     }
 
@@ -692,42 +691,20 @@ public class ValidBeans {
 
     public static BPayInfoResponse bpayInfoResponse(boolean isError, String errorString) {
         BPayInfoResponse bPayInfoResponse;
-        bPayInfoResponse = isError ? new BPayInfoResponse(null, errorString) :
-                new BPayInfoResponse("id", null);
+        bPayInfoResponse = isError ? new BPayInfoResponse(null, errorString) : new BPayInfoResponse("id", null);
         return bPayInfoResponse;
     }
 
     public static XPayOrderStatusRequest createXPayOrderStatusRequest() {
-        return new XPayOrderStatusRequest(
-                "apiKey",
-                "codTrans",
-                String.valueOf(System.currentTimeMillis()),
-                "mac");
+        return new XPayOrderStatusRequest("apiKey", "codTrans", String.valueOf(System.currentTimeMillis()), "mac");
     }
 
     public static XPayRevertRequest createXPayRevertRequest() {
-        return new XPayRevertRequest(
-                "apiKey",
-                "codTrans",
-                BigInteger.valueOf(23L),
-                978L,
-                String.valueOf(System.currentTimeMillis()),
-                "mac");
+        return new XPayRevertRequest("apiKey", "codTrans", BigInteger.valueOf(23L), 978L, String.valueOf(System.currentTimeMillis()), "mac");
     }
 
     public static StepZeroRequest createStep0Request(Boolean isFirstPayment) {
-        return new StepZeroRequest(
-                "123456",
-                BigInteger.valueOf(123455),
-                "3456567899754",
-                "123",
-                "12/23",
-                "holder",
-                MASTERCARD,
-                "threeDsData",
-                "email@emal.com",
-                isFirstPayment,
-                "idPsp13");
+        return new StepZeroRequest("123456", BigInteger.valueOf(123455), "3456567899754", "123", "12/23", "holder", MASTERCARD, "threeDsData", "email@emal.com", isFirstPayment, "idPsp13");
     }
 
     public static HttpClientResponse createHttpClientResponseVPos() throws IOException {
@@ -751,8 +728,7 @@ public class ValidBeans {
     }
 
     private static byte[] convertToBytes(Object object) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeObject(object);
             return bos.toByteArray();
         }
@@ -907,91 +883,27 @@ public class ValidBeans {
 
     public static Document createThreeDs2AuthorizationResponseDocument(ThreeDS2Response threeDS2Response) throws IOException, JDOMException {
         ThreeDS2Authorization authorization = (ThreeDS2Authorization) threeDS2Response.getThreeDS2ResponseElement();
-        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<BPWXmlResponse><Timestamp>" + threeDS2Response.getTimestamp() + "</Timestamp><Result>00</Result><MAC>null</MAC><Data><PanAliasData><PanAlias>alias</PanAlias>" +
-                "<PanAliasExpDate>exp</PanAliasExpDate><PanAliasTail>tail</PanAliasTail><MAC>9ba711c59658a8abb5a962a0becb515e980cee1e</MAC></PanAliasData>" +
-                "<ThreeDSAuthorizationRequest0>" +
-                "<Header><ShopID>shopIdS</ShopID><OperatorID>terminalIdS</OperatorID><ReqRefNum>123456</ReqRefNum></Header>" +
-                "<OrderID>12345678921</OrderID><Pan>123456789123</Pan><CVV2>123</CVV2><ExpDate>30/12</ExpDate><Amount>12345</Amount><Currency>978</Currency>" +
-                "<AccountingMode>D</AccountingMode><Network>02</Network><Userid>prova prova</Userid><OpDescr>Pagamenti PA</OpDescr><ThreeDSData>threeDSData</ThreeDSData>" +
-                "<NotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</NotifUrl>" +
-                "<EmailCH>prova@mail.com</EmailCH><NameCH>prova prova</NameCH>" +
-                "<ThreeDSMtdNotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</ThreeDSMtdNotifUrl>" +
-                "</ThreeDSAuthorizationRequest0>" +
-                "<Authorization>" +
-                "<PaymentType>" + authorization.getPaymentType() + "</PaymentType><AuthorizationType>" + authorization.getAuthorizationType() + "</AuthorizationType>" +
-                "<TransactionID>" + authorization.getTransactionId() + "</TransactionID><Network>02</Network>" +
-                "<OrderID>" + authorization.getOrderId() + "</OrderID><TransactionAmount>" + authorization.getTransactionAmount() + "</TransactionAmount>" +
-                "<AuthorizedAmount>" + authorization.getAuthorizedAmount() + "</AuthorizedAmount><Currency>978</Currency><Exponent>" + authorization.getExponent() + "</Exponent>" +
-                "<AccountedAmount>" + authorization.getAccountedAmount() + "</AccountedAmount><RefundedAmount>" + authorization.getRefundedAmount() + "</RefundedAmount>" +
-                "<TransactionResult>" + authorization.getTransactionResult() + "</TransactionResult><Timestamp>" + authorization.getTimestamp() + "</Timestamp>" +
-                "<AuthorizationNumber>" + authorization.getAuthorizationNumber() + "</AuthorizationNumber><AcquirerBIN>" + authorization.getAcquirerBin() + "</AcquirerBIN>" +
-                "<MerchantID>" + authorization.getMerchantId() + "</MerchantID>" + "<TransactionStatus>" + authorization.getTransactionStatus() + "</TransactionStatus>" +
-                "<ResponseCodeISO>" + authorization.getResponseCodeIso() + "</ResponseCodeISO><RRN>" + authorization.getRrn() + "</RRN>" +
-                "</Authorization>" +
-                "</Data></BPWXmlResponse>\n";
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<BPWXmlResponse><Timestamp>" + threeDS2Response.getTimestamp() + "</Timestamp><Result>00</Result><MAC>null</MAC><Data><PanAliasData><PanAlias>alias</PanAlias>" + "<PanAliasExpDate>exp</PanAliasExpDate><PanAliasTail>tail</PanAliasTail><MAC>9ba711c59658a8abb5a962a0becb515e980cee1e</MAC></PanAliasData>" + "<ThreeDSAuthorizationRequest0>" + "<Header><ShopID>shopIdS</ShopID><OperatorID>terminalIdS</OperatorID><ReqRefNum>123456</ReqRefNum></Header>" + "<OrderID>12345678921</OrderID><Pan>123456789123</Pan><CVV2>123</CVV2><ExpDate>30/12</ExpDate><Amount>12345</Amount><Currency>978</Currency>" + "<AccountingMode>D</AccountingMode><Network>02</Network><Userid>prova prova</Userid><OpDescr>Pagamenti PA</OpDescr><ThreeDSData>threeDSData</ThreeDSData>" + "<NotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</NotifUrl>" + "<EmailCH>prova@mail.com</EmailCH><NameCH>prova prova</NameCH>" + "<ThreeDSMtdNotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</ThreeDSMtdNotifUrl>" + "</ThreeDSAuthorizationRequest0>" + "<Authorization>" + "<PaymentType>" + authorization.getPaymentType() + "</PaymentType><AuthorizationType>" + authorization.getAuthorizationType() + "</AuthorizationType>" + "<TransactionID>" + authorization.getTransactionId() + "</TransactionID><Network>02</Network>" + "<OrderID>" + authorization.getOrderId() + "</OrderID><TransactionAmount>" + authorization.getTransactionAmount() + "</TransactionAmount>" + "<AuthorizedAmount>" + authorization.getAuthorizedAmount() + "</AuthorizedAmount><Currency>978</Currency><Exponent>" + authorization.getExponent() + "</Exponent>" + "<AccountedAmount>" + authorization.getAccountedAmount() + "</AccountedAmount><RefundedAmount>" + authorization.getRefundedAmount() + "</RefundedAmount>" + "<TransactionResult>" + authorization.getTransactionResult() + "</TransactionResult><Timestamp>" + authorization.getTimestamp() + "</Timestamp>" + "<AuthorizationNumber>" + authorization.getAuthorizationNumber() + "</AuthorizationNumber><AcquirerBIN>" + authorization.getAcquirerBin() + "</AcquirerBIN>" + "<MerchantID>" + authorization.getMerchantId() + "</MerchantID>" + "<TransactionStatus>" + authorization.getTransactionStatus() + "</TransactionStatus>" + "<ResponseCodeISO>" + authorization.getResponseCodeIso() + "</ResponseCodeISO><RRN>" + authorization.getRrn() + "</RRN>" + "</Authorization>" + "</Data></BPWXmlResponse>\n";
         SAXBuilder saxBuilder = new SAXBuilder();
         return saxBuilder.build(new StringReader(xmlString));
     }
 
     public static Document createThreeDs2MethodResponseDocument(ThreeDS2Response threeDS2Response) throws IOException, JDOMException {
         ThreeDS2Method method = (ThreeDS2Method) threeDS2Response.getThreeDS2ResponseElement();
-        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<BPWXmlResponse><Timestamp>" + threeDS2Response.getTimestamp() + "</Timestamp><Result>00</Result><MAC>null</MAC><Data><PanAliasData><PanAlias>alias</PanAlias>" +
-                "<PanAliasExpDate>exp</PanAliasExpDate><PanAliasTail>tail</PanAliasTail><MAC>9ba711c59658a8abb5a962a0becb515e980cee1e</MAC></PanAliasData>" +
-                "<ThreeDSAuthorizationRequest0>" +
-                "<Header><ShopID>shopIdS</ShopID><OperatorID>terminalIdS</OperatorID><ReqRefNum>123456</ReqRefNum></Header>" +
-                "<OrderID>12345678921</OrderID><Pan>123456789123</Pan><CVV2>123</CVV2><ExpDate>30/12</ExpDate><Amount>12345</Amount><Currency>978</Currency>" +
-                "<AccountingMode>D</AccountingMode><Network>02</Network><Userid>prova prova</Userid><OpDescr>Pagamenti PA</OpDescr><ThreeDSData>threeDSData</ThreeDSData>" +
-                "<NotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</NotifUrl>" +
-                "<EmailCH>prova@mail.com</EmailCH><NameCH>prova prova</NameCH>" +
-                "<ThreeDSMtdNotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</ThreeDSMtdNotifUrl>" +
-                "</ThreeDSAuthorizationRequest0>" +
-                "<ThreeDSMethod>" +
-                "<ThreeDSTransId>" + method.getThreeDSTransId() + "</ThreeDSTransId><ThreeDSMethodData>" + method.getThreeDSMethodData() + "</ThreeDSMethodData>" +
-                "<ThreeDSMethodUrl>" + method.getThreeDSMethodUrl() + "</ThreeDSMethodUrl><MAC>" + method.getMac() + "</MAC>" +
-                "</ThreeDSMethod>" +
-                "</Data></BPWXmlResponse>\n";
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<BPWXmlResponse><Timestamp>" + threeDS2Response.getTimestamp() + "</Timestamp><Result>00</Result><MAC>null</MAC><Data><PanAliasData><PanAlias>alias</PanAlias>" + "<PanAliasExpDate>exp</PanAliasExpDate><PanAliasTail>tail</PanAliasTail><MAC>9ba711c59658a8abb5a962a0becb515e980cee1e</MAC></PanAliasData>" + "<ThreeDSAuthorizationRequest0>" + "<Header><ShopID>shopIdS</ShopID><OperatorID>terminalIdS</OperatorID><ReqRefNum>123456</ReqRefNum></Header>" + "<OrderID>12345678921</OrderID><Pan>123456789123</Pan><CVV2>123</CVV2><ExpDate>30/12</ExpDate><Amount>12345</Amount><Currency>978</Currency>" + "<AccountingMode>D</AccountingMode><Network>02</Network><Userid>prova prova</Userid><OpDescr>Pagamenti PA</OpDescr><ThreeDSData>threeDSData</ThreeDSData>" + "<NotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</NotifUrl>" + "<EmailCH>prova@mail.com</EmailCH><NameCH>prova prova</NameCH>" + "<ThreeDSMtdNotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</ThreeDSMtdNotifUrl>" + "</ThreeDSAuthorizationRequest0>" + "<ThreeDSMethod>" + "<ThreeDSTransId>" + method.getThreeDSTransId() + "</ThreeDSTransId><ThreeDSMethodData>" + method.getThreeDSMethodData() + "</ThreeDSMethodData>" + "<ThreeDSMethodUrl>" + method.getThreeDSMethodUrl() + "</ThreeDSMethodUrl><MAC>" + method.getMac() + "</MAC>" + "</ThreeDSMethod>" + "</Data></BPWXmlResponse>\n";
         SAXBuilder saxBuilder = new SAXBuilder();
         return saxBuilder.build(new StringReader(xmlString));
     }
 
     public static Document createThreeDs2ChallengeResponseDocument(ThreeDS2Response threeDS2Response) throws IOException, JDOMException {
         ThreeDS2Challenge challenge = (ThreeDS2Challenge) threeDS2Response.getThreeDS2ResponseElement();
-        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<BPWXmlResponse><Timestamp>" + threeDS2Response.getTimestamp() + "</Timestamp><Result>00</Result><MAC>null</MAC><Data><PanAliasData><PanAlias>alias</PanAlias>" +
-                "<PanAliasExpDate>exp</PanAliasExpDate><PanAliasTail>tail</PanAliasTail><MAC>9ba711c59658a8abb5a962a0becb515e980cee1e</MAC></PanAliasData>" +
-                "<ThreeDSAuthorizationRequest0>" +
-                "<Header><ShopID>shopIdS</ShopID><OperatorID>terminalIdS</OperatorID><ReqRefNum>123456</ReqRefNum></Header>" +
-                "<OrderID>12345678921</OrderID><Pan>123456789123</Pan><CVV2>123</CVV2><ExpDate>30/12</ExpDate><Amount>12345</Amount><Currency>978</Currency>" +
-                "<AccountingMode>D</AccountingMode><Network>02</Network><Userid>prova prova</Userid><OpDescr>Pagamenti PA</OpDescr><ThreeDSData>threeDSData</ThreeDSData>" +
-                "<NotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</NotifUrl>" +
-                "<EmailCH>prova@mail.com</EmailCH><NameCH>prova prova</NameCH>" +
-                "<ThreeDSMtdNotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</ThreeDSMtdNotifUrl>" +
-                "</ThreeDSAuthorizationRequest0>" +
-                "<ThreeDSChallenge>" +
-                "<ThreeDSTransId>" + challenge.getThreeDSTransId() + "</ThreeDSTransId><ACSUrl>" + challenge.getAcsUrl() + "</ACSUrl>" +
-                "<CReq>" + challenge.getCReq() + "</CReq><MAC>" + challenge.getMac() + "</MAC>" +
-                "</ThreeDSChallenge>" +
-                "</Data></BPWXmlResponse>\n";
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<BPWXmlResponse><Timestamp>" + threeDS2Response.getTimestamp() + "</Timestamp><Result>00</Result><MAC>null</MAC><Data><PanAliasData><PanAlias>alias</PanAlias>" + "<PanAliasExpDate>exp</PanAliasExpDate><PanAliasTail>tail</PanAliasTail><MAC>9ba711c59658a8abb5a962a0becb515e980cee1e</MAC></PanAliasData>" + "<ThreeDSAuthorizationRequest0>" + "<Header><ShopID>shopIdS</ShopID><OperatorID>terminalIdS</OperatorID><ReqRefNum>123456</ReqRefNum></Header>" + "<OrderID>12345678921</OrderID><Pan>123456789123</Pan><CVV2>123</CVV2><ExpDate>30/12</ExpDate><Amount>12345</Amount><Currency>978</Currency>" + "<AccountingMode>D</AccountingMode><Network>02</Network><Userid>prova prova</Userid><OpDescr>Pagamenti PA</OpDescr><ThreeDSData>threeDSData</ThreeDSData>" + "<NotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</NotifUrl>" + "<EmailCH>prova@mail.com</EmailCH><NameCH>prova prova</NameCH>" + "<ThreeDSMtdNotifUrl>http://localhost:8080/payment-gateway/payment-gateway/request-payments/creditCard/07f92d0c-1735-4863-9051-dcdb03e88ead/resume</ThreeDSMtdNotifUrl>" + "</ThreeDSAuthorizationRequest0>" + "<ThreeDSChallenge>" + "<ThreeDSTransId>" + challenge.getThreeDSTransId() + "</ThreeDSTransId><ACSUrl>" + challenge.getAcsUrl() + "</ACSUrl>" + "<CReq>" + challenge.getCReq() + "</CReq><MAC>" + challenge.getMac() + "</MAC>" + "</ThreeDSChallenge>" + "</Data></BPWXmlResponse>\n";
         SAXBuilder saxBuilder = new SAXBuilder();
         return saxBuilder.build(new StringReader(xmlString));
     }
 
     public static Document createAuthResponseDocument(AuthResponse authResponse) throws IOException, JDOMException {
-        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<BPWXmlResponse><Timestamp>" + authResponse.getTimestamp() + "</Timestamp><Result>" + authResponse.getResultCode() + "</Result><MAC>" + authResponse.getResultMac() + "</MAC>" +
-                "<Data><Operation><Authorization>" +
-                "<PaymentType>" + authResponse.getPaymentType() + "</PaymentType><AuthorizationType>" + authResponse.getAuthorizationType() + "</AuthorizationType>" +
-                "<TransactionID>" + authResponse.getAcquirerTransactionId() + "</TransactionID><Network></Network>" +
-                "<OrderID>" + authResponse.getOrderNumber() + "</OrderID><TransactionAmount>" + authResponse.getAmount() + "</TransactionAmount>" +
-                "<AuthorizedAmount>" + authResponse.getAuthorizationAmount() + "</AuthorizedAmount><RefundedAmount>" + authResponse.getRefundAmount() + "</RefundedAmount>" +
-                "<AccountedAmount>" + authResponse.getAccountAmount() + "</AccountedAmount><Currency>" + authResponse.getCurrency() + "</Currency>" +
-                "<AuthorizationNumber>" + authResponse.getAuthorizationNumber() + "</AuthorizationNumber><AcquirerBIN>" + authResponse.getAcquirerBin() + "</AcquirerBIN>" +
-                "<MerchantID>" + authResponse.getMerchantCode() + "</MerchantID><TransactionStatus>" + authResponse.getStatus() + "</TransactionStatus>" +
-                "<RRN>" + authResponse.getRrn() + "</RRN><MAC>" + authResponse.getAuthorizationMac() + "</MAC>" +
-                "</Authorization></Operation></Data>" +
-                "</BPWXmlResponse>\n";
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<BPWXmlResponse><Timestamp>" + authResponse.getTimestamp() + "</Timestamp><Result>" + authResponse.getResultCode() + "</Result><MAC>" + authResponse.getResultMac() + "</MAC>" + "<Data><Operation><Authorization>" + "<PaymentType>" + authResponse.getPaymentType() + "</PaymentType><AuthorizationType>" + authResponse.getAuthorizationType() + "</AuthorizationType>" + "<TransactionID>" + authResponse.getAcquirerTransactionId() + "</TransactionID><Network></Network>" + "<OrderID>" + authResponse.getOrderNumber() + "</OrderID><TransactionAmount>" + authResponse.getAmount() + "</TransactionAmount>" + "<AuthorizedAmount>" + authResponse.getAuthorizationAmount() + "</AuthorizedAmount><RefundedAmount>" + authResponse.getRefundAmount() + "</RefundedAmount>" + "<AccountedAmount>" + authResponse.getAccountAmount() + "</AccountedAmount><Currency>" + authResponse.getCurrency() + "</Currency>" + "<AuthorizationNumber>" + authResponse.getAuthorizationNumber() + "</AuthorizationNumber><AcquirerBIN>" + authResponse.getAcquirerBin() + "</AcquirerBIN>" + "<MerchantID>" + authResponse.getMerchantCode() + "</MerchantID><TransactionStatus>" + authResponse.getStatus() + "</TransactionStatus>" + "<RRN>" + authResponse.getRrn() + "</RRN><MAC>" + authResponse.getAuthorizationMac() + "</MAC>" + "</Authorization></Operation></Data>" + "</BPWXmlResponse>\n";
         SAXBuilder saxBuilder = new SAXBuilder();
         return saxBuilder.build(new StringReader(xmlString));
     }
@@ -1077,21 +989,7 @@ public class ValidBeans {
         Header header = orderStatus.getHeader();
         List<ThreeDS2Authorization> authorizations = response.getAuthorizations();
         ThreeDS2Authorization authorization = authorizations.get(0);
-        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<BPWXmlResponse><Timestamp>" + response.getTimestamp() + "</Timestamp><Result>" + response.getResultCode() + "</Result><MAC>" + response.getResultMac() + "</MAC>" +
-                "<Header>" +
-                "<OperatorId>" + header.getOperatorId() + "</OperatorId><ShopId>" + header.getShopId() + "</ShopId>" + "<ReqRefNum>" + header.getReqRefNum() + "</ReqRefNum>" +
-                "</Header>" +
-                "<Data>" +
-                "<OrderStatus>" +
-                "<OrderID>" + orderStatus.getOrderId() + "</OrderID>" +
-                "</OrderStatus>" +
-                "<ProductRef>" + response.getProductRef() + "</ProductRef>" +
-                "<NumberOfItems>" + response.getNumberOfItems() + "</NumberOfItems>" +
-                "<NumberOfItems>" + response.getNumberOfItems() + "</NumberOfItems>" +
-                "<Authorization>" + authorization + "</Authorization>" +
-                "</Data>" +
-                "</BPWXmlResponse>\n";
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<BPWXmlResponse><Timestamp>" + response.getTimestamp() + "</Timestamp><Result>" + response.getResultCode() + "</Result><MAC>" + response.getResultMac() + "</MAC>" + "<Header>" + "<OperatorId>" + header.getOperatorId() + "</OperatorId><ShopId>" + header.getShopId() + "</ShopId>" + "<ReqRefNum>" + header.getReqRefNum() + "</ReqRefNum>" + "</Header>" + "<Data>" + "<OrderStatus>" + "<OrderID>" + orderStatus.getOrderId() + "</OrderID>" + "</OrderStatus>" + "<ProductRef>" + response.getProductRef() + "</ProductRef>" + "<NumberOfItems>" + response.getNumberOfItems() + "</NumberOfItems>" + "<NumberOfItems>" + response.getNumberOfItems() + "</NumberOfItems>" + "<Authorization>" + authorization + "</Authorization>" + "</Data>" + "</BPWXmlResponse>\n";
         SAXBuilder saxBuilder = new SAXBuilder();
         return saxBuilder.build(new StringReader(xmlString));
     }

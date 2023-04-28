@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.METHOD_NOTIFICATIONS;
-import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_VPOS;
+import static it.pagopa.pm.gateway.constant.ApiPaths.VPOS_AUTHORIZATIONS;
 
 @Slf4j
 @Controller
-@RequestMapping(REQUEST_PAYMENTS_VPOS)
+@RequestMapping(VPOS_AUTHORIZATIONS)
 public class WebViewVposController {
 
     @Value("${vpos.method.origin}")

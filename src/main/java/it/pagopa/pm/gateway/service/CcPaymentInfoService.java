@@ -76,8 +76,12 @@ public class CcPaymentInfoService {
         response.setPaymentRequestStatusEnum(paymentRequestStatusEnum);
         response.setRequestId(requestId);
         String authorizationUrl = paymentRequestEntity.getAuthorizationUrl();
-        String vposUrl = getVposUrl(authorizationUrl);
-        String creq = getCreqFromAuthUrl(authorizationUrl);
+        String vposUrl = null;
+        String creq = null;
+        if (StringUtils.isNotBlank(authorizationUrl)) {
+            vposUrl = getVposUrl(authorizationUrl);
+            creq = getCreqFromAuthUrl(authorizationUrl);
+        }
         switch (paymentRequestStatusEnum) {
             case CREATED:
                 ThreeDS2ResponseTypeEnum responseTypeEnum = valueOf(paymentRequestEntity.getResponseType());
@@ -87,7 +91,6 @@ public class CcPaymentInfoService {
                 break;
             case AUTHORIZED:
                 response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
-                response.setCreq(creq);
                 response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, OK));
                 break;
             case CANCELLED:

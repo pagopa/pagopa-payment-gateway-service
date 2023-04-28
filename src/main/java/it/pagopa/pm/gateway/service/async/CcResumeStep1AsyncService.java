@@ -28,7 +28,7 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 @Slf4j
 @NoArgsConstructor
 public class CcResumeStep1AsyncService {
-    private static final String CREQ_QUERY_PARAM = "?creq=";
+
     public static final String RESULT_CODE_METHOD = "26";
 
     private String vposUrl;
@@ -98,7 +98,7 @@ public class CcResumeStep1AsyncService {
             case RESULT_CODE_CHALLENGE:
                 ThreeDS2Challenge challengeResponse = (ThreeDS2Challenge) threeDS2ResponseElement;
                 responseType = response.getResponseType().name();
-                responseVposUrl = getChallengeUrl(challengeResponse);
+                responseVposUrl = vPosResponseUtils.getChallengeUrl(challengeResponse);
                 correlationId = challengeResponse.getThreeDSTransId();
                 break;
             default:
@@ -114,12 +114,6 @@ public class CcResumeStep1AsyncService {
         entity.setRrn(rrn);
         paymentRequestRepository.save(entity);
         return isToAccount;
-    }
-
-    private String getChallengeUrl(ThreeDS2Challenge threeDS2Challenge) {
-        String url = threeDS2Challenge.getAcsUrl();
-        String creq = threeDS2Challenge.getCReq();
-        return StringUtils.join(url, CREQ_QUERY_PARAM, creq);
     }
 
     private void executeAccount(PaymentRequestEntity entity, StepZeroRequest pgsRequest) {

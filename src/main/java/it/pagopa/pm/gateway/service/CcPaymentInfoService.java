@@ -127,7 +127,7 @@ public class CcPaymentInfoService {
         outcomeVposGateway.setRrn(paymentRequestEntity.getRrn());
         outcomeVposGateway.setAuthorizationCode(paymentRequestEntity.getAuthorizationCode());
         String errorCode = paymentRequestEntity.getErrorCode();
-        VposErrorCodeEnum errorCodeEnum = StringUtils.isNotBlank(errorCode) ? VposErrorCodeEnum.valueOf(errorCode) : null;
+        VposErrorCodeEnum errorCodeEnum = StringUtils.isNotBlank(errorCode) ? VposErrorCodeEnum.getEnumFromCode(errorCode) : null;
         outcomeVposGateway.setVposErrorCodeEnum(errorCodeEnum);
         return outcomeVposGateway;
     }

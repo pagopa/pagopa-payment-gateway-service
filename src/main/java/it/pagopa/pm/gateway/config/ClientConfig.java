@@ -38,7 +38,6 @@ import org.springframework.ws.transport.http.HttpComponentsMessageSender;
 
 @Slf4j
 @Configuration
-@EnableAsync
 public class ClientConfig {
 
     private static final int XPAY_DEFAULT_TIMEOUT = 10000;

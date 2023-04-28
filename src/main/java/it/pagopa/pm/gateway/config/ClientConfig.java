@@ -32,7 +32,6 @@ import java.util.Objects;
 
 @Slf4j
 @Configuration
-@EnableAsync
 public class ClientConfig {
 
     private static final String HTTPS_PROXY_HOST_PROPERTY = "https.proxyHost";

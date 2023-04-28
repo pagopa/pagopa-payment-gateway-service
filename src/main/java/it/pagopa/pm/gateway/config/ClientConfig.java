@@ -77,10 +77,10 @@ public class ClientConfig {
     @Value("${pgs.xpay.client.timeOut}")
     private String xpayClientTimeout;
 
-    @Value("${bpay.keystore.location}")
+    @Value("${bancomatpay.keystore.location}")
     private String bpayKeyStoreLocation;
 
-    @Value("${bpay.keystore.password}")
+    @Value("${bancomatpay.keystore.password}")
     private String bpayKeyStorePassword;
 
     @Bean

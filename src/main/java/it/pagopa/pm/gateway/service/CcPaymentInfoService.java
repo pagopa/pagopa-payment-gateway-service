@@ -26,7 +26,6 @@ import org.springframework.util.Base64Utils;
 
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.VPOS_AUTHORIZATIONS;
@@ -105,18 +104,18 @@ public class CcPaymentInfoService {
     private String getVposUrl(String authorizationUrl) throws URISyntaxException {
         URIBuilder uriBuilder = new URIBuilder(authorizationUrl);
         List<NameValuePair> queryParams = uriBuilder.getQueryParams();
-        queryParams.removeIf(queryParameter -> queryParameter.getName().equals(CREQ));
+        queryParams.removeIf(queryParam -> StringUtils.equals(queryParam.getName(), CREQ));
         uriBuilder.setParameters(queryParams);
         return uriBuilder.build().toString();
     }
 
     private String getCreqFromAuthUrl(String authorizationUrl) throws URISyntaxException {
         URIBuilder uriBuilder = new URIBuilder(authorizationUrl);
-        NameValuePair creqPair = uriBuilder.getQueryParams().stream()
+        return uriBuilder.getQueryParams().stream()
                 .filter(queryParam -> StringUtils.equals(queryParam.getName(), CREQ))
                 .findFirst()
+                .map(NameValuePair::getValue)
                 .orElse(null);
-        return Objects.nonNull(creqPair) ? creqPair.getValue() : null;
     }
 
     private OutcomeVposGateway buildOutcomeVposGateway(PaymentRequestEntity paymentRequestEntity, OutcomeEnum outcomeEnum) {

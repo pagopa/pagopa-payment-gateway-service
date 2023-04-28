@@ -2,6 +2,9 @@ package it.pagopa.pm.gateway.dto.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
 
 @AllArgsConstructor
 public enum VposErrorCodeEnum {
@@ -40,5 +43,9 @@ public enum VposErrorCodeEnum {
     @Getter
     private final String description;
 
-
+    public static VposErrorCodeEnum getEnumFromCode(String code) {
+        return Arrays.stream(VposErrorCodeEnum.values())
+                .filter(enumValue -> StringUtils.equals(enumValue.code, code))
+                .findFirst().orElse(null);
+    }
 }

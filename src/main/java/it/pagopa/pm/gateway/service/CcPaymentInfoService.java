@@ -5,7 +5,6 @@ import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.enums.OutcomeEnum;
 import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
-import it.pagopa.pm.gateway.dto.enums.VposErrorCodeEnum;
 import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
 import it.pagopa.pm.gateway.dto.vpos.OutcomeVposGateway;
@@ -126,9 +125,7 @@ public class CcPaymentInfoService {
         outcomeVposGateway.setOutcomeEnum(outcomeEnum);
         outcomeVposGateway.setRrn(paymentRequestEntity.getRrn());
         outcomeVposGateway.setAuthorizationCode(paymentRequestEntity.getAuthorizationCode());
-        String errorCode = paymentRequestEntity.getErrorCode();
-        VposErrorCodeEnum errorCodeEnum = StringUtils.isNotBlank(errorCode) ? VposErrorCodeEnum.getEnumFromCode(errorCode) : null;
-        outcomeVposGateway.setVposErrorCodeEnum(errorCodeEnum);
+        outcomeVposGateway.setErrorCode(paymentRequestEntity.getErrorCode());
         return outcomeVposGateway;
     }
 

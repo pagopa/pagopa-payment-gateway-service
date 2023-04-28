@@ -30,7 +30,7 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 @RestController
 @Slf4j
 @NoArgsConstructor
-@RequestMapping(REQUEST_PAYMENTS_VPOS)
+@RequestMapping(VPOS_AUTHORIZATIONS)
 public class CreditCardPaymentController {
 
     @Autowired
@@ -61,7 +61,7 @@ public class CreditCardPaymentController {
         log.info("START - GET CreditCard request info for requestId: " + requestId);
         MdcUtils.setMdcFields(mdcFields);
 
-        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentoInfo(requestId);
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo(requestId);
         return ResponseEntity.ok(response);
     }
 
@@ -94,23 +94,23 @@ public class CreditCardPaymentController {
     public ResponseEntity<VposResumeMethodResponse> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                             @PathVariable UUID requestId,
                                                                             @RequestBody CreditCardResumeRequest request) {
-        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
+        log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
         VposResumeMethodResponse response = new VposResumeMethodResponse(requestId);
         resumeStep1Service.startResumeStep1(request, requestId.toString());
 
-        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
+        log.info("END - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping(REQUEST_PAYMENTS_RESUME_CHALLENGE)
     public ResponseEntity<String> resumeCreditCardPaymentStep2(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                @PathVariable String requestId) {
-        log.info("START - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
+        log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         MdcUtils.setMdcFields(mdcFields);
 
         resumeStep2Service.startResumeStep2(requestId);
-        log.info("END - POST {}{} info for requestId: {}", REQUEST_PAYMENTS_VPOS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
+        log.info("END - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
 
         String vposPollingRedirect = vposPollingUrl + requestId;
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(vposPollingRedirect)).build();
@@ -118,9 +118,9 @@ public class CreditCardPaymentController {
 
     @DeleteMapping(REQUEST_ID)
     public ResponseEntity<VposDeleteResponse> deleteVposPayment(@PathVariable String requestId) {
-        log.info("START - DELETE {} for requestId: {}", REQUEST_PAYMENTS_VPOS, requestId);
+        log.info("START - DELETE {} for requestId: {}", VPOS_AUTHORIZATIONS, requestId);
         VposDeleteResponse deleteResponse = deleteService.startDelete(requestId);
-        log.info("START - DELETE {} for requestId: {}", REQUEST_PAYMENTS_VPOS, requestId);
+        log.info("START - DELETE {} for requestId: {}", VPOS_AUTHORIZATIONS, requestId);
         return buildResponseDelete(deleteResponse, requestId);
     }
 

@@ -2,7 +2,8 @@ package it.pagopa.pm.gateway.client.ecommerce;
 
 import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.transaction.TransactionInfo;
-import it.pagopa.pm.gateway.dto.transaction.UpdateAuthRequest;
+import it.pagopa.pm.gateway.dto.vpos.UpdateAuthRequestVPos;
+import it.pagopa.pm.gateway.dto.xpay.UpdateAuthRequestXPay;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -68,19 +69,41 @@ public class EcommerceClient {
         return NumberUtils.isParsable(value) ? Integer.parseInt(value) : defaultValue;
     }
 
-    public TransactionInfo callPatchTransaction(UpdateAuthRequest request, String transactionId, ClientConfig clientConfig) {
+    public TransactionInfo callPatchTransaction(UpdateAuthRequestXPay request, String transactionId, ClientConfig clientConfig) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (StringUtils.isNotBlank(clientConfig.getAuthorizationUpdateApiKey())) {
             headers.add(HEADER_API_KEY, clientConfig.getAuthorizationUpdateApiKey());
         }
 
-        HttpEntity<UpdateAuthRequest> entity = new HttpEntity<>(request, headers);
+        HttpEntity<UpdateAuthRequestXPay> entity = new HttpEntity<>(request, headers);
         String transactionPatchUrl = String.format(clientConfig.getAuthorizationUpdateUrl(), transactionId);
 
-        log.info("Calling PATCH for transaction {} with outcome {}, authorizationCode {}, rrn {}, errorCode {} ",
-                transactionId, request.getOutcomeGateway().getOutcome(), request.getOutcomeGateway().getAuthorizationCode(),
-                request.getOutcomeGateway().getRrn(), request.getOutcomeGateway().getErrorCode());
+        log.info("Calling PATCH for transaction {} with outcome {}, authorizationCode {}, errorCode {} ",
+                transactionId,
+                request.getOutcomeXpayGatewayRequest().getOutcome(),
+                request.getOutcomeXpayGatewayRequest().getAuthorizationCode(),
+                request.getOutcomeXpayGatewayRequest().getErrorCode());
+
+        return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
+    }
+
+    public TransactionInfo callPatchTransaction(UpdateAuthRequestVPos request, String transactionId, ClientConfig clientConfig) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (StringUtils.isNotBlank(clientConfig.getAuthorizationUpdateApiKey())) {
+            headers.add(HEADER_API_KEY, clientConfig.getAuthorizationUpdateApiKey());
+        }
+
+        HttpEntity<UpdateAuthRequestVPos> entity = new HttpEntity<>(request, headers);
+        String transactionPatchUrl = String.format(clientConfig.getAuthorizationUpdateUrl(), transactionId);
+
+        log.info("Calling PATCH for transaction {} with outcome {}, rrn {}, authorizationCode {}, errorCode {} ",
+                transactionId,
+                request.getOutcomeVposGatewayRequest().getOutcome(),
+                request.getOutcomeVposGatewayRequest().getRrn(),
+                request.getOutcomeVposGatewayRequest().getAuthorizationCode(),
+                request.getOutcomeVposGatewayRequest().getErrorCode());
 
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }

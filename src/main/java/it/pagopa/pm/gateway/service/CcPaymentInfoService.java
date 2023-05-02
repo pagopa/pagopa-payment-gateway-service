@@ -7,7 +7,7 @@ import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
 import it.pagopa.pm.gateway.dto.vpos.CcHttpException;
 import it.pagopa.pm.gateway.dto.vpos.CcPaymentInfoResponse;
-import it.pagopa.pm.gateway.dto.vpos.OutcomeVposGateway;
+import it.pagopa.pm.gateway.dto.vpos.OutcomeVposGatewayResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDsMethodData;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -90,13 +90,13 @@ public class CcPaymentInfoService {
                 break;
             case AUTHORIZED:
                 response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
-                response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, OK));
+                response.setOutcomeVposGatewayResponse(buildOutcomeVposGateway(paymentRequestEntity, OK));
                 break;
             case CANCELLED:
             case DENIED:
             default:
                 OutcomeEnum outcomeEnum = paymentRequestStatusEnum.equals(CANCELLED) ? OK : KO;
-                response.setOutcomeVposGateway(buildOutcomeVposGateway(paymentRequestEntity, outcomeEnum));
+                response.setOutcomeVposGatewayResponse(buildOutcomeVposGateway(paymentRequestEntity, outcomeEnum));
                 response.setRedirectUrl(getRedirectUrl(paymentRequestEntity));
                 break;
         }
@@ -120,13 +120,13 @@ public class CcPaymentInfoService {
                 .orElse(null);
     }
 
-    private OutcomeVposGateway buildOutcomeVposGateway(PaymentRequestEntity paymentRequestEntity, OutcomeEnum outcomeEnum) {
-        OutcomeVposGateway outcomeVposGateway = new OutcomeVposGateway();
-        outcomeVposGateway.setOutcomeEnum(outcomeEnum);
-        outcomeVposGateway.setRrn(paymentRequestEntity.getRrn());
-        outcomeVposGateway.setAuthorizationCode(paymentRequestEntity.getAuthorizationCode());
-        outcomeVposGateway.setErrorCode(paymentRequestEntity.getErrorCode());
-        return outcomeVposGateway;
+    private OutcomeVposGatewayResponse buildOutcomeVposGateway(PaymentRequestEntity paymentRequestEntity, OutcomeEnum outcomeEnum) {
+        OutcomeVposGatewayResponse outcomeVposGatewayResponse = new OutcomeVposGatewayResponse();
+        outcomeVposGatewayResponse.setOutcomeEnum(outcomeEnum);
+        outcomeVposGatewayResponse.setRrn(paymentRequestEntity.getRrn());
+        outcomeVposGatewayResponse.setAuthorizationCode(paymentRequestEntity.getAuthorizationCode());
+        outcomeVposGatewayResponse.setErrorCode(paymentRequestEntity.getErrorCode());
+        return outcomeVposGatewayResponse;
     }
 
     private void fillStepInformation(CcPaymentInfoResponse response, String requestId,

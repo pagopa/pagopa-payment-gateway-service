@@ -68,7 +68,7 @@ public class VposAsyncService {
 
             //If the resultCode is 25 or 26, the PATCH is not called
             if (!METHOD_CHALLENGE_CODES.contains(response.getResultCode())) {
-                ecommercePatchUtils.executePatchTransaction(entity);
+                ecommercePatchUtils.executePatchTransactionVPos(entity);
             }
         } catch (Exception e) {
             log.error("{}{}{}{} - {}",GENERIC_ERROR_MSG,entity.getIdTransaction(),CAUSE,e.getCause(), e.getMessage(), e);

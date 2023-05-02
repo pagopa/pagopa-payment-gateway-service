@@ -11,13 +11,13 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 public class UpdateAuthRequestVPos {
     @NotNull
-    private OutcomeVposGatewayRequest outcomeVposGatewayRequest;
+    private OutcomeVposGatewayRequest outcomeGateway;
 
     @NotNull
     private OffsetDateTime timestampOperation;
 
     public UpdateAuthRequestVPos(String paymentGatewayType, AuthResultEnum outcome, String rrn, String authorizationCode, String errorCode) {
-        this.outcomeVposGatewayRequest = new OutcomeVposGatewayRequest(paymentGatewayType, outcome, rrn, authorizationCode, errorCode);
+        this.outcomeGateway = new OutcomeVposGatewayRequest(paymentGatewayType, outcome, rrn, authorizationCode, errorCode);
         this.timestampOperation = OffsetDateTime.now();
     }
 }

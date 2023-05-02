@@ -81,9 +81,9 @@ public class EcommerceClient {
 
         log.info("Calling PATCH for transaction {} with outcome {}, authorizationCode {}, errorCode {} ",
                 transactionId,
-                request.getOutcomeXpayGatewayRequest().getOutcome(),
-                request.getOutcomeXpayGatewayRequest().getAuthorizationCode(),
-                request.getOutcomeXpayGatewayRequest().getErrorCode());
+                request.getOutcomeGateway().getOutcome(),
+                request.getOutcomeGateway().getAuthorizationCode(),
+                request.getOutcomeGateway().getErrorCode());
 
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }
@@ -100,10 +100,10 @@ public class EcommerceClient {
 
         log.info("Calling PATCH for transaction {} with outcome {}, rrn {}, authorizationCode {}, errorCode {} ",
                 transactionId,
-                request.getOutcomeVposGatewayRequest().getOutcome(),
-                request.getOutcomeVposGatewayRequest().getRrn(),
-                request.getOutcomeVposGatewayRequest().getAuthorizationCode(),
-                request.getOutcomeVposGatewayRequest().getErrorCode());
+                request.getOutcomeGateway().getOutcome(),
+                request.getOutcomeGateway().getRrn(),
+                request.getOutcomeGateway().getAuthorizationCode(),
+                request.getOutcomeGateway().getErrorCode());
 
         return eCommerceRestTemplate.patchForObject(transactionPatchUrl, entity, TransactionInfo.class);
     }

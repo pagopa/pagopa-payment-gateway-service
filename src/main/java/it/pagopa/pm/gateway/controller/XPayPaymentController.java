@@ -150,7 +150,7 @@ public class XPayPaymentController {
             entity.setStatus(DENIED.name());
             paymentRequestRepository.save(entity);
 
-            ecommercePatchUtils.executePatchTransaction(entity);
+            ecommercePatchUtils.executePatchTransactionXPay(entity);
         }
 
         log.info("END - GET {}{} for requestId {}", REQUEST_PAYMENTS_XPAY, REQUEST_PAYMENTS_RESUME, requestId);
@@ -229,9 +229,9 @@ public class XPayPaymentController {
         if (statusEnum.equals(CREATED)) {
             response.setHtml(paymentRequestEntity.getXpayHtml());
         } else if (isStatusOneOf(statusEnum, AUTHORIZED, DENIED, CANCELLED)) {
-            OutcomeXpayGateway outcomeXpayGateway = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),
+            OutcomeXpayGatewayResponse outcomeXpayGatewayResponse = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),
                     paymentRequestEntity.getAuthorizationCode(), statusEnum);
-            response.setOutcomeXpayGateway(outcomeXpayGateway);
+            response.setOutcomeXpayGatewayResponse(outcomeXpayGatewayResponse);
             ClientConfig clientConfig = clientsConfig.getByKey(paymentRequestEntity.getClientId());
             String clientReturnUrl = clientConfig.getXpay().getClientReturnUrl();
             response.setRedirectUrl(StringUtils.join(clientReturnUrl, paymentRequestEntity.getIdTransaction()));
@@ -248,25 +248,25 @@ public class XPayPaymentController {
         return paymentRequestStatusEnums.contains(referenceStatus);
     }
 
-    private static OutcomeXpayGateway buildOutcomeXpayGateway(String errorCode, String authorizationCode,
-                                                              PaymentRequestStatusEnum paymentRequestStatusEnum) {
-        OutcomeXpayGateway outcomeXpayGateway = new OutcomeXpayGateway();
-        outcomeXpayGateway.setErrorCode(errorCode);
+    private static OutcomeXpayGatewayResponse buildOutcomeXpayGateway(String errorCode, String authorizationCode,
+                                                                      PaymentRequestStatusEnum paymentRequestStatusEnum) {
+        OutcomeXpayGatewayResponse outcomeXpayGatewayResponse = new OutcomeXpayGatewayResponse();
+        outcomeXpayGatewayResponse.setErrorCode(errorCode);
         switch (paymentRequestStatusEnum) {
             case AUTHORIZED:
-                outcomeXpayGateway.setOutcomeEnum(OutcomeEnum.OK);
-                outcomeXpayGateway.setAuthorizationCode(authorizationCode);
+                outcomeXpayGatewayResponse.setOutcomeEnum(OutcomeEnum.OK);
+                outcomeXpayGatewayResponse.setAuthorizationCode(authorizationCode);
                 break;
             case CANCELLED:
-                outcomeXpayGateway.setOutcomeEnum(OutcomeEnum.OK);
+                outcomeXpayGatewayResponse.setOutcomeEnum(OutcomeEnum.OK);
                 break;
             case DENIED:
-                outcomeXpayGateway.setOutcomeEnum(OutcomeEnum.KO);
+                outcomeXpayGatewayResponse.setOutcomeEnum(OutcomeEnum.KO);
                 break;
             default:
                 break;
         }
-        return outcomeXpayGateway;
+        return outcomeXpayGatewayResponse;
     }
 
     private boolean checkResumeRequest(PaymentRequestEntity entity, String requestId, XPay3DSResponse xpay3DSResponse) {

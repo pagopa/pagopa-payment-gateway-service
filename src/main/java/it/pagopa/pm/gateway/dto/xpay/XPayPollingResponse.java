@@ -22,5 +22,5 @@ public class XPayPollingResponse {
     private String redirectUrl;
     @JsonProperty(value = "paymentAuthorizationId")
     private String requestId;
-    private OutcomeXpayGateway outcomeXpayGateway;
+    private OutcomeXpayGatewayResponse outcomeXpayGatewayResponse;
 }

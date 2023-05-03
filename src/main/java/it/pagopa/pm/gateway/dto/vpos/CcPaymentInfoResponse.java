@@ -20,5 +20,5 @@ public class CcPaymentInfoResponse {
     private String redirectUrl;
     private String threeDsMethodData;
     private String creq;
-    private OutcomeVposGateway outcomeVposGateway;
+    private OutcomeVposGatewayResponse outcomeVposGatewayResponse;
 }

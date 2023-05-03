@@ -62,7 +62,7 @@ public class CcResumeStep2AsyncService {
                 executeAccount(entity, request);
             }
 
-            ecommercePatchUtils.executePatchTransaction(entity);
+            ecommercePatchUtils.executePatchTransactionVPos(entity);
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
         }

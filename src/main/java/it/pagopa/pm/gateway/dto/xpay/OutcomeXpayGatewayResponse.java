@@ -1,4 +1,4 @@
-package it.pagopa.pm.gateway.dto.vpos;
+package it.pagopa.pm.gateway.dto.xpay;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,10 +9,9 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 @Data
 @JsonInclude(NON_NULL)
-public class OutcomeVposGateway {
+public class OutcomeXpayGatewayResponse {
     @JsonProperty(value = "outcome", required = true)
     private OutcomeEnum outcomeEnum;
-    private String rrn;
     private String authorizationCode;
     private String errorCode;
 }

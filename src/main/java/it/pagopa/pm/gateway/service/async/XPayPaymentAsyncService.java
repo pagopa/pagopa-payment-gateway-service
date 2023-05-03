@@ -80,7 +80,7 @@ public class XPayPaymentAsyncService {
                 }
 
                 if (DENIED.name().equals(requestEntity.getStatus())) {
-                    ecommercePatchUtils.executePatchTransaction(requestEntity);
+                    ecommercePatchUtils.executePatchTransactionXPay(requestEntity);
                 }
 
                 paymentRequestRepository.save(requestEntity);
@@ -133,7 +133,7 @@ public class XPayPaymentAsyncService {
         entity.setAuthorizationOutcome(isAuthorized);
         paymentRequestRepository.save(entity);
 
-        ecommercePatchUtils.executePatchTransaction(entity);
+        ecommercePatchUtils.executePatchTransactionXPay(entity);
 
         log.info(String.format("END - executeXPayPaymentCall for requestId: %s. Status: %s " +
                 "- Authorization: %s. Retry attempts number: %s", requestId, entity.getStatus(), isAuthorized, retryCount));

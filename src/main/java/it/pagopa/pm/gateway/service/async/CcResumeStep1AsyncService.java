@@ -70,7 +70,7 @@ public class CcResumeStep1AsyncService {
 
             //If the resultCode is 26, the PATCH is not called
             if (!RESULT_CODE_METHOD.equals(response.getResultCode())) {
-                ecommercePatchUtils.executePatchTransaction(entity);
+                ecommercePatchUtils.executePatchTransactionVPos(entity);
             }
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);

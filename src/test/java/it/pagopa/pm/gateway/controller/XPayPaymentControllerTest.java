@@ -12,10 +12,7 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import it.pagopa.pm.gateway.service.async.XPayPaymentAsyncService;
-import it.pagopa.pm.gateway.utils.ClientsConfig;
-import it.pagopa.pm.gateway.utils.EcommercePatchUtils;
-import it.pagopa.pm.gateway.utils.JwtTokenUtils;
-import it.pagopa.pm.gateway.utils.XPayUtils;
+import it.pagopa.pm.gateway.utils.*;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,6 +35,7 @@ import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.XPayParams.XPAY_MAC;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -244,7 +242,7 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(patchResponse);
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -269,7 +267,7 @@ public class XPayPaymentControllerTest {
 
         when(xPayUtils.checkMac(any(), any())).thenReturn(false);
 
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(patchResponse);
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -298,7 +296,7 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(patchResponse);
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -325,7 +323,7 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callPaga3DS(any())).thenReturn(null);
 
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(patchResponse);
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -352,7 +350,7 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callPaga3DS(any())).thenThrow(new RuntimeException());
 
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(patchResponse);
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -375,7 +373,7 @@ public class XPayPaymentControllerTest {
         TransactionInfo patchResponse = new TransactionInfo();
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(patchResponse);
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -402,7 +400,7 @@ public class XPayPaymentControllerTest {
 
         when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
 
-        when(ecommerceClient.callPatchTransaction(any(),any(),any())).thenThrow(new RuntimeException());
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()),any(),any())).thenThrow(new RuntimeException());
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
@@ -439,7 +437,7 @@ public class XPayPaymentControllerTest {
         TransactionInfo patchResponse = new TransactionInfo();
 
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        when(ecommerceClient.callPatchTransaction(any(), any(), any())).thenReturn(patchResponse);
+        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)

@@ -89,8 +89,8 @@ stages:
                     deployToSlotOrASE: true
                     resourceGroupName: U87-PM-AppServices-pci-prod
                     slotName: release
-                - task: PublishBuildArtifacts@1
+                - task: PublishPipelineArtifact@1
                   displayName: Publish Artifact
                   inputs:
-                    pathToPublish: '$(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
+                    targetPath: '$(Pipeline.Workspace)/pagopa-payment-transactions-gateway-${{parameters.buildVersion}}.war'
                     artifactName: 'PROD - Deployed PTG ${{parameters.buildVersion}}'

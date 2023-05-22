@@ -120,7 +120,6 @@ public class CreditCardPaymentController {
     public ResponseEntity<VposDeleteResponse> deleteVposPayment(@PathVariable String requestId) {
         log.info("START - DELETE {} for requestId: {}", VPOS_AUTHORIZATIONS, requestId);
         VposDeleteResponse deleteResponse = deleteService.startDelete(requestId);
-        log.info("START - DELETE {} for requestId: {}", VPOS_AUTHORIZATIONS, requestId);
         return buildResponseDelete(deleteResponse, requestId);
     }
 

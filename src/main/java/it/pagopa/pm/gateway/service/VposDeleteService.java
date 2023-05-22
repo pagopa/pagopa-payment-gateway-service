@@ -62,12 +62,12 @@ public class VposDeleteService {
 
         if (Objects.isNull(entity)) {
             log.error(REQUEST_ID_NOT_FOUND_MSG);
-            return createDeleteResponse(requestId, REQUEST_ID_NOT_FOUND_MSG, KO, null);
+            return createDeleteResponse(requestId, REQUEST_ID_NOT_FOUND_MSG, null);
         }
 
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
-            return createDeleteResponse(requestId, String.format(TRANSACTION_ALREADY_REFUND, entity.getIdTransaction()), KO, entity);
+            return createDeleteResponse(requestId, null, entity);
         }
 
         RefundOutcome refundOutcome;
@@ -77,16 +77,16 @@ public class VposDeleteService {
             if (refundOutcome.equals(OK)) {
                 refundOutcome = executeRevert(entity, stepZeroRequest);
                 if (!refundOutcome.equals(OK)) {
-                    return createDeleteResponse(requestId, entity.getErrorMessage(), refundOutcome, entity);
+                    return createDeleteResponse(requestId, entity.getErrorMessage(), entity);
                 } else {
-                    return createDeleteResponse(requestId, null, refundOutcome, entity);
+                    return createDeleteResponse(requestId, null, entity);
                 }
             } else {
-                return createDeleteResponse(requestId, entity.getErrorMessage(), refundOutcome, entity);
+                return createDeleteResponse(requestId, entity.getErrorMessage(), entity);
             }
         } catch (Exception e) {
-            log.error(GENERIC_ERROR_MSG + entity.getIdTransaction() + e);
-            return createDeleteResponse(requestId, GENERIC_REFUND_ERROR_MSG + requestId, KO, entity);
+            log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
+            return createDeleteResponse(requestId, GENERIC_REFUND_ERROR_MSG + requestId, entity);
         }
     }
 
@@ -99,39 +99,31 @@ public class VposDeleteService {
     private RefundOutcome executeOrderStatus(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
         log.info("Calling VPOS - OrderStatus - for requestId: " + entity.getGuid());
         Map<String, String> params = vPosRequestUtils.buildOrderStatusParams(stepZeroRequest);
-        HttpClientResponse clientResponse = callVPos(params);
+        HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
         VposOrderStatusResponse response = vPosResponseUtils.buildOrderStatusResponse(clientResponse.getEntity());
+        log.info("Result code from VPOS - OrderStatus - for RequestId {} is {}", entity.getGuid(), response.getResultCode());
         return computeOrderStatusResultCode(response, entity);
     }
 
     private RefundOutcome executeRevert(PaymentRequestEntity entity, StepZeroRequest stepZeroRequest) throws IOException {
         log.info("Calling VPOS - Revert - for requestId: " + entity.getGuid());
         Map<String, String> params = vPosRequestUtils.buildRevertRequestParams(stepZeroRequest, entity.getCorrelationId());
-        HttpClientResponse clientResponse = callVPos(params);
+        HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
         AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
+        log.info("END - Vpos Request Payment Revert for requestId {} - resultCode: {} ", entity.getGuid(), response.getResultCode());
         return saveRevertResultCode(response, entity);
     }
 
-    private VposDeleteResponse createDeleteResponse(String requestId, String errorMessage, RefundOutcome refundOutcome, PaymentRequestEntity entity) {
+    private VposDeleteResponse createDeleteResponse(String requestId, String errorMessage, PaymentRequestEntity entity) {
         VposDeleteResponse response = new VposDeleteResponse();
         response.setRequestId(requestId);
         response.setError(errorMessage);
-        response.setRefundOutcome(refundOutcome.name());
         if (Objects.nonNull(entity)) {
             response.setStatus(entity.getStatus());
         }
 
         log.info("END - Vpos refund for requestId: " + requestId);
         return response;
-    }
-
-    private HttpClientResponse callVPos(Map<String, String> params) throws IOException {
-        HttpClientResponse clientResponse = httpClient.post(vposUrl, ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), params);
-        if (clientResponse.getStatus() != HttpStatus.OK.value()) {
-            log.error("HTTP Response Status: " + clientResponse.getStatus());
-            throw new IOException("Non-ok response from VPos. HTTP status: " + clientResponse.getStatus());
-        }
-        return clientResponse;
     }
 
     private RefundOutcome computeOrderStatusResultCode(VposOrderStatusResponse response, PaymentRequestEntity entity) {

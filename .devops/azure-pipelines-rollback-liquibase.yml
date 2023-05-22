@@ -1,8 +1,3 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
 trigger: none
 pr: none
 
@@ -17,8 +12,8 @@ parameters:
     values:
       - 'SIT'
       - 'UAT'
-#      - 'PT'
-#      - 'PROD'
+      - 'PT'
+      - 'PROD'
 
 variables:
   vmImageNameDefault: 'ubuntu-latest'
@@ -32,13 +27,13 @@ variables:
   azureSubscriptionUAT: 'Pm-Subscription-uat'
   KeyVaultNameUAT: 'u87-kmn-pm-uat-pci'
   #PT
-#  poolNamePT: 'pm-agent-pool-pt'
-#  azureSubscriptionPT: 'Pm-Subscription-pt'
-#  KeyVaultNamePT: 'u87-kmn-pm-pt-pci'
+  poolNamePT: 'pm-agent-pool-uat'
+  azureSubscriptionPT: 'Pm-Subscription-uat'
+  KeyVaultNamePT: 'u87-kmn-pm-uat-pci'
   #PROD
-#  poolNamePROD: 'pm-agent-pool-prod'
-#  azureSubscriptionPROD: 'Pm-Subscription-prod'
-#  KeyVaultNamePROD: 'u87-kmn-pm-prod-pci'
+  poolNamePROD: 'pm-agent-pool-prod'
+  azureSubscriptionPROD: 'U87-PAGOPA-PCI(b276d890-671c-4927-a8d9-48a25b4a5df2)'
+  KeyVaultNamePROD: 'U87-KMN-PM-pci-prod'
 
 stages:
   - stage: stage_rollback_check
@@ -94,28 +89,28 @@ stages:
           azureSubscription: $(azureSubscriptionUAT)
           KeyVaultName: $(KeyVaultNameUAT)
 
-#  - stage: stage_rollback_exec_PT
-#    displayName: "Execute Rollback Stage - PT"
-#    dependsOn:
-#      - stage_rollback_check
-#    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'PT') }})
-#    jobs:
-#      - template: templates/pt/rollback_db.yml
-#        parameters:
-#          version: ${{parameters.rollbackToVersion}}
-#          poolName: $(poolNamePT)
-#          azureSubscription: $(azureSubscriptionPT)
-#          KeyVaultName: $(KeyVaultNamePT)
-#
-#  - stage: stage_rollback_exec_PROD
-#    displayName: "Execute Rollback Stage - PROD"
-#    dependsOn:
-#      - stage_rollback_check
-#    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'PROD') }})
-#    jobs:
-#      - template: templates/prod/rollback_db.yml
-#        parameters:
-#          version: ${{parameters.rollbackToVersion}}
-#          poolName: $(poolNamePROD)
-#          azureSubscription: $(azureSubscriptionPROD)
-#          KeyVaultName: $(KeyVaultNamePROD)
+  - stage: stage_rollback_exec_PT
+    displayName: "Execute Rollback Stage - PT"
+    dependsOn:
+      - stage_rollback_check
+    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'PT') }})
+    jobs:
+      - template: templates/pt/rollback_db.yml
+        parameters:
+          version: ${{parameters.rollbackToVersion}}
+          poolName: $(poolNamePT)
+          azureSubscription: $(azureSubscriptionPT)
+          KeyVaultName: $(KeyVaultNamePT)
+
+  - stage: stage_rollback_exec_PROD
+    displayName: "Execute Rollback Stage - PROD"
+    dependsOn:
+      - stage_rollback_check
+    condition: and(succeeded('stage_rollback_check'), ${{ eq(parameters.rollbackEnv, 'PROD') }})
+    jobs:
+      - template: templates/prod/rollback_db.yml
+        parameters:
+          version: ${{parameters.rollbackToVersion}}
+          poolName: $(poolNamePROD)
+          azureSubscription: $(azureSubscriptionPROD)
+          KeyVaultName: $(KeyVaultNamePROD)

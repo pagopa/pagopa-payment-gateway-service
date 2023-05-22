@@ -80,10 +80,10 @@ stages:
               effectivePomSkip: true
               sonarQubeRunAnalysis: false
               publishJUnitResults: false
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Archive
             inputs:
-              pathToPublish: './target/pagopa-payment-transactions-gateway-$(var.outputBranchVersion).war'
+              targetPath: './target/pagopa-payment-transactions-gateway-$(var.outputBranchVersion).war'
               artifactName: 'Build PTG $(var.outputBranchVersion)'
           - publish: $(liquibaseFolderScript)
             artifact: $(var.outputBranchVersion)-liquibase-script

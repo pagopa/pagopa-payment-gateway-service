@@ -129,8 +129,9 @@ public class CreditCardPaymentController {
         if (Objects.nonNull(error)) {
             if (error.equals(REQUEST_ID_NOT_FOUND_MSG)) {
                 httpStatus = HttpStatus.NOT_FOUND;
-            }
-            if (error.equals(GENERIC_REFUND_ERROR_MSG + requestId)) {
+            } else if (error.equals(DENIED_STATUS_MSG)) {
+                httpStatus = HttpStatus.CONFLICT;
+            } else if (error.equals(GENERIC_REFUND_ERROR_MSG + requestId)) {
                 httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             }
         }

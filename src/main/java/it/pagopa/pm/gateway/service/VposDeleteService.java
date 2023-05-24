@@ -16,6 +16,7 @@ import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ import java.util.Objects;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_AUTHORIZED;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
 import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.KO;
 import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 
@@ -63,6 +65,11 @@ public class VposDeleteService {
         if (Objects.isNull(entity)) {
             log.error(REQUEST_ID_NOT_FOUND_MSG);
             return createDeleteResponse(requestId, REQUEST_ID_NOT_FOUND_MSG, null);
+        }
+
+        if (DENIED.name().equals(entity.getStatus())) {
+            log.info("Payment with requestId " + requestId + " is in DENIED status. Skipping refund");
+            return createDeleteResponse(requestId, DENIED_STATUS_MSG, entity);
         }
 
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {

@@ -1,7 +1,20 @@
-openapi: 3.0.1
-info:
-  title: OpenAPI definition
-  version: v0
+openapi: 3.0.3 
+info:   
+  title: Openapi for pagopa-payment-transactions-gateway (PGS)   
+  version: 0.0.1   
+  description: |      
+    Openapi definitåion for the API exposed by the *pagopa-payment-transactions-gateway* (**PGS**) and
+    consumed by the pagoPA touchpoints (for example *pagopPA - checkout* via *pagoPA - ecommerce*) to
+    authorize payments via the following payment gateway:
+    <ol>
+      <li>xpay</li>
+      <li>vpos</li>
+      <li>bancomatpay</li>
+      <li>postepay</li>
+    </ol> 
+externalDocs:   
+  url: https://pagopa.atlassian.net/wiki/spaces/TKM/overview
+  description: Design review 
 servers:
   - url: http://localhost:8080/
     description: Generated server url
@@ -395,65 +408,150 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /request-payments/xpay:
-    post:
-      summary: payment authorization request to xPay
-      tags:
-        - XPay
-      operationId: auth-request-xpay
-      parameters:
-        - in: header
-          name: X-Client-ID
-          description: channel origin (APP/Web)
-          example: APP
-          schema:
-            type: string
-          required: true
-        - in: header
-          name: MDC-Fields
-          description: MDC information
-          example: 97g10t83x7bb0437bbc50sdf58e970gt
-          schema:
-            type: string
-          required: false
-      requestBody:
-        content:
-          application/json:
+  /xpay/authorizations:     
+    post:       
+      summary: New authorization with xpay       
+      description: Creation of a new authorization with *xpay* and return url on which to complete the frontend authorization 3DS2 flow       
+      tags:         
+        - XPay       
+      operationId: new-authorization-xpay       
+      parameters:         
+      - in: header           
+        name: x-client-id           
+        description: touchpoint client           
+        schema:             
+          type: string             
+          enum:             
+          - ECOMMERCE_CHECKOUT             
+          - ECOMMERCE_APP_IO           
+        required: true         
+      - in: header           
+        name: MDC-Fields           
+        description: MDC information
+        example: 97g10t83x7bb0437bbc50sdf58e970gt             
+        schema:             
+          type: string           
+        required: false       
+      requestBody:         
+        content:           
+          application/json:             
             schema:
-              $ref: '#/components/schemas/XPayAuthRequest'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/XPayAuthResponseEntity'
+              $ref: '#/components/schemas/XPayPaymentAuthorizationRequest'
+        required: true       
+      responses:         
+        "202":           
+          description: Authorization requested           
+          content:             
+            application/json:
+              schema:                 
+                $ref: '#/components/schemas/XPayPaymentAuthorizationRequestAccepted'         
         "400":
-          description: Bad request - missing mandatory parameters
+          description: Bad request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/XPayAuthResponseEntity400'
-        "401":
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError'
+        "409":
           description: transactionId already processed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/XPayAuthResponseEntity401'
-  /request-payments/xpay/{requestId}/resume:
-    get:
-      summary: payment request to xPay
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError'
+  /xpay/authorizations/{paymentAuthorizationId}:     
+    get:       
+      summary: Retrieve xpay payment authorization
+      description:  Retrieve xpay payment authorization given paymentAuthorizationId
+      tags:         
+        - XPay
+      operationId: get-auth-payment-xpay
+      parameters:         
+      - in: path           
+        required: true
+        name: paymentAuthorizationId
+        description: Id of the payment authorization
+        example: "41bc2409-5926-4aa9-afcc-797c7054e467"           
+        schema:
+          type: string
+      - in: header
+        name: MDC-Fields
+        description: MDC information
+        example: 97g10t83x7bb0437bbc50sdf58e970gt
+        schema:
+          type: string
+        required: false
+      responses:
+        "200":
+          description: OK
+          content:             
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayPaymentAuthorization'     
+        "404":           
+          description: payment authorization not found           
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError' 
+    delete:
       tags:
         - XPay
-      operationId: resumeXPayPayment
+      summary: refund xpay requests
+      description:  Refund xpay payment authorization given paymentAuthorizationId
+      operationId: refund-auth-payment-xpay
       parameters:
-        - name: requestId
-          in: path
-          required: true
+        - in: path
+          name: paymentAuthorizationId
           schema:
             type: string
-        - name: esito
+            format: uuid
+          required: true
+          description: PGS-generated GUID of the request to retrieve
+          example: 77e1c83b-7bb0-437b-bc50-a7a58e5660ac
+      responses:
+        "200":
+          description: OK
+          content:             
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayPaymentAuthorization'     
+        "404":           
+          description: payment authorization not found           
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError' 
+  /xpay/authorizations/{paymentAuthorizationId}/resume:     
+    get:       
+      summary: Resume of a xpay payment authorization       
+      description: Resume of a xpay payment authorization and redirect on touchpoint client frontend
+      tags:
+      - XPay
+      operationId: resume-auth-payment-xpay
+      parameters:         
+        - name: paymentAuthorizationId           
+          in: path           
+          required: true           
+          schema:             
+            type: string         
+        - name: esito           
           in: query
           required: false
           schema:
@@ -485,99 +583,23 @@ paths:
             type: string
       responses:
         "302":
-          description: OK-FOUND
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
+          description: Resume completed
+          headers:
+            Location:
+              description: client Url 
               schema:
                 type: string
-                example: "Unauthorized - transaction already processed"
-        "400":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                type: string
-                example: "Bad Request - mandatory parameters missing"
-        "404":
-          description: TimeOut
-          content:
-            application/json:
-              schema:
-                type: string
-                example: "RequestId not Found"
-  /request-payments/xpay/{requestId}:
-    get:
-      summary: retrieve XPay payment request
-      tags:
-        - XPay
-      operationId: auth-response-xpay
-      parameters:
-        - in: path
-          required: true
-          name: requestId
-          description: Id of the request
-          example: "41bc2409-5926-4aa9-afcc-797c7054e467"
-          schema:
-            type: string
-        - in: header
-          name: MDC-Fields
-          description: MDC information
-          example: 97g10t83x7bb0437bbc50sdf58e970gt
-          schema:
-            type: string
-          required: false
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/XPayPollingResponseEntity'
-        "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XPayPollingResponseEntity404'
-  /request-payments/xpay{requestId}:
-    delete:
-      tags:
-        - XPay
-      summary: refund xpay requests
-      operationId: refund-xpay-request
-      parameters:
-        - in: path
-          name: requestId
-          schema:
-            type: string
-            format: uuid
-          required: true
-          description: PGS-generated GUID of the request to retrieve
-          example: 77e1c83b-7bb0-437b-bc50-a7a58e5660ac
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XPayRefundResponse200'
-        "404":
-          description: Request doesn't exist
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/XPayRefundResponse404'
+                format: uri
         "500":
-          description: Generic Error
+          description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/XPayRefundResponse500'
-  /request-payments/vpos:
+                $ref: '#/components/schemas/XPayPaymentAuthorizationError'
+  /vpos/authorizations:
     post:
-      summary: payment authorization request to Vpos
+      summary: New authorization with Vpos
+      description: Creation of a new authorization with vpos and return url on which to complete the frontend authorization 3DS2 flow
       tags:
         - Vpos
       operationId: step0-creditCard
@@ -603,7 +625,7 @@ paths:
               $ref: '#/components/schemas/CreditCardAuthRequest'
         required: true
       responses:
-        "200":
+        "202":
           description: OK
           content:
             application/json:
@@ -627,15 +649,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreditCardAuthResponseGenericError'
-  /request-payments/vpos/{requestId}:
+  /vpos/authorizations/{paymentAuthorizationId}:
     get:
-      summary: retrieve vpos payment request
+      summary: retrieve vpos payment authorization
       tags:
         - Vpos
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -670,7 +692,7 @@ paths:
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -694,15 +716,15 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/VposDeleteResponse500'
-  /request-payments/vpos/{requestId}/resume/method:
+  /vpos/authorizations/{paymentAuthorizationId}/resume/method:
     post:
-      summary: resume vpos payment request
+      summary: resume vpos payment authorization
       tags:
         - Vpos
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -728,7 +750,7 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/VposResumeResponse'
-  /request-payments/vpos/{requestId}/resume/challenge:
+  /vpos/authorizations/{paymentAuthorizationId}/resume/challenge:
     post:
       summary: resume vpos payment request
       tags:
@@ -736,7 +758,7 @@ paths:
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -751,7 +773,7 @@ paths:
       responses:
         "302":
           description: "FOUND, Redirect to url"
-  /request-payments/vpos/{requestId}/method/notifications:
+  /vpos/authorizations/{paymentAuthorizationId}/method/notifications:
     post:
       summary: created webView to execute 'method'
       tags:
@@ -759,7 +781,7 @@ paths:
       parameters:
         - in: path
           required: true
-          name: requestId
+          name: paymentAuthorizationId
           description: Id of the request
           example: "41bc2409-5926-4aa9-afcc-797c7054e467"
           schema:
@@ -948,7 +970,7 @@ components:
         - transactionId
         - paymentId
         - error
-    XPayAuthRequest:
+    XPayPaymentAuthorizationRequest:
       required:
         - cvv
         - pan
@@ -978,94 +1000,54 @@ components:
           type: string
           description: Expiration date of the card, yyyyMM format
           example: 203012
-    XPayPaymentRequest:
-      required:
-        - esito
-      type: object
-      properties:
-        esito:
-          type: string
-          enum: [ OK, KO ]
-          description: outhcome from xpay
-        idOperazione:
-          type: string
-          description: idOperazione from xpay
-          example: "123456"
-        xpayNonce:
-          type: string
-          description: nonce from xpay
-          example: "nonce"
-        timestamp:
-          type: string
-          description: timestamp in ms
-          example: 16589654852
-        mac:
-          type: string
-          description: mac from xpay
-          example: bd2dd7a959e4816b1ba9e767cf2a5287192c8be7
-        codice:
-          type: string
-          description: error code from xpay
-          example: 1
-        messaggio:
-          type: string
-          description: error message from xpay
-          example: error message from xpay
-    XPayAuthResponseEntity:
+    XPayPaymentAuthorizationRequestAccepted:       
       type: object
       required:
         - requestId
         - urlRedirect
         - timeStamp
       properties:
-        requestId:
+        paymentAuthorizationId:
           type: string
-          description: payment request Id
+          description: payment authorization Id         
         urlRedirect:
           type: string
-          description: redirect URL generated by PGS logic
+          description: redirect URL generated by PGS logic to complete authorization frontend flow  
           example: "urlRedirect.com"
         timeStamp:
           type: string
           description: timeStamp
           example: 1667484646944
-    XPayAuthResponseEntity400:
+    XPayPaymentAuthorizationError:
       type: object
       required:
-        - error
+        - errorDetail
       properties:
-        error:
+        errorDetail:
           type: string
-          description: error description
-          example: Bad Request - mandatory parameters missing
-    XPayAuthResponseEntity401:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-          description: error description
-          example: Transaction already processed
-    XPayPollingResponseEntity:
+          description: error detail
+          example: Bad Request - mandatory parameters missing      
+    XPayPaymentAuthorization:
       type: object
       required:
         - status
-        - requestId
+        - paymentAuthorizationId
       properties:
         html:
           type: string
           description: HTML received in response from XPay
           example: "\u003chtml\u003e\n\u003chead\u003e\n\u003ctitle\u003e\nGestione Pagamento Fraud detection\u003c/title\u003e\n\u003cscript type\u003d\"text/javascript\" language\u003d\"javascript\"\u003e\nfunction moveWindow() {\n    document.tdsFraudForm.submit();\n}\n\u003c/script\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003cform name\u003d\"tdsFraudForm\" action\u003d\"https://coll-ecommerce.nexi.it/ecomm/ecomm/TdsMerchantServlet\" method\u003d\"POST\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"action\"     value\u003d\"fraud\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"merchantId\" value\u003d\"31320986\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"description\" value\u003d\"7090069933_1606392234626\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"gdiUrl\"      value\u003d\"\"\u003e\n\u003cinput type\u003d\"hidden\" name\u003d\"gdiNotify\"   value\u003d\"\"\u003e\n\u003c/form\u003e\n\u003cscript type\u003d\"text/javascript\"\u003e\n  moveWindow();\n\u003c/script\u003e\n\u003c/body\u003e\n\u003c/html\u003e\n"
-        requestId:
+        paymentAuthorizationId:
           type: string
-          description: payment request Id
+          description: payment authorization Id
           example: affd8e24-f99a-406f-9ded-67a4a20c097f
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, REFUNDED]
           description: status
           example: CREATED
+        outcomeXpayGateway:
+         $ref: '#/components/schemas/OutcomeXpayGateway'
         authCode:
           type: string
           description: authorization code received from XPay
@@ -1074,68 +1056,6 @@ components:
           type: string
           description: redirection URL after a response from XPay has been received
           example: "http://localhost:8080/payment-gateway/request-payments/xpay/2d75ebf8-c789-46a9-9a22-edf1976a8917"
-    XPayPollingResponseEntity404:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: object
-          required:
-            - code
-            - message
-          properties:
-            code:
-              type: number
-              format: integer
-              description: error code
-              example: 404
-            message:
-              type: string
-              description: error message
-              example: "RequestId not found"
-    XPayRefundResponse200:
-      type: object
-      properties:
-        requestId:
-          type: string
-          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
-        error:
-          type: string
-        status:
-          type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
-      required:
-        - requestId
-        - status
-    XPayRefundResponse404:
-      type: object
-      properties:
-        requestId:
-          type: string
-          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
-        error:
-          type: string
-          example: "RequestId not Found"
-      required:
-        - transactionId
-        - error
-    XPayRefundResponse500:
-      type: object
-      properties:
-        requestId:
-          type: string
-          example: "77e1c83b-7bb0-437b-bc50-a7a58e5660ac"
-        error:
-          type: string
-          example: "Error while requesting refund for requestId: xxx"
-        status:
-          type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
-      required:
-        - transactionId
-        - error
-        - status
     BPayInfoResponse:
       type: object
       properties:
@@ -1302,6 +1222,8 @@ components:
         creq:
           type: string
           format: base64
+        outcomeVposGateway:
+         $ref: '#/components/schemas/OutcomeVposGateway'
         authCode:
           type: string
           description: authorization code received from XPay
@@ -1383,3 +1305,92 @@ components:
           enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
         error:
           type: string
+    OutcomeVposGateway:
+      type: object
+      properties:
+        outcome:
+         type: string
+         enum:
+         - OK
+         - KO
+        rrn:
+         type: string
+        authorizationCode:
+          type: string
+        errorCode:
+         type: string
+         description: error code received from Vpos - https://github.com/pagopa/pagopa-wisp2.0-pp-server/blob/ff0e8e3354fc11d296fe5547b9b00941ead64e96/pp-server/pp-dto/src/main/java/com/pagopa/utils/VposResultCodeEnum.java
+         enum: 
+          - '00'
+          - '01'
+          - '02'
+          - '03'
+          - '04'
+          - '05'
+          - '06'
+          - '07'
+          - '08'
+          - '09'
+          - '10'
+          - '11'
+          - '12'
+          - '13'
+          - '16'
+          - '17'
+          - '20'
+          - '21'
+          - '25'
+          - '26'
+          - '35'
+          - '37'
+          - '38'
+          - '40'
+          - '41'
+          - '50'
+          - '51'
+          - '98'
+          - '99'
+      required:
+      - outcome
+    OutcomeXpayGateway:
+      type: object
+      properties:
+        outcome:
+         type: string
+         enum:
+         - OK
+         - KO
+        authorizationCode:
+          type: string
+        errorCode:
+         type: number
+         description: error code received from XPay - https://ecommerce.nexi.it/specifiche-tecniche/tabelleecodifiche/codicierroreapirestful.html
+         enum: 
+           - 1
+           - 2
+           - 3
+           - 4
+           - 5
+           - 7
+           - 8
+           - 9
+           - 12
+           - 13
+           - 14
+           - 15
+           - 16
+           - 17
+           - 18
+           - 19
+           - 20
+           - 21
+           - 22
+           - 50
+           - 96
+           - 97
+           - 98
+           - 99
+           - 100
+      required:
+      - outcome
+        

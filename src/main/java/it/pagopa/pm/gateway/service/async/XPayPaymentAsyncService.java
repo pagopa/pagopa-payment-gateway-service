@@ -93,7 +93,7 @@ public class XPayPaymentAsyncService {
         }
     }
 
-    @Async
+    //@Async
     public void executeXPayPaymentCall(String requestId, XPay3DSResponse xpay3DSResponse, PaymentRequestEntity entity) {
         setMdcFields(entity.getMdcInfo());
         log.info("START - executeXPayPaymentCall for requestId " + requestId);

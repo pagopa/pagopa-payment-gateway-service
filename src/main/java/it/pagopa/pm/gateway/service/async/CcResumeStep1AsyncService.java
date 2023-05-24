@@ -56,7 +56,7 @@ public class CcResumeStep1AsyncService {
         this.ecommercePatchUtils = ecommercePatchUtils;
     }
 
-    @Async
+    //@Async
     public void executeStep1(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
         try {
             MdcUtils.setMdcFields(entity.getMdcInfo());

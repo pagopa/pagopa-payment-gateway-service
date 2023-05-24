@@ -49,7 +49,7 @@ public class CcResumeStep2AsyncService {
         this.ecommercePatchUtils = ecommercePatchUtils;
     }
 
-    @Async
+    //@Async
     public void executeStep2(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
         try {
             String requestId = entity.getGuid();

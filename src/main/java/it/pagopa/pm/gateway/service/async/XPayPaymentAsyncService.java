@@ -91,7 +91,7 @@ public class XPayPaymentAsyncService {
         }
     }
 
-    @Async
+    //@Async
     public void executeXPayPaymentCall(String requestId, XPay3DSResponse xpay3DSResponse, PaymentRequestEntity entity) {
         log.info("START - executeXPayPaymentCall for requestId " + requestId);
         String xpayNonce = xpay3DSResponse.getXpayNonce();

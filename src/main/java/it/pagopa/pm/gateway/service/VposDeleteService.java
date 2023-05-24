@@ -85,7 +85,7 @@ public class VposDeleteService {
                 return createDeleteResponse(requestId, entity.getErrorMessage(), entity);
             }
         } catch (Exception e) {
-            log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
+            log.error("{}{}", GENERIC_REFUND_ERROR_MSG, entity.getIdTransaction(), e);
             return createDeleteResponse(requestId, GENERIC_REFUND_ERROR_MSG + requestId, entity);
         }
     }

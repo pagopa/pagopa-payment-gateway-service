@@ -103,7 +103,7 @@ public class VposService {
             response.setError(errorMessage);
         }
 
-        log.info("END - POST {} for requestId {} with transactionId {}", VPOS_AUTHORIZATIONS, requestId);
+        log.info("END - POST {} for requestId {}", VPOS_AUTHORIZATIONS, requestId);
         return response;
     }
 

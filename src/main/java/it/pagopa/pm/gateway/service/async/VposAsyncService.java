@@ -7,6 +7,7 @@ import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.EcommercePatchUtils;
+import it.pagopa.pm.gateway.utils.MdcUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.NoArgsConstructor;
@@ -54,6 +55,7 @@ public class VposAsyncService {
     @Async
     public void executeStepZeroAuth(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest pgsRequest) {
         try {
+            MdcUtils.setMdcFields(entity.getMdcInfo());
             String requestId = entity.getGuid();
             log.info("Calling VPOS - Step 0 - for requestId: " + requestId);
             HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);

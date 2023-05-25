@@ -7,6 +7,7 @@ import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.utils.EcommercePatchUtils;
+import it.pagopa.pm.gateway.utils.MdcUtils;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.NoArgsConstructor;
@@ -58,6 +59,7 @@ public class CcResumeStep1AsyncService {
     //@Async
     public void executeStep1(Map<String, String> params, PaymentRequestEntity entity, StepZeroRequest request) {
         try {
+            MdcUtils.setMdcFields(entity.getMdcInfo());
             String requestId = entity.getGuid();
             log.info("Calling VPOS - Step 1 - for requestId: " + requestId);
             HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);

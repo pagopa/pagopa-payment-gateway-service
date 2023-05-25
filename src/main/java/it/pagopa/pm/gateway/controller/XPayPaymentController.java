@@ -10,15 +10,13 @@ import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import it.pagopa.pm.gateway.service.async.XPayPaymentAsyncService;
-import it.pagopa.pm.gateway.utils.ClientsConfig;
-import it.pagopa.pm.gateway.utils.EcommercePatchUtils;
-import it.pagopa.pm.gateway.utils.JwtTokenUtils;
-import it.pagopa.pm.gateway.utils.XPayUtils;
+import it.pagopa.pm.gateway.utils.*;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -85,6 +83,7 @@ public class XPayPaymentController {
     public ResponseEntity<XPayAuthResponse> requestPaymentsXPay(@RequestHeader(value = X_CLIENT_ID) String clientId,
                                                                 @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                 @Valid @RequestBody XPayAuthRequest pgsRequest) {
+        setMdcFields(mdcFields);
         if (!VALID_CLIENT_ID.contains(clientId)) {
             log.info("START - POST " + REQUEST_PAYMENTS_XPAY);
             log.error(String.format("Client id %s is not valid", clientId));
@@ -99,7 +98,6 @@ public class XPayPaymentController {
 
         String idTransaction = pgsRequest.getIdTransaction();
         log.info("START - POST {} for transactionId {}", REQUEST_PAYMENTS_XPAY, idTransaction);
-        setMdcFields(mdcFields);
 
         if (Objects.nonNull(paymentRequestRepository.findByIdTransaction(idTransaction))) {
             log.warn("Transaction " + idTransaction + " has already been processed previously");
@@ -112,8 +110,8 @@ public class XPayPaymentController {
     @GetMapping(REQUEST_ID)
     public ResponseEntity<XPayPollingResponse> getRequestInfo(@PathVariable String requestId,
                                                               @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
-        log.info("START - GET XPay request info for requestId: " + requestId);
         setMdcFields(mdcFields);
+        log.info("START - GET XPay request info for requestId: {}", requestId);
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
         if (Objects.isNull(entity) || !StringUtils.equals(entity.getRequestEndpoint(), REQUEST_PAYMENTS_XPAY)) {
             log.error("No XPay request entity has been found for requestId: " + requestId);
@@ -127,7 +125,7 @@ public class XPayPaymentController {
     @GetMapping(REQUEST_PAYMENTS_RESUME)
     public ResponseEntity<String> resumeXPayPayment(@PathVariable String requestId,
                                                     @RequestParam Map<String, String> params) {
-
+        MDC.clear();
         log.info("START - GET {}{} for requestId {}", REQUEST_PAYMENTS_XPAY, REQUEST_PAYMENTS_RESUME, requestId);
         log.info("Params received from XPay{} for requestId: {}", params, requestId);
 
@@ -140,6 +138,8 @@ public class XPayPaymentController {
             log.error("No XPay entity has been found for requestId: " + requestId);
             return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(pollingUrlRedirect)).build();
         }
+
+        setMdcFields(entity.getMdcInfo());
 
         if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)
                 && CREATED.name().equals(entity.getStatus())) {
@@ -177,7 +177,9 @@ public class XPayPaymentController {
     }
 
     @DeleteMapping(REQUEST_ID)
-    public ResponseEntity<XPayRefundResponse> refundXpayPayment(@PathVariable String requestId) {
+    public ResponseEntity<XPayRefundResponse> refundXpayPayment(@PathVariable String requestId,
+                                                                @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
+        setMdcFields(mdcFields);
         log.info("START - requesting XPay refund for requestId: " + requestId);
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
 

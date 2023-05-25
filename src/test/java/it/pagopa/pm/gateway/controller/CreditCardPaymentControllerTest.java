@@ -25,9 +25,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import static it.pagopa.pm.gateway.constant.ApiPaths.VPOS_AUTHORIZATIONS;
-import static it.pagopa.pm.gateway.constant.Messages.GENERIC_REFUND_ERROR_MSG;
-import static it.pagopa.pm.gateway.constant.Messages.REQUEST_ID_NOT_FOUND_MSG;
+import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -177,6 +177,18 @@ public class CreditCardPaymentControllerTest {
         mvc.perform(delete(VPOS_AUTHORIZATIONS + "/" + UUID_SAMPLE)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    public void deleteVposPayment_Test_409() throws Exception {
+        String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+        VposDeleteResponse response = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, DENIED_STATUS_MSG, false);
+        response.setStatus(DENIED.name());
+        when(deleteService.startDelete(any())).thenReturn(response);
+
+        mvc.perform(delete(VPOS_AUTHORIZATIONS + "/" + UUID_SAMPLE)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
     }
 
 }

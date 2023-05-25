@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static it.pagopa.pm.gateway.constant.Messages.*;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -36,8 +36,6 @@ public class VposDeleteServiceTest {
 
     public static final String RESULT_CODE_OK = "00";
     public static final String RESULT_CODE_KO = "02";
-    public static final String CREATED = "CREATED";
-    public static final String AUTHORIZED = "AUTHORIZED";
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 
     @Mock
@@ -102,7 +100,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
-        entity.setStatus(CREATED);
+        entity.setStatus(CREATED.name());
 
         //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
@@ -133,7 +131,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
-        entity.setStatus(CREATED);
+        entity.setStatus(CREATED.name());
 
         //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
@@ -174,12 +172,12 @@ public class VposDeleteServiceTest {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setIdTransaction("1235");
         entity.setIsRefunded(true);
-        entity.setStatus(AUTHORIZED);
+        entity.setStatus(AUTHORIZED.name());
         VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, null, true);
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
 
-        responseTest.setStatus(AUTHORIZED);
+        responseTest.setStatus(AUTHORIZED.name());
         assertEquals(responseTest, responseService);
     }
 
@@ -192,7 +190,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
-        entity.setStatus(CREATED);
+        entity.setStatus(CREATED.name());
 
         VposDeleteResponse resposeTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, GENERIC_REFUND_ERROR_MSG + UUID_SAMPLE, false);
 
@@ -212,7 +210,7 @@ public class VposDeleteServiceTest {
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
         entity.setIdTransaction("1235");
-        entity.setStatus(CREATED);
+        entity.setStatus(CREATED.name());
 
         //This param is not validated, so the test doesn't fail
         Map<String, String> params = new HashMap<>();
@@ -228,6 +226,21 @@ public class VposDeleteServiceTest {
         VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
 
         assertEquals(resposeTest, responseService);
+    }
+
+    @Test
+    public void startDelete_Test_Error_TransactionDenied() throws IOException {
+        PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setIdTransaction("1235");
+        entity.setIsRefunded(false);
+        entity.setStatus(DENIED.name());
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+        VposDeleteResponse responseService = service.startDelete(UUID_SAMPLE);
+
+        VposDeleteResponse responseTest = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, DENIED_STATUS_MSG, false);
+        responseTest.setStatus(DENIED.name());
+        assertEquals(responseTest, responseService);
     }
 
 }

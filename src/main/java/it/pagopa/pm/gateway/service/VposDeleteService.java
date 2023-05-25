@@ -65,7 +65,7 @@ public class VposDeleteService {
         }
 
         if (DENIED.name().equals(entity.getStatus())) {
-            log.info("Payment with requestId " + requestId + " is in DENIED status. Skipping refund");
+            log.info("Payment with requestId {} is in DENIED status. Skipping refund", requestId);
             return createDeleteResponse(requestId, DENIED_STATUS_MSG, entity);
         }
 

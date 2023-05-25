@@ -188,6 +188,11 @@ public class XPayPaymentController {
             return createXPayRefundResponse(requestId, HttpStatus.NOT_FOUND, null);
         }
 
+        if (DENIED.name().equals(entity.getStatus())) {
+            log.info("Payment with requestId " + requestId + " is in DENIED status. Skipping refund");
+            return createXPayRefundResponse(requestId, HttpStatus.CONFLICT, entity);
+        }
+
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
             return createXPayRefundResponse(requestId, HttpStatus.OK, entity);
@@ -346,7 +351,9 @@ public class XPayPaymentController {
         if (entity != null)
             response.setStatus(entity.getStatus());
 
-        if (httpStatus.is4xxClientError()) {
+        if (HttpStatus.CONFLICT.equals(httpStatus)) {
+            response.setError(DENIED_STATUS_MSG);
+        } else if (httpStatus.is4xxClientError()) {
             response.setError(REQUEST_ID_NOT_FOUND_MSG);
         } else if (!httpStatus.is2xxSuccessful()) {
             response.setError(GENERIC_REFUND_ERROR_MSG + requestId);

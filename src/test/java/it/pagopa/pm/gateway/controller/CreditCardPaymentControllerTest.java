@@ -181,7 +181,7 @@ public class CreditCardPaymentControllerTest {
 
     @Test
     public void deleteVposPayment_Test_409() throws Exception {
-        String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
+        String transactionId = UUID.randomUUID().toString();
         VposDeleteResponse response = ValidBeans.createVposDeleteResponse(UUID_SAMPLE, DENIED_STATUS_MSG, false);
         response.setStatus(DENIED.name());
         when(deleteService.startDelete(any())).thenReturn(response);

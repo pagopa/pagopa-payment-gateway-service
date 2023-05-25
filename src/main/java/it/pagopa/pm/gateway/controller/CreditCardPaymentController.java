@@ -59,7 +59,7 @@ public class CreditCardPaymentController {
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,
                                                                 @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
         MdcUtils.setMdcFields(mdcFields);
-        log.info("START - GET CreditCard request info for requestId: " + requestId);
+        log.info("START - GET CreditCard request info for requestId: {}", requestId);
 
         CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo(requestId);
         return ResponseEntity.ok(response);

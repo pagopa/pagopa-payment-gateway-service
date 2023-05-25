@@ -111,7 +111,7 @@ public class XPayPaymentController {
     public ResponseEntity<XPayPollingResponse> getRequestInfo(@PathVariable String requestId,
                                                               @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
         setMdcFields(mdcFields);
-        log.info("START - GET XPay request info for requestId: " + requestId);
+        log.info("START - GET XPay request info for requestId: {}", requestId);
         PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
         if (Objects.isNull(entity) || !StringUtils.equals(entity.getRequestEndpoint(), REQUEST_PAYMENTS_XPAY)) {
             log.error("No XPay request entity has been found for requestId: " + requestId);

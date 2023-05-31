@@ -134,10 +134,10 @@ public class BancomatPayPaymentTransactionsController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BPayInfoResponse(null, outputMsg));
         }
 
-        String correlationId = entity.getCorrelationId();
-        log.info(String.format("CorrelationId %s has been found for requestId %s", correlationId, requestId));
+        String abi = entity.getAbi();
+        log.info(String.format("ABI %s has been found for requestId %s", abi, requestId));
         log.info("END - retrieved bancomatPay information for requestId " + requestId);
-        return ResponseEntity.status(HttpStatus.OK).body(new BPayInfoResponse(correlationId, null));
+        return ResponseEntity.status(HttpStatus.OK).body(new BPayInfoResponse(abi, null));
     }
 
     private String inquiryTransactionToBancomatPay(BPayRefundRequest request) throws Exception {

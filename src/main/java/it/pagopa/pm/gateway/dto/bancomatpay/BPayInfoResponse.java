@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class BPayInfoResponse {
-    private String correlationId;
+
+    private String abi;
     private String errorMessage;
+
 }

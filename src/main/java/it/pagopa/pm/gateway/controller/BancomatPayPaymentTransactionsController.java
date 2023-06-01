@@ -127,7 +127,7 @@ public class BancomatPayPaymentTransactionsController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BPayInfoResponse(null, outputMsg));
         }
 
-        BPayPaymentResponseEntity entity = bPayPaymentResponseRepository.findByClientGuid(requestId);
+        BPayPaymentResponseEntity entity = bPayPaymentResponseRepository.findByIdPagoPa(Long.valueOf(requestId));
         if (Objects.isNull(entity)) {
             outputMsg = "No entity has been found for requestId " + requestId;
             log.error(outputMsg);

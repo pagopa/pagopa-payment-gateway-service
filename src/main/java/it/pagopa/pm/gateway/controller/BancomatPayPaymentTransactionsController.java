@@ -203,7 +203,7 @@ public class BancomatPayPaymentTransactionsController {
             }
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid, mdcInfo);
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid, mdcInfo, response.getReturn().getAbi());
         bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         try {
             TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(),
@@ -216,7 +216,7 @@ public class BancomatPayPaymentTransactionsController {
         log.info("END executePaymentRequest for transaction " + idPagoPa);
     }
 
-    private BPayPaymentResponseEntity convertBpayPaymentResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa, String guid, String mdcInfo) {
+    private BPayPaymentResponseEntity convertBpayPaymentResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa, String guid, String mdcInfo, String abi) {
         ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
         EsitoVO esitoVO = responseReturnVO.getEsito();
         BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
@@ -227,6 +227,7 @@ public class BancomatPayPaymentTransactionsController {
         bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
         bPayPaymentResponseEntity.setClientGuid(guid);
         bPayPaymentResponseEntity.setMdcInfo(mdcInfo);
+        bPayPaymentResponseEntity.setAbi(abi);
         return bPayPaymentResponseEntity;
     }
 

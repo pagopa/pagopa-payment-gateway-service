@@ -261,7 +261,7 @@ public class BancomatPayControllerTests {
 
     @Test
     public void whenRequestIdIsNotFound_thenReturnNotFound() throws Exception {
-        String requestId = "testRequestId";
+        String requestId = "111111111";
         String errorMsg = "No entity has been found for requestId " + requestId;
         mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, requestId))
                 .andExpect(status().isNotFound())
@@ -270,10 +270,11 @@ public class BancomatPayControllerTests {
 
     @Test
     public void whenRequestIdIsFound_thenReturnBpayInfoResponse() throws Exception {
-        when(bPayPaymentResponseRepository.findByClientGuid(anyString()))
+        when(bPayPaymentResponseRepository.findByIdPagoPa(anyLong()))
                 .thenReturn(ValidBeans.bPayPaymentResponseEntityToFind());
-        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, "testRequestId"))
+        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, "111111111"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(false, null))));
     }
+
 }

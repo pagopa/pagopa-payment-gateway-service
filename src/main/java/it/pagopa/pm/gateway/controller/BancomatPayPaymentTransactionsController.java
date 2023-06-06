@@ -117,26 +117,26 @@ public class BancomatPayPaymentTransactionsController {
     }
 
     @GetMapping(RETRIEVE_BPAY_INFO)
-    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String requestId) {
-        log.info("START - retrieve bancomatPay information for requestId " + requestId);
+    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String transactionId) {
+        log.info("START - retrieve bancomatPay information for transactionId " + transactionId);
         String outputMsg;
 
-        if (StringUtils.isBlank(requestId)) {
-            outputMsg = "RequestId is blank: please specify a valid requestId";
+        if (StringUtils.isBlank(transactionId)) {
+            outputMsg = "transactionId is blank: please specify a valid transactionId";
             log.error(outputMsg);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BPayInfoResponse(null, outputMsg));
         }
 
-        BPayPaymentResponseEntity entity = bPayPaymentResponseRepository.findByIdPagoPa(Long.valueOf(requestId));
+        BPayPaymentResponseEntity entity = bPayPaymentResponseRepository.findByIdPagoPa(Long.valueOf(transactionId));
         if (Objects.isNull(entity)) {
-            outputMsg = "No entity has been found for requestId " + requestId;
+            outputMsg = "No entity has been found for transactionId " + transactionId;
             log.error(outputMsg);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BPayInfoResponse(null, outputMsg));
         }
 
         String abi = entity.getAbi();
-        log.info(String.format("ABI %s has been found for requestId %s", abi, requestId));
-        log.info("END - retrieved bancomatPay information for requestId " + requestId);
+        log.info(String.format("ABI %s has been found for transactionId %s", abi, transactionId));
+        log.info("END - retrieved bancomatPay information for transactionId " + transactionId);
         return ResponseEntity.status(HttpStatus.OK).body(new BPayInfoResponse(abi, null));
     }
 

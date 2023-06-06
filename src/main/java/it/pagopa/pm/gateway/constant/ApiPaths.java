@@ -19,11 +19,12 @@ public class ApiPaths {
 
     // path parameters
     public static final String REQUEST_ID = "/{requestId}";
+    public static final String TRANSACTION_ID = "/{transactionId}";
 
     // BancomatPay
     public static final String REQUEST_PAYMENTS_BPAY = REQUEST_PAYMENTS + BPAY;
     public static final String REQUEST_REFUNDS_BPAY = REQUEST_REFUNDS + BPAY;
-    public static final String RETRIEVE_BPAY_INFO = REQUEST_PAYMENTS_BPAY + REQUEST_ID;
+    public static final String RETRIEVE_BPAY_INFO = REQUEST_PAYMENTS_BPAY + TRANSACTION_ID;
 
     // PostePay
     public static final String REQUEST_PAYMENTS_POSTEPAY = REQUEST_PAYMENTS + POSTEPAY;

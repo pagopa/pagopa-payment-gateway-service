@@ -253,14 +253,14 @@ public class BancomatPayControllerTests {
 
     @Test
     public void whenBlankRequestId_thenReturnGenericError() throws Exception {
-        String errorMsg = "transactionId is blank: please specify a valid requestId";
+        String errorMsg = "transactionId is blank: please specify a valid transactionId";
         mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, StringUtils.SPACE))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(true, errorMsg))));
     }
 
     @Test
-    public void whenRequestIdIsNotFound_thenReturnNotFound() throws Exception {
+    public void whenTransactionIdIsNotFound_thenReturnNotFound() throws Exception {
         String requestId = "111111111";
         String errorMsg = "No entity has been found for transactionId " + requestId;
         mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, requestId))
@@ -269,7 +269,7 @@ public class BancomatPayControllerTests {
     }
 
     @Test
-    public void whenRequestIdIsFound_thenReturnBpayInfoResponse() throws Exception {
+    public void whenTransactionIdIsFound_thenReturnBpayInfoResponse() throws Exception {
         when(bPayPaymentResponseRepository.findByIdPagoPa(anyLong()))
                 .thenReturn(ValidBeans.bPayPaymentResponseEntityToFind());
         mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, "111111111"))

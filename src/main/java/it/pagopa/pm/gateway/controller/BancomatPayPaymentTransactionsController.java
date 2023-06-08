@@ -116,8 +116,8 @@ public class BancomatPayPaymentTransactionsController {
         return new BPayOutcomeResponse(true);
     }
 
-    @GetMapping(RETRIEVE_BPAY_INFO)
-    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String transactionId) {
+    @GetMapping(REQUEST_PAYMENTS_BPAY)
+    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@RequestParam String transactionId) {
         log.info("START - retrieve bancomatPay information for transactionId " + transactionId);
         String outputMsg;
 

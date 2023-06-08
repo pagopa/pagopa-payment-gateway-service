@@ -35,6 +35,7 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 
 import java.util.UUID;
 
+import static it.pagopa.pm.gateway.constant.ApiPaths.REQUEST_PAYMENTS_BPAY;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -254,16 +255,16 @@ public class BancomatPayControllerTests {
     @Test
     public void whenBlankRequestId_thenReturnGenericError() throws Exception {
         String errorMsg = "transactionId is blank: please specify a valid transactionId";
-        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, StringUtils.SPACE))
+        mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_BPAY).param("transactionId", " "))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(true, errorMsg))));
     }
 
     @Test
     public void whenTransactionIdIsNotFound_thenReturnNotFound() throws Exception {
-        String requestId = "111111111";
-        String errorMsg = "No entity has been found for transactionId " + requestId;
-        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, requestId))
+        String transactionId = "111111111";
+        String errorMsg = "No entity has been found for transactionId " + transactionId;
+        mvc.perform(get(ApiPaths.REQUEST_PAYMENTS_BPAY).param("transactionId", transactionId))
                 .andExpect(status().isNotFound())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(true, errorMsg))));
     }
@@ -272,7 +273,7 @@ public class BancomatPayControllerTests {
     public void whenTransactionIdIsFound_thenReturnBpayInfoResponse() throws Exception {
         when(bPayPaymentResponseRepository.findByIdPagoPa(anyLong()))
                 .thenReturn(ValidBeans.bPayPaymentResponseEntityToFind());
-        mvc.perform(get(ApiPaths.RETRIEVE_BPAY_INFO, "111111111"))
+        mvc.perform(get(REQUEST_PAYMENTS_BPAY).param("transactionId", "111111111"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(mapper.writeValueAsString(ValidBeans.bpayInfoResponse(false, null))));
     }

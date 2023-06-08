@@ -7,6 +7,38 @@ servers:
     description: Generated server url
 paths:
   /request-payments/bancomatpay:
+    get:
+      tags:
+        - BancomatPay
+      operationId: retrieve informations about a BancomatPay payment request
+      parameters:
+        - in: query
+          name: transactionId
+          schema:
+            type: string
+            format: number
+          required: true
+          description: Transaction ID of the request to retrieve
+          example: 775660
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/BPayInfoResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BPayInfoResponse'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BPayInfoResponse'
     put:
       tags:
         - BancomatPay
@@ -107,39 +139,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /request-payments/bancomatpay/{transactionId}:
-    get:
-      tags:
-        - BancomatPay
-      operationId: retrieve the ABI of a BancomatPay payment request
-      parameters:
-        - in: path
-          name: transactionId
-          schema:
-            type: string
-            format: number
-          required: true
-          description: Transaction ID of the request to retrieve
-          example: 775660
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/BPayInfoResponse'
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BPayInfoResponse'
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BPayInfoResponse'
   /request-refunds/bancomatpay:
     post:
       tags:

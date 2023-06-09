@@ -135,8 +135,8 @@ public class BancomatPayPaymentTransactionsController {
         }
 
         String abi = entity.getAbi();
-        log.info(String.format("ABI %s has been found for transactionId %s", abi, transactionId));
-        log.info("END - retrieved bancomatPay information for transactionId " + transactionId);
+        log.info("ABI {} has been found for transactionId {}", abi, transactionId);
+        log.info("END - retrieved bancomatPay information for transactionId {}", transactionId);
         return ResponseEntity.status(HttpStatus.OK).body(new BPayInfoResponse(abi, null));
     }
 

@@ -458,6 +458,21 @@ public class XPayPaymentControllerTest {
     }
 
     @Test
+    public void xPay_givenDeniedTransactionRequestIdForRefund_shouldReturn409() throws Exception {
+
+        XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
+        PaymentRequestEntity entity = ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, DENIED, false);
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+
+
+        mvc.perform(delete(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE)
+                        .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     public void xPay_givenRequestAlreadyRefunded_shouldReturn200() throws Exception {
 
         MultiValueMap<String, String> xPayResumeRequest = ValidBeans.createXPayResumeRequest(true);

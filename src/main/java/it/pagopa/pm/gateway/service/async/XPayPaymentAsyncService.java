@@ -25,6 +25,7 @@ import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.AUTHORIZED
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
 import static it.pagopa.pm.gateway.dto.xpay.EsitoXpay.KO;
 import static it.pagopa.pm.gateway.dto.xpay.EsitoXpay.OK;
+import static it.pagopa.pm.gateway.utils.MdcUtils.setMdcFields;
 
 @Service
 @Slf4j
@@ -59,6 +60,7 @@ public class XPayPaymentAsyncService {
     @Async
     public void executeXPayAuthorizationCall(AuthPaymentXPayRequest xPayRequest, PaymentRequestEntity requestEntity, String transactionId) {
         String requestId = requestEntity.getGuid();
+        setMdcFields(requestEntity.getMdcInfo());
         log.info("START - execute XPay payment authorization call for transactionId {} and requestId {} ", transactionId, requestId);
         try {
             AuthPaymentXPayResponse response = xpayService.callAutenticazione3DS(xPayRequest);
@@ -91,8 +93,9 @@ public class XPayPaymentAsyncService {
         }
     }
 
-    @Async
+    //@Async
     public void executeXPayPaymentCall(String requestId, XPay3DSResponse xpay3DSResponse, PaymentRequestEntity entity) {
+        setMdcFields(entity.getMdcInfo());
         log.info("START - executeXPayPaymentCall for requestId " + requestId);
         String xpayNonce = xpay3DSResponse.getXpayNonce();
         entity.setXpayNonce(xpayNonce);

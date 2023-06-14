@@ -20,6 +20,7 @@ public class MdcUtils {
 
     public static void setMdcFields(String mdcFields) {
         try {
+            MDC.clear();
             if (StringUtils.isNotBlank(mdcFields)) {
                 objectMapper.readValue(new String(Base64.decodeBase64(mdcFields)), new TypeReference<HashMap<String, String>>() {}).forEach(MDC::put);
             }

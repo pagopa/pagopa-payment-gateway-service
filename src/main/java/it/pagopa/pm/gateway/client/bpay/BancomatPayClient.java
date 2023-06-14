@@ -98,9 +98,6 @@ public class BancomatPayClient {
         InquiryTransactionStatusResponse inquiryTransactionStatusResponse = inquiryTransactionStatusResponseJAXBElement.getValue();
         log.info("END sendInquiryRequest");
         return inquiryTransactionStatusResponse;
-
     }
-
-
 
 }

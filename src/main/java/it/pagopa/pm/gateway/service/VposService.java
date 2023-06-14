@@ -81,6 +81,7 @@ public class VposService {
 
     private StepZeroResponse processStepZero(StepZeroRequest request, String clientId, String mdcFields) throws Exception {
         PaymentRequestEntity entity = createEntity(clientId, mdcFields, request.getIdTransaction(), request);
+        log.info("New paymentRequestEntity created for idTransaction {} with requestId {} ", entity.getIdTransaction(), entity.getGuid());
         Map<String, String> params = vPosRequestUtils.buildStepZeroRequestParams(request, entity.getGuid());
         vposAsyncService.executeStepZeroAuth(params, entity, request);
         return createStepZeroResponse(null, entity.getGuid());

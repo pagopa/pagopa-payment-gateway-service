@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.*;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.springframework.ws.client.core.WebServiceTemplate;
+import org.springframework.ws.transport.http.*;
 
 import javax.xml.bind.*;
 
@@ -28,6 +30,9 @@ class BPayClientTests {
 
     @InjectMocks
     BancomatPayClient client;
+
+    @MockBean
+    HttpComponentsMessageSender httpComponentsMessageSender;
 
     @Spy
     ObjectFactory objectFactory;

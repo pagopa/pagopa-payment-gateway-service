@@ -16,10 +16,8 @@ import it.pagopa.pm.gateway.utils.VPosResponseUtils;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -29,6 +27,7 @@ import java.util.Objects;
 import static it.pagopa.pm.gateway.constant.Messages.*;
 import static it.pagopa.pm.gateway.constant.VposConstant.RESULT_CODE_AUTHORIZED;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CANCELLED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.DENIED;
 import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.KO;
 import static it.pagopa.pm.gateway.dto.enums.RefundOutcome.OK;
 
@@ -65,6 +64,11 @@ public class VposDeleteService {
             return createDeleteResponse(requestId, REQUEST_ID_NOT_FOUND_MSG, null);
         }
 
+        if (DENIED.name().equals(entity.getStatus())) {
+            log.info("Payment with requestId {} is in DENIED status. Skipping refund", requestId);
+            return createDeleteResponse(requestId, DENIED_STATUS_MSG, entity);
+        }
+
         if (BooleanUtils.isTrue(entity.getIsRefunded())) {
             log.info("RequestId " + requestId + " has been refunded already. Skipping refund");
             return createDeleteResponse(requestId, null, entity);
@@ -85,7 +89,7 @@ public class VposDeleteService {
                 return createDeleteResponse(requestId, entity.getErrorMessage(), entity);
             }
         } catch (Exception e) {
-            log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
+            log.error("{}{}", GENERIC_REFUND_ERROR_MSG, entity.getIdTransaction(), e);
             return createDeleteResponse(requestId, GENERIC_REFUND_ERROR_MSG + requestId, entity);
         }
     }

@@ -3,6 +3,8 @@ WORKDIR /workspace/app
 
 COPY . .
 
+ADD  ./keys/clientCertificate.jks /opt/keys/
+
 RUN apt-get update && \
 	apt-get -y install dos2unix
 RUN dos2unix mvnw

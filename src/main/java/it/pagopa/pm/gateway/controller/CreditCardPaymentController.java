@@ -58,8 +58,8 @@ public class CreditCardPaymentController {
     @GetMapping(REQUEST_ID)
     public ResponseEntity<CcPaymentInfoResponse> getPaymentInfo(@PathVariable String requestId,
                                                                 @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
-        log.info("START - GET CreditCard request info for requestId: " + requestId);
         MdcUtils.setMdcFields(mdcFields);
+        log.info("START - GET CreditCard request info for requestId: {}", requestId);
 
         CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo(requestId);
         return ResponseEntity.ok(response);
@@ -94,8 +94,8 @@ public class CreditCardPaymentController {
     public ResponseEntity<VposResumeMethodResponse> resumeCreditCardPayment(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                             @PathVariable UUID requestId,
                                                                             @RequestBody CreditCardResumeRequest request) {
-        log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         MdcUtils.setMdcFields(mdcFields);
+        log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         VposResumeMethodResponse response = new VposResumeMethodResponse(requestId);
         resumeStep1Service.startResumeStep1(request, requestId.toString());
 
@@ -106,8 +106,8 @@ public class CreditCardPaymentController {
     @PostMapping(REQUEST_PAYMENTS_RESUME_CHALLENGE)
     public ResponseEntity<String> resumeCreditCardPaymentStep2(@RequestHeader(required = false, value = MDC_FIELDS) String mdcFields,
                                                                @PathVariable String requestId) {
-        log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
         MdcUtils.setMdcFields(mdcFields);
+        log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
 
         resumeStep2Service.startResumeStep2(requestId);
         log.info("END - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
@@ -117,10 +117,10 @@ public class CreditCardPaymentController {
     }
 
     @DeleteMapping(REQUEST_ID)
-    public ResponseEntity<VposDeleteResponse> deleteVposPayment(@PathVariable String requestId) {
+    public ResponseEntity<VposDeleteResponse> deleteVposPayment(@PathVariable String requestId, @RequestHeader(required = false, value = MDC_FIELDS) String mdcFields) {
+        MdcUtils.setMdcFields(mdcFields);
         log.info("START - DELETE {} for requestId: {}", VPOS_AUTHORIZATIONS, requestId);
         VposDeleteResponse deleteResponse = deleteService.startDelete(requestId);
-        log.info("START - DELETE {} for requestId: {}", VPOS_AUTHORIZATIONS, requestId);
         return buildResponseDelete(deleteResponse, requestId);
     }
 
@@ -130,8 +130,9 @@ public class CreditCardPaymentController {
         if (Objects.nonNull(error)) {
             if (error.equals(REQUEST_ID_NOT_FOUND_MSG)) {
                 httpStatus = HttpStatus.NOT_FOUND;
-            }
-            if (error.equals(GENERIC_REFUND_ERROR_MSG + requestId)) {
+            } else if (error.equals(DENIED_STATUS_MSG)) {
+                httpStatus = HttpStatus.CONFLICT;
+            } else if (error.equals(GENERIC_REFUND_ERROR_MSG + requestId)) {
                 httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             }
         }

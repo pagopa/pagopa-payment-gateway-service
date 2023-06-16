@@ -23,7 +23,6 @@ public class ApiPaths {
     // BancomatPay
     public static final String REQUEST_PAYMENTS_BPAY = REQUEST_PAYMENTS + BPAY;
     public static final String REQUEST_REFUNDS_BPAY = REQUEST_REFUNDS + BPAY;
-    public static final String RETRIEVE_BPAY_INFO = REQUEST_PAYMENTS_BPAY + REQUEST_ID;
 
     // PostePay
     public static final String REQUEST_PAYMENTS_POSTEPAY = REQUEST_PAYMENTS + POSTEPAY;

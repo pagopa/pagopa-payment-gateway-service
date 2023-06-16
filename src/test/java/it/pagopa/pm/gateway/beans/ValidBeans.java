@@ -116,6 +116,7 @@ public class ValidBeans {
         entity.setErrorCode("0");
         entity.setClientGuid("client-guid");
         entity.setIsProcessed(true);
+        entity.setAbi("000000");
         return entity;
     }
 
@@ -128,6 +129,7 @@ public class ValidBeans {
         entity.setMessage("messaggio");
         entity.setErrorCode("0");
         entity.setClientGuid("client-guid");
+        entity.setAbi("000000");
         return entity;
     }
 
@@ -691,7 +693,7 @@ public class ValidBeans {
 
     public static BPayInfoResponse bpayInfoResponse(boolean isError, String errorString) {
         BPayInfoResponse bPayInfoResponse;
-        bPayInfoResponse = isError ? new BPayInfoResponse(null, errorString) : new BPayInfoResponse("id", null);
+        bPayInfoResponse = isError ? new BPayInfoResponse(null, errorString) : new BPayInfoResponse("000000", null);
         return bPayInfoResponse;
     }
 

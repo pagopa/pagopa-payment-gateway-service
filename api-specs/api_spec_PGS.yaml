@@ -1184,9 +1184,7 @@ components:
           example: "435654"
         errorMessage:
           type: string
-          example: "transactionId 775660 has not been found"
-      required:
-        - correlationId
+          example: "RequestId 77e1c83b-7bb0-437b-bc50-a7a58e5660ac has not been found"
     CreditCardAuthRequest:
       required:
         - idTransaction

@@ -1,8 +1,6 @@
 package it.pagopa.pm.gateway.dto.xpay;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigInteger;
 
@@ -21,4 +19,5 @@ public class AuthPaymentXPayRequest {
     private String urlRisposta;
     private String timeStamp;
     private String mac;
+
 }

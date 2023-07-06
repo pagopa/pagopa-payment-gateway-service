@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -117,10 +118,13 @@ public class BancomatPayPaymentTransactionsController {
     }
 
     @GetMapping(RETRIEVE_BPAY_INFO)
+    @Cacheable("test")
     public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String requestId) {
-        log.info("START - retrieve bancomatPay information for requestId " + requestId);
+        log.info("START - retrieve bancomatPay information for requestId {}", requestId);
         String outputMsg;
-
+        BPayPaymentRequest r = new BPayPaymentRequest();
+        r.setEncryptedTelephoneNumber("rsrtgvsrtvrvrf");
+        log.info("dfvrsvfv " + r.getEncryptedTelephoneNumber());
         if (StringUtils.isBlank(requestId)) {
             outputMsg = "RequestId is blank: please specify a valid requestId";
             log.error(outputMsg);

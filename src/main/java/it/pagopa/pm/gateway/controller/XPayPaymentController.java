@@ -419,6 +419,7 @@ public class XPayPaymentController {
         xPayRequest.setTimeStamp(timeStamp);
         xPayRequest.setCodiceTransazione(codTrans);
         log.info("Request body to call autenticazione3DS created for transactionId " + idTransaction);
+        log.info(xPayRequest.getPan());
         return xPayRequest;
     }
 

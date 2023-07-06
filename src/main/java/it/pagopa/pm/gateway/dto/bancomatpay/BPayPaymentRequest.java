@@ -1,5 +1,6 @@
 package it.pagopa.pm.gateway.dto.bancomatpay;
 
+import it.pagopa.pm.gateway.config.*;
 import lombok.Data;
 
 import javax.validation.constraints.*;
@@ -23,4 +24,8 @@ public class BPayPaymentRequest {
 
     String language;
 
+    @Sensitive
+    public String getEncryptedTelephoneNumber() {
+        return encryptedTelephoneNumber;
+    }
 }

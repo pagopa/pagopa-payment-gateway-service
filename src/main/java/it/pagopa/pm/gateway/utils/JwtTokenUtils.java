@@ -31,7 +31,7 @@ public class JwtTokenUtils {
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(issueDate)
                 .setExpiration(expiryDate)
-                .signWith(HS256, jwtTokenKey.getBytes(UTF_8))
+                .signWith(HS256, jwtTokenKey)
                 .compact();
     }
 }

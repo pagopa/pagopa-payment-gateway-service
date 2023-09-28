@@ -116,28 +116,28 @@ public class BancomatPayPaymentTransactionsController {
         return new BPayOutcomeResponse(true);
     }
 
-    @GetMapping(RETRIEVE_BPAY_INFO)
-    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@PathVariable String requestId) {
-        log.info("START - retrieve bancomatPay information for requestId " + requestId);
+    @GetMapping(REQUEST_PAYMENTS_BPAY)
+    public ResponseEntity<BPayInfoResponse> retrieveBPayInfo(@RequestParam String transactionId) {
+        log.info("START - retrieve bancomatPay information for transactionId " + transactionId);
         String outputMsg;
 
-        if (StringUtils.isBlank(requestId)) {
-            outputMsg = "RequestId is blank: please specify a valid requestId";
+        if (StringUtils.isBlank(transactionId)) {
+            outputMsg = "transactionId is blank: please specify a valid transactionId";
             log.error(outputMsg);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BPayInfoResponse(null, outputMsg));
         }
 
-        BPayPaymentResponseEntity entity = bPayPaymentResponseRepository.findByClientGuid(requestId);
+        BPayPaymentResponseEntity entity = bPayPaymentResponseRepository.findByIdPagoPa(Long.valueOf(transactionId));
         if (Objects.isNull(entity)) {
-            outputMsg = "No entity has been found for requestId " + requestId;
+            outputMsg = "No entity has been found for transactionId " + transactionId;
             log.error(outputMsg);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BPayInfoResponse(null, outputMsg));
         }
 
-        String correlationId = entity.getCorrelationId();
-        log.info(String.format("CorrelationId %s has been found for requestId %s", correlationId, requestId));
-        log.info("END - retrieved bancomatPay information for requestId " + requestId);
-        return ResponseEntity.status(HttpStatus.OK).body(new BPayInfoResponse(correlationId, null));
+        String abi = entity.getAbi();
+        log.info("ABI {} has been found for transactionId {}", abi, transactionId);
+        log.info("END - retrieved bancomatPay information for transactionId {}", transactionId);
+        return ResponseEntity.status(HttpStatus.OK).body(new BPayInfoResponse(abi, null));
     }
 
     private String inquiryTransactionToBancomatPay(BPayRefundRequest request) throws Exception {
@@ -203,7 +203,7 @@ public class BancomatPayPaymentTransactionsController {
             }
             throw new RestApiException(ExceptionsEnum.GENERIC_ERROR);
         }
-        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid, mdcInfo);
+        BPayPaymentResponseEntity bPayPaymentResponseEntity = convertBpayPaymentResponseToEntity(response, idPagoPa, guid, mdcInfo, response.getReturn().getAbi());
         bPayPaymentResponseRepository.save(bPayPaymentResponseEntity);
         try {
             TransactionUpdateRequest transactionUpdate = new TransactionUpdateRequest(TX_PROCESSING.getId(),
@@ -216,7 +216,7 @@ public class BancomatPayPaymentTransactionsController {
         log.info("END executePaymentRequest for transaction " + idPagoPa);
     }
 
-    private BPayPaymentResponseEntity convertBpayPaymentResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa, String guid, String mdcInfo) {
+    private BPayPaymentResponseEntity convertBpayPaymentResponseToEntity(InserimentoRichiestaPagamentoPagoPaResponse response, Long idPagoPa, String guid, String mdcInfo, String abi) {
         ResponseInserimentoRichiestaPagamentoPagoPaVO responseReturnVO = response.getReturn();
         EsitoVO esitoVO = responseReturnVO.getEsito();
         BPayPaymentResponseEntity bPayPaymentResponseEntity = new BPayPaymentResponseEntity();
@@ -227,6 +227,7 @@ public class BancomatPayPaymentTransactionsController {
         bPayPaymentResponseEntity.setCorrelationId(responseReturnVO.getCorrelationId());
         bPayPaymentResponseEntity.setClientGuid(guid);
         bPayPaymentResponseEntity.setMdcInfo(mdcInfo);
+        bPayPaymentResponseEntity.setAbi(abi);
         return bPayPaymentResponseEntity;
     }
 

@@ -39,4 +39,7 @@ public class BPayPaymentResponseEntity {
     @Column(name = "MDC_INFO")
     private String mdcInfo;
 
+    @Column(name = "ABI")
+    private String abi;
+
 }

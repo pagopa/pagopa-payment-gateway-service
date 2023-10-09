@@ -96,7 +96,7 @@ public class CcResumeStep1ServiceTest {
     public void prepareResume_Test_EntityAlreadyInProcessing() {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
-        entity.setResponseType(ThreeDS2ResponseTypeEnum.CHALLENGE.name());
+        entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         when(paymentRequestLockRepository.findByGuid(any())).thenReturn(entity);
         boolean check = service.prepareResumeStep1(UUID_SAMPLE);
         verify(service).prepareResumeStep1(UUID_SAMPLE);
@@ -107,7 +107,7 @@ public class CcResumeStep1ServiceTest {
     public void prepareResume_Test_OK() {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setStatus(PaymentRequestStatusEnum.CREATED.name());
-        entity.setResponseType(ThreeDS2ResponseTypeEnum.CHALLENGE.name());
+        entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         when(paymentRequestLockRepository.findByGuid(any())).thenReturn(entity);
         when(paymentRequestLockRepository.save(any())).thenReturn(entity);
         boolean check = service.prepareResumeStep1(UUID_SAMPLE);

@@ -64,7 +64,7 @@ public class CcResumeStep1Service {
         String responseType = entity.getResponseType();
         if (PaymentRequestStatusEnum.CREATED.name().equals(entity.getStatus())
                 && responseType != null
-                && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.CHALLENGE.name())) {
+                && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
             log.info("prepareResumeStep1 request in state CREATED METHOD - proceed for requestId: {}",requestId);
             entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
             paymentRequestLockRepository.save(entity);

@@ -48,12 +48,12 @@ public class CcResumeStep2Service {
         PaymentRequestEntity entity = paymentRequestLockRepository.findByGuid(requestId);
 
         if (Objects.isNull(entity)) {
-            log.error("No CreditCard request entity has been found for requestId: " + requestId);
+            log.error("No CreditCard request entity has been found for requestId: {}", requestId);
             return false;
         }
 
         if (Objects.nonNull(entity.getAuthorizationOutcome())) {
-            log.warn(String.format("requestId %s already processed", requestId));
+            log.warn("requestId {} already processed", requestId);
             entity.setErrorMessage("requestId already processed");
             return false;
         }
@@ -62,9 +62,12 @@ public class CcResumeStep2Service {
         if (PaymentRequestStatusEnum.CREATED.name().equals(entity.getStatus())
                 && responseType != null
                 && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.CHALLENGE.name())) {
+            log.info("prepareResumeStep2 request in state CREATED CHALLENGE - proceed for requestId: {}",requestId);
             entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
             paymentRequestLockRepository.save(entity);
             return true;
+        } else {
+            log.info("prepareResumeStep2 request in state {} {} - not proceed for requestId: {}",entity.getStatus(),responseType,requestId);
         }
 
         return false;

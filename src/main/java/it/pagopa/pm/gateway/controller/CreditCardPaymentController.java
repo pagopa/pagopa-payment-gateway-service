@@ -96,8 +96,12 @@ public class CreditCardPaymentController {
                                                                             @RequestBody CreditCardResumeRequest request) {
         MdcUtils.setMdcFields(mdcFields);
         log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
+        ResponseEntity<VposResumeMethodResponse> responseEntity = null;
         VposResumeMethodResponse response = new VposResumeMethodResponse(requestId);
-        resumeStep1Service.startResumeStep1(request, requestId.toString());
+
+        if (resumeStep1Service.prepareResumeStep1(requestId.toString())) {
+            resumeStep1Service.startResumeStep1(request, requestId.toString());
+        }
 
         log.info("END - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -109,7 +113,10 @@ public class CreditCardPaymentController {
         MdcUtils.setMdcFields(mdcFields);
         log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
 
-        resumeStep2Service.startResumeStep2(requestId);
+        if (resumeStep2Service.prepareResumeStep2(requestId)) {
+            resumeStep2Service.startResumeStep2(requestId);
+        }
+
         log.info("END - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_CHALLENGE, requestId);
 
         String vposPollingRedirect = vposPollingUrl + requestId;

@@ -233,7 +233,7 @@ public class XPayPaymentController {
         XPayPollingResponse response = new XPayPollingResponse();
         response.setRequestId(requestId);
         response.setPaymentRequestStatusEnum(statusEnum);
-        if (statusEnum.equals(CREATED)) {
+        if (isStatusOneOf(statusEnum, CREATED, PROCESSING)) {
             response.setHtml(paymentRequestEntity.getXpayHtml());
         } else if (isStatusOneOf(statusEnum, AUTHORIZED, DENIED, CANCELLED)) {
             OutcomeXpayGatewayResponse outcomeXpayGatewayResponse = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),

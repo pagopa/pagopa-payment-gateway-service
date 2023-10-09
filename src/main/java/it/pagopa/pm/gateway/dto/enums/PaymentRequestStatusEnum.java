@@ -10,7 +10,8 @@ public enum PaymentRequestStatusEnum {
     CREATED(1L, "Creata"),
     AUTHORIZED(2L, "Autorizzazione concessa"),
     DENIED(3L, "Autorizzazione negata"),
-    CANCELLED(4L, "Cancellata");
+    CANCELLED(4L, "Cancellata"),
+    PROCESSING(5L, "In elaborazione");
 
     private static final Map<String, PaymentRequestStatusEnum> map = new HashMap<>(values().length, 1);
 

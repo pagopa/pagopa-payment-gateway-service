@@ -3,9 +3,11 @@ package it.pagopa.pm.gateway.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
 import it.pagopa.pm.gateway.dto.vpos.MethodCompletedEnum;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
+import it.pagopa.pm.gateway.repository.PaymentRequestLockRepository;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.async.CcResumeStep1AsyncService;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
@@ -14,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +32,9 @@ public class CcResumeStep1Service {
     private String vposUrl;
 
     @Autowired
+    private PaymentRequestLockRepository paymentRequestLockRepository;
+
+    @Autowired
     private PaymentRequestRepository paymentRequestRepository;
 
     @Autowired
@@ -39,23 +46,39 @@ public class CcResumeStep1Service {
     @Autowired
     private CcResumeStep1AsyncService ccResumeStep1AsyncService;
 
-    public void startResumeStep1(CreditCardResumeRequest request, String requestId) {
-        PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean prepareResumeStep1(String requestId) {
+        PaymentRequestEntity entity = paymentRequestLockRepository.findByGuid(requestId);
 
         if (Objects.isNull(entity)) {
             log.error("No CreditCard request entity has been found for requestId: " + requestId);
-            return;
+            return false;
         }
 
         if (Objects.nonNull(entity.getAuthorizationOutcome())) {
             log.warn(String.format("requestId %s already processed", requestId));
             entity.setErrorMessage("requestId already processed");
-            return;
+            return false;
         }
-        processResume(request, entity, requestId);
+
+        String responseType = entity.getResponseType();
+        if (PaymentRequestStatusEnum.CREATED.name().equals(entity.getStatus())
+                && responseType != null
+                && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.CHALLENGE.name())) {
+            entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
+            paymentRequestLockRepository.save(entity);
+            return true;
+        }
+
+        return false;
     }
 
-    private void processResume(CreditCardResumeRequest request, PaymentRequestEntity entity, String requestId) {
+    public void startResumeStep1(CreditCardResumeRequest request, String requestId) {
+        PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
+        processResume(request, entity);
+    }
+
+    private void processResume(CreditCardResumeRequest request, PaymentRequestEntity entity) {
         String methodCompleted = request.getMethodCompleted();
         String responseType = entity.getResponseType();
         String correlationId = entity.getCorrelationId();
@@ -68,7 +91,7 @@ public class CcResumeStep1Service {
                 ccResumeStep1AsyncService.executeStep1(params, entity, stepZeroRequest);
             }
         } catch (Exception e) {
-            log.error("error during execution of resume for requestId {}", requestId, e);
+            log.error("error during execution of resume for requestId {}", entity.getGuid(), e);
         }
     }
 }

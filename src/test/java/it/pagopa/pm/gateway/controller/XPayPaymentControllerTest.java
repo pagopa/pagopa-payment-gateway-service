@@ -229,7 +229,6 @@ public class XPayPaymentControllerTest {
         XPayAuthRequest xPayAuthRequest = ValidBeans.createXPayAuthRequest(true);
         when(paymentRequestRepository.findByGuid(UUID_SAMPLE))
                 .thenReturn(ValidBeans.paymentRequestEntityxPay(xPayAuthRequest, ECOMMERCE_APP_ORIGIN, true, PROCESSING, false));
-        when(clientsConfig.getByKey(any())).thenReturn(clientConfig);
 
         String url = REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE;
         mvc.perform(get(url))
@@ -436,7 +435,6 @@ public class XPayPaymentControllerTest {
     public void xPay_givenGoodResumeRequest_NoEntityshouldReturn302Status() throws Exception {
         MultiValueMap<String, String> params = ValidBeans.createXPayResumeRequest(true);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
         when(paymentRequestLockRepository.findByGuid(any())).thenReturn(null);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume")
@@ -486,14 +484,7 @@ public class XPayPaymentControllerTest {
 
         PaymentXPayResponse xPayResponse = ValidBeans.createPaymentXPayResponse(isTrue);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(paymentRequestLockRepository.findByGuid(any())).thenReturn(entity);
-
-        when(xPayUtils.checkMac(any(), any())).thenReturn(isTrue);
-
-        when(xpayService.callPaga3DS(any())).thenReturn(xPayResponse);
-
-        when(ecommerceClient.callPatchTransaction(argThat(new TypeUpdateAuthRequestXPayMatcher()), any(), any())).thenReturn(patchResponse);
 
         mvc.perform(get(REQUEST_PAYMENTS_XPAY + "/" + UUID_SAMPLE + "/resume/")
                         .header(Headers.X_CLIENT_ID, ECOMMERCE_APP_ORIGIN)

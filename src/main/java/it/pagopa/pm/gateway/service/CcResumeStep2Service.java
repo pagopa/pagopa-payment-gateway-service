@@ -62,12 +62,12 @@ public class CcResumeStep2Service {
         if (PaymentRequestStatusEnum.CREATED.name().equals(entity.getStatus())
                 && responseType != null
                 && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.CHALLENGE.name())) {
-            log.info("prepareResumeStep2 request in state CREATED CHALLENGE - proceed for requestId: {}",requestId);
+            log.info("prepareResumeStep2 request in state CREATED CHALLENGE - proceed for requestId: {}", requestId);
             entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
             paymentRequestLockRepository.save(entity);
             return true;
         } else {
-            log.info("prepareResumeStep2 request in state {} {} - not proceed for requestId: {}",entity.getStatus(),responseType,requestId);
+            log.info("prepareResumeStep2 request in state {} {} - not proceed for requestId: {}", entity.getStatus(), responseType, requestId);
         }
 
         return false;
@@ -90,6 +90,10 @@ public class CcResumeStep2Service {
             }
         } catch (Exception e) {
             log.error("error during execution of resume for requestId {}", entity.getGuid(), e);
+            if (PaymentRequestStatusEnum.PROCESSING.name().equals(entity.getStatus())) {
+                entity.setStatus(PaymentRequestStatusEnum.CREATED.name());
+                paymentRequestRepository.save(entity);
+            }
         }
     }
 }

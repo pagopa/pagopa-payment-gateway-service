@@ -51,7 +51,7 @@ public class CcResumeStep1Service {
         PaymentRequestEntity entity = paymentRequestLockRepository.findByGuid(requestId);
 
         if (Objects.isNull(entity)) {
-            log.error("No CreditCard request entity has been found for requestId: {}",requestId);
+            log.error("No CreditCard request entity has been found for requestId: {}", requestId);
             return false;
         }
 
@@ -65,12 +65,12 @@ public class CcResumeStep1Service {
         if (PaymentRequestStatusEnum.CREATED.name().equals(entity.getStatus())
                 && responseType != null
                 && responseType.equalsIgnoreCase(ThreeDS2ResponseTypeEnum.METHOD.name())) {
-            log.info("prepareResumeStep1 request in state CREATED METHOD - proceed for requestId: {}",requestId);
+            log.info("prepareResumeStep1 request in state CREATED METHOD - proceed for requestId: {}", requestId);
             entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
             paymentRequestLockRepository.save(entity);
             return true;
         } else {
-            log.info("prepareResumeStep1 request in state {} {} - not proceed for requestId: {}",entity.getStatus(),responseType,requestId);
+            log.info("prepareResumeStep1 request in state {} {} - not proceed for requestId: {}", entity.getStatus(), responseType, requestId);
         }
 
         return false;
@@ -95,6 +95,10 @@ public class CcResumeStep1Service {
             }
         } catch (Exception e) {
             log.error("error during execution of resume for requestId {}", entity.getGuid(), e);
+            if (PaymentRequestStatusEnum.PROCESSING.name().equals(entity.getStatus())) {
+                entity.setStatus(PaymentRequestStatusEnum.CREATED.name());
+                paymentRequestRepository.save(entity);
+            }
         }
     }
 }

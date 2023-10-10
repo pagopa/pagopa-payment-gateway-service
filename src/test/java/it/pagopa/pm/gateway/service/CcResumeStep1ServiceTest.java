@@ -215,6 +215,31 @@ public class CcResumeStep1ServiceTest {
     }
 
     @Test
+    public void startResume_callVpos_Exception() throws IOException {
+        StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
+        CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
+
+        PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
+        entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
+        String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
+        entity.setJsonRequest(requestJson);
+        entity.setCorrelationId("CorrelationId");
+        entity.setIdTransaction("1234566");
+
+        Map<String, String> params = new HashMap<>();
+        params.put("1", "prova");
+
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+        when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
+        when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
+        when(httpClient.callVPos(any(), any())).thenThrow(new IOException());
+
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+    }
+
+    @Test
     public void startResume_STEP_1_Test_OK_Challenge_Response() throws IOException {
         StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);

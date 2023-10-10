@@ -96,7 +96,6 @@ public class CreditCardPaymentController {
                                                                             @RequestBody CreditCardResumeRequest request) {
         MdcUtils.setMdcFields(mdcFields);
         log.info("START - POST {}{} info for requestId: {}", VPOS_AUTHORIZATIONS, REQUEST_PAYMENTS_RESUME_METHOD, requestId);
-        ResponseEntity<VposResumeMethodResponse> responseEntity = null;
         VposResumeMethodResponse response = new VposResumeMethodResponse(requestId);
 
         if (resumeStep1Service.prepareResumeStep1(requestId.toString())) {

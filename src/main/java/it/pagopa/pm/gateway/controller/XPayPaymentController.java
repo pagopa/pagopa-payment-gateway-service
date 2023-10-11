@@ -133,24 +133,21 @@ public class XPayPaymentController {
         EsitoXpay outcome = xPay3DSResponse.getOutcome();
 
         String pollingUrlRedirect = StringUtils.join(xpayPollingUrl, requestId);
-        PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
-        if (Objects.isNull(entity)) {
-            log.error("No XPay entity has been found for requestId: " + requestId);
-            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(pollingUrlRedirect)).build();
-        }
 
-        setMdcFields(entity.getMdcInfo());
+        boolean proceed = xPayPaymentAsyncService.prepareResume(requestId, xPay3DSResponse);
 
-        if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)
-                && CREATED.name().equals(entity.getStatus())) {
-
-            xPayPaymentAsyncService.executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
-        } else {
-            log.info(String.format("Outcome is %s: setting status as DENIED for requestId %s", outcome, requestId));
-            entity.setStatus(DENIED.name());
-            paymentRequestRepository.save(entity);
-
-            ecommercePatchUtils.executePatchTransactionXPay(entity);
+        if (proceed)
+        {
+            PaymentRequestEntity entity = paymentRequestRepository.findByGuid(requestId);
+            setMdcFields(entity.getMdcInfo());
+            if (outcome.equals(OK) && checkResumeRequest(entity, requestId, xPay3DSResponse)) {
+                xPayPaymentAsyncService.executeXPayPaymentCall(requestId, xPay3DSResponse, entity);
+            } else {
+               log.info(String.format("Outcome is %s: setting status as DENIED for requestId %s", outcome, requestId));
+               entity.setStatus(DENIED.name());
+               paymentRequestRepository.save(entity);
+               ecommercePatchUtils.executePatchTransactionXPay(entity);
+           }
         }
 
         log.info("END - GET {}{} for requestId {}", REQUEST_PAYMENTS_XPAY, REQUEST_PAYMENTS_RESUME, requestId);
@@ -233,7 +230,7 @@ public class XPayPaymentController {
         XPayPollingResponse response = new XPayPollingResponse();
         response.setRequestId(requestId);
         response.setPaymentRequestStatusEnum(statusEnum);
-        if (statusEnum.equals(CREATED)) {
+        if (isStatusOneOf(statusEnum, CREATED, PROCESSING)) {
             response.setHtml(paymentRequestEntity.getXpayHtml());
         } else if (isStatusOneOf(statusEnum, AUTHORIZED, DENIED, CANCELLED)) {
             OutcomeXpayGatewayResponse outcomeXpayGatewayResponse = buildOutcomeXpayGateway(paymentRequestEntity.getErrorCode(),

@@ -3,6 +3,7 @@ package it.pagopa.pm.gateway.service.async;
 import it.pagopa.pm.gateway.client.vpos.HttpClient;
 import it.pagopa.pm.gateway.client.vpos.HttpClientResponse;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.vpos.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
@@ -15,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -62,7 +62,7 @@ public class CcResumeStep1AsyncService {
             MdcUtils.setMdcFields(entity.getMdcInfo());
             String requestId = entity.getGuid();
             log.info("Calling VPOS - Step 1 - for requestId: " + requestId);
-            HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
+            HttpClientResponse clientResponse = httpClient.callVPos(vposUrl, params);
             ThreeDS2Response response = vPosResponseUtils.build3ds2Response(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), request);
             log.info("Result code from VPOS - Step 1 - for RequestId {} is {}", requestId, response.getResultCode());
@@ -76,6 +76,10 @@ public class CcResumeStep1AsyncService {
             }
         } catch (Exception e) {
             log.error("{}{}", GENERIC_ERROR_MSG, entity.getIdTransaction(), e);
+            if (PaymentRequestStatusEnum.PROCESSING.name().equals(entity.getStatus())) {
+                entity.setStatus(PaymentRequestStatusEnum.CREATED.name());
+                paymentRequestRepository.save(entity);
+            }
         }
     }
 
@@ -122,7 +126,7 @@ public class CcResumeStep1AsyncService {
         try {
             log.info("Calling VPOS - Accounting - for requestId: {}", entity.getGuid());
             Map<String, String> params = vPosRequestUtils.buildAccountingRequestParams(pgsRequest, entity.getCorrelationId());
-            HttpClientResponse clientResponse = httpClient.callVPos(vposUrl,params);
+            HttpClientResponse clientResponse = httpClient.callVPos(vposUrl, params);
             AuthResponse response = vPosResponseUtils.buildAuthResponse(clientResponse.getEntity());
             vPosResponseUtils.validateResponseMac(response.getTimestamp(), response.getResultCode(), response.getResultMac(), pgsRequest);
             checkAccountResultCode(response, entity);

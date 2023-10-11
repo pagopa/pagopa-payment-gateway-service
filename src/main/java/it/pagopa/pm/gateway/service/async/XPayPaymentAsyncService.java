@@ -2,8 +2,10 @@ package it.pagopa.pm.gateway.service.async;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.pagopa.pm.gateway.client.ecommerce.EcommerceClient;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.xpay.*;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
+import it.pagopa.pm.gateway.repository.PaymentRequestLockRepository;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.XpayService;
 import it.pagopa.pm.gateway.utils.ClientsConfig;
@@ -17,8 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import static it.pagopa.pm.gateway.constant.Messages.GENERIC_ERROR_MSG;
 import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.AUTHORIZED;
@@ -36,8 +41,10 @@ public class XPayPaymentAsyncService {
     public static final String ZERO_CHAR = "0";
     private static final int MAX_ERROR_MESSAGE_ENTITY_SIZE = 50;
     private static final String ERROR_MESSAGE_TRUNCATE_SUFFIX = "...";
+    private static final String PGS_GENERIC_ERROR = "1000";
     private XpayService xpayService;
     private PaymentRequestRepository paymentRequestRepository;
+    private PaymentRequestLockRepository paymentRequestLockRepository;
     private XPayUtils xPayUtils;
     private String apiKey;
     private ClientsConfig clientsConfig;
@@ -47,7 +54,7 @@ public class XPayPaymentAsyncService {
     @Autowired
     public XPayPaymentAsyncService(PaymentRequestRepository paymentRequestRepository, XpayService xpayService, XPayUtils xPayUtils,
                                    @Value("${xpay.apiKey}") String apiKey, ClientsConfig clientsConfig, EcommerceClient ecommerceClient,
-                                   EcommercePatchUtils ecommercePatchUtils) {
+                                   EcommercePatchUtils ecommercePatchUtils, PaymentRequestLockRepository paymentRequestLockRepository) {
         this.paymentRequestRepository = paymentRequestRepository;
         this.xpayService = xpayService;
         this.apiKey = apiKey;
@@ -55,6 +62,7 @@ public class XPayPaymentAsyncService {
         this.xPayUtils = xPayUtils;
         this.clientsConfig = clientsConfig;
         this.ecommercePatchUtils = ecommercePatchUtils;
+        this.paymentRequestLockRepository = paymentRequestLockRepository;
     }
 
     @Async
@@ -176,5 +184,27 @@ public class XPayPaymentAsyncService {
             entity.setErrorCode(errorCode);
             entity.setErrorMessage(truncatedMessage);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean prepareResume(String requestId, XPay3DSResponse xpay3DSResponse) {
+        log.info("prepareResume for requestId: " + requestId);
+
+        PaymentRequestEntity entity = paymentRequestLockRepository.findByGuid(requestId);
+
+        if (Objects.isNull(entity)) {
+            log.error("No XPay entity has been found for requestId: {}", requestId);
+            return false;
+        }
+
+        if (PaymentRequestStatusEnum.CREATED.name().equals(entity.getStatus())) {
+            log.info("prepareResume request in state CREATED - proceed for requestId: {}", requestId);
+            entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
+            paymentRequestLockRepository.save(entity);
+            return true;
+        } else {
+            log.info("prepareResume request in state {} - not proceed for requestId: {}", entity.getStatus(), requestId);
+        }
+        return false;
     }
 }

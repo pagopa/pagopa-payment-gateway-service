@@ -7,14 +7,16 @@ import it.pagopa.pm.gateway.dto.config.ClientConfig;
 import it.pagopa.pm.gateway.dto.config.VposClientConfig;
 import it.pagopa.pm.gateway.dto.creditcard.CreditCardResumeRequest;
 import it.pagopa.pm.gateway.dto.creditcard.StepZeroRequest;
+import it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum;
 import it.pagopa.pm.gateway.dto.enums.ThreeDS2ResponseTypeEnum;
-import it.pagopa.pm.gateway.dto.vpos.AuthResponse;
 import it.pagopa.pm.gateway.dto.vpos.ThreeDS2Response;
 import it.pagopa.pm.gateway.entity.PaymentRequestEntity;
+import it.pagopa.pm.gateway.repository.PaymentRequestLockRepository;
 import it.pagopa.pm.gateway.repository.PaymentRequestRepository;
 import it.pagopa.pm.gateway.service.async.CcResumeStep1AsyncService;
 import it.pagopa.pm.gateway.utils.VPosRequestUtils;
 import it.pagopa.pm.gateway.utils.VPosResponseUtils;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +38,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest(classes = CcResumeStep1Service.class)
 public class CcResumeStep1ServiceTest {
-    public static final String RESULT_CODE_00 = "00";
+    //    public static final String RESULT_CODE_00 = "00";
     private final ClientConfig clientConfig = new ClientConfig();
 
     @Spy
@@ -58,6 +60,8 @@ public class CcResumeStep1ServiceTest {
     }
 
     @Mock
+    private PaymentRequestLockRepository paymentRequestLockRepository;
+    @Mock
     private PaymentRequestRepository paymentRequestRepository;
     @Mock
     private VPosRequestUtils vPosRequestUtils;
@@ -71,21 +75,44 @@ public class CcResumeStep1ServiceTest {
     private final String UUID_SAMPLE = "8d8b30e3-de52-4f1c-a71c-9905a8043dac";
 
     @Test
-    public void startResume_Test_EntityNull() {
-        CreditCardResumeRequest request = ValidBeans.createCreditCardResumeRequest(true);
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(null);
-        service.startResumeStep1(request, UUID_SAMPLE);
-        verify(service).startResumeStep1(request, UUID_SAMPLE);
+    public void prepareResume_Test_EntityNull() {
+        when(paymentRequestLockRepository.findByGuid(any())).thenReturn(null);
+        boolean check = service.prepareResumeStep1(UUID_SAMPLE);
+        verify(service).prepareResumeStep1(UUID_SAMPLE);
+        Assert.assertFalse(check);
     }
 
     @Test
-    public void startResume_Test_EntityAlreadyAuthorized() {
-        CreditCardResumeRequest request = ValidBeans.createCreditCardResumeRequest(true);
+    public void prepareResume_Test_EntityAlreadyAuthorized() {
         PaymentRequestEntity entity = new PaymentRequestEntity();
         entity.setAuthorizationOutcome(true);
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
-        service.startResumeStep1(request, UUID_SAMPLE);
-        verify(service).startResumeStep1(request, UUID_SAMPLE);
+        when(paymentRequestLockRepository.findByGuid(any())).thenReturn(entity);
+        boolean check = service.prepareResumeStep1(UUID_SAMPLE);
+        verify(service).prepareResumeStep1(UUID_SAMPLE);
+        Assert.assertFalse(check);
+    }
+
+    @Test
+    public void prepareResume_Test_EntityAlreadyInProcessing() {
+        PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
+        entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
+        when(paymentRequestLockRepository.findByGuid(any())).thenReturn(entity);
+        boolean check = service.prepareResumeStep1(UUID_SAMPLE);
+        verify(service).prepareResumeStep1(UUID_SAMPLE);
+        Assert.assertFalse(check);
+    }
+
+    @Test
+    public void prepareResume_Test_OK() {
+        PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.CREATED.name());
+        entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
+        when(paymentRequestLockRepository.findByGuid(any())).thenReturn(entity);
+        when(paymentRequestLockRepository.save(any())).thenReturn(entity);
+        boolean check = service.prepareResumeStep1(UUID_SAMPLE);
+        verify(service).prepareResumeStep1(UUID_SAMPLE);
+        Assert.assertTrue(check);
     }
 
     @Test
@@ -94,6 +121,7 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
@@ -101,19 +129,19 @@ public class CcResumeStep1ServiceTest {
         entity.setIdTransaction("1234566");
 
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        AuthResponse authResponse = ValidBeans.createVPosAuthResponse(RESULT_CODE_00);
+//        AuthResponse authResponse = ValidBeans.createVPosAuthResponse(RESULT_CODE_00);
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
+//        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
+//        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
@@ -124,12 +152,13 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = new CreditCardResumeRequest(null);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         entity.setJsonRequest("jsonRequest");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
@@ -140,6 +169,7 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
@@ -149,12 +179,12 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenThrow(RuntimeException.class);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
@@ -165,6 +195,7 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
@@ -174,11 +205,36 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createKOHttpClientResponseVPos());
 
+        service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+        verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
+    }
+
+    @Test
+    public void startResume_callVpos_Exception() throws IOException {
+        StepZeroRequest stepZeroRequest = ValidBeans.createStep0Request(false);
+        CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
+
+        PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
+        entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
+        String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
+        entity.setJsonRequest(requestJson);
+        entity.setCorrelationId("CorrelationId");
+        entity.setIdTransaction("1234566");
+
+        Map<String, String> params = new HashMap<>();
+        params.put("1", "prova");
+
         when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
+        when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
+        when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
+        when(httpClient.callVPos(any(), any())).thenThrow(new IOException());
+
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
@@ -189,6 +245,7 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
@@ -199,12 +256,12 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
@@ -215,6 +272,7 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
@@ -226,12 +284,12 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
@@ -242,6 +300,7 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
@@ -252,15 +311,15 @@ public class CcResumeStep1ServiceTest {
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
+//        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenThrow(RuntimeException.class);
+//        when(vPosResponseUtils.buildAuthResponse(any())).thenThrow(RuntimeException.class);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }
@@ -271,6 +330,7 @@ public class CcResumeStep1ServiceTest {
         CreditCardResumeRequest creditCardResumeRequest = ValidBeans.createCreditCardResumeRequest(true);
 
         PaymentRequestEntity entity = new PaymentRequestEntity();
+        entity.setStatus(PaymentRequestStatusEnum.PROCESSING.name());
         entity.setResponseType(ThreeDS2ResponseTypeEnum.METHOD.name());
         String requestJson = objectMapper.writeValueAsString(stepZeroRequest);
         entity.setJsonRequest(requestJson);
@@ -278,19 +338,19 @@ public class CcResumeStep1ServiceTest {
         entity.setIdTransaction("1234566");
 
         ThreeDS2Response response = ValidBeans.createThreeDS2ResponseStep0Authorization();
-        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("99");
+//        AuthResponse authResponse = ValidBeans.createVPosAuthResponse("99");
         Map<String, String> params = new HashMap<>();
         params.put("1", "prova");
 
+        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         when(objectMapper.readValue(entity.getJsonRequest(), StepZeroRequest.class)).thenReturn(stepZeroRequest);
         when(vPosRequestUtils.buildStepOneRequestParams(any(), any(), any())).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
         when(vPosResponseUtils.build3ds2Response(any())).thenReturn(response);
-        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
+//        when((vPosRequestUtils.buildAccountingRequestParams(any(), any()))).thenReturn(params);
         when(httpClient.callVPos(any(), any())).thenReturn(ValidBeans.createHttpClientResponseVPos());
-        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
+//        when(vPosResponseUtils.buildAuthResponse(any())).thenReturn(authResponse);
 
-        when(paymentRequestRepository.findByGuid(any())).thenReturn(entity);
         service.startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
         verify(service).startResumeStep1(creditCardResumeRequest, UUID_SAMPLE);
     }

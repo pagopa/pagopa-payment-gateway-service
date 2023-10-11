@@ -1087,7 +1087,7 @@ components:
           example: affd8e24-f99a-406f-9ded-67a4a20c097f
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
           description: status
           example: CREATED
         authCode:
@@ -1128,7 +1128,7 @@ components:
           type: string
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
       required:
         - requestId
         - status
@@ -1171,7 +1171,7 @@ components:
           example: "Error while requesting refund for requestId: xxx"
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
       required:
         - transactionId
         - error
@@ -1287,7 +1287,7 @@ components:
       properties:
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
         requestId:
           type: string
         vposUrl:
@@ -1308,7 +1308,7 @@ components:
       properties:
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
         responseType:
           type: string
           enum: [METHOD, CHALLENGE, AUTHORIZATION, ERROR]
@@ -1332,7 +1332,7 @@ components:
       properties:
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
         requestId:
           type: string
         redirectUrl:
@@ -1390,7 +1390,7 @@ components:
           type: string
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
         error:
           type: string
           description: "null if no error occurred"
@@ -1404,7 +1404,7 @@ components:
           type: string
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
         error:
           type: string
     VposDeleteResponse409:
@@ -1434,6 +1434,6 @@ components:
           type: string
         status:
           type: string
-          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED]
+          enum: [CREATED, AUTHORIZED, DENIED, CANCELLED, PROCESSING]
         error:
           type: string

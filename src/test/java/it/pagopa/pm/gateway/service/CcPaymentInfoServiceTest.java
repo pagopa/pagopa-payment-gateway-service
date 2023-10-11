@@ -18,8 +18,7 @@ import org.springframework.http.HttpStatus;
 
 import java.util.Optional;
 
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.AUTHORIZED;
-import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.CREATED;
+import static it.pagopa.pm.gateway.dto.enums.PaymentRequestStatusEnum.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -82,10 +81,52 @@ public class CcPaymentInfoServiceTest {
     }
 
     @Test
+    public void getPaymentInfoProcessingNoAuthorizedSuccessTest() {
+        PaymentRequestEntity paymentInfo = new PaymentRequestEntity();
+        paymentInfo.setStatus(PROCESSING.name());
+        paymentInfo.setResponseType("type");
+        paymentInfo.setGuid("guid");
+        paymentInfo.setAuthorizationUrl("url");
+        paymentInfo.setResponseType("METHOD");
+        paymentInfo.setIdTransaction("12345");
+
+        when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any()))
+                .thenReturn(Optional.of(paymentInfo));
+
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo("123");
+        assertNotNull(response.getPaymentRequestStatusEnum());
+        assertNotNull(response.getRequestId());
+        assertNotNull(response.getThreeDS2ResponseTypeEnum());
+        assertNotNull(response.getVposUrl());
+    }
+
+    @Test
     public void getPaymentInfoChallengeSuccessTest() {
         String authUrl = "https://local?TK=tkFromVpos&creq=realcreq";
         PaymentRequestEntity paymentInfo = new PaymentRequestEntity();
         paymentInfo.setStatus(CREATED.name());
+        paymentInfo.setGuid("guid");
+        paymentInfo.setAuthorizationUrl(authUrl);
+        paymentInfo.setResponseType("CHALLENGE");
+        paymentInfo.setIdTransaction("12345");
+
+        when(paymentRequestRepository.findByGuidAndRequestEndpoint(any(), any()))
+                .thenReturn(Optional.of(paymentInfo));
+
+        CcPaymentInfoResponse response = ccPaymentInfoService.getPaymentInfo("123");
+        assertNotNull(response.getPaymentRequestStatusEnum());
+        assertNotNull(response.getRequestId());
+        assertNotNull(response.getThreeDS2ResponseTypeEnum());
+        assertNotNull(response.getVposUrl());
+        assertEquals("https://local?TK=tkFromVpos", response.getVposUrl());
+        assertEquals("realcreq", response.getCreq());
+    }
+
+    @Test
+    public void getPaymentInfoProcessingChallengeSuccessTest() {
+        String authUrl = "https://local?TK=tkFromVpos&creq=realcreq";
+        PaymentRequestEntity paymentInfo = new PaymentRequestEntity();
+        paymentInfo.setStatus(PROCESSING.name());
         paymentInfo.setGuid("guid");
         paymentInfo.setAuthorizationUrl(authUrl);
         paymentInfo.setResponseType("CHALLENGE");

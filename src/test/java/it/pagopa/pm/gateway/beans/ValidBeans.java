@@ -546,11 +546,16 @@ public class ValidBeans {
         return authPaymentXPayResponse;
     }
 
-    public static XPayPollingResponse createXpayAuthPollingResponse(boolean isOk, boolean isCancelled) {
+    public static XPayPollingResponse createXpayAuthPollingResponse(boolean isOk, boolean isCancelled, boolean isProcessing) {
         XPayPollingResponse response = new XPayPollingResponse();
         if (isOk) {
-            response.setHtml("<html><body></body></html>");
-            response.setPaymentRequestStatusEnum(CREATED);
+            if (isProcessing) {
+                response.setHtml("<html><body></body></html>");
+                response.setPaymentRequestStatusEnum(PROCESSING);
+            } else {
+                response.setHtml("<html><body></body></html>");
+                response.setPaymentRequestStatusEnum(CREATED);
+            }
         } else {
             response.setPaymentRequestStatusEnum(DENIED);
         }

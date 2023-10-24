@@ -83,6 +83,7 @@ public class CcPaymentInfoService {
         }
         switch (paymentRequestStatusEnum) {
             case CREATED:
+            case PROCESSING:
                 ThreeDS2ResponseTypeEnum responseTypeEnum = valueOf(paymentRequestEntity.getResponseType());
                 response.setThreeDS2ResponseTypeEnum(responseTypeEnum);
                 response.setVposUrl(vposUrl);
